@@ -101,17 +101,21 @@ void SceneIntro::SceneUpdate(float dt) {
                     status = "Sprawdzanie sieci...";
                     Request::QueueRequest("https://api-inmobile-pl.easypack24.net", "", {  }, bufferPointer);
                     bufferPointer->status = InProgress;
-                } else if (bufferPointer->status == Error) {
-                    if (bufferPointer->result != CURLE_OK) {
-                        error = NetworkError;
-                        SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
-                    }
                 } else if (bufferPointer->status == InProgress) {
-                    status = "";
                     introStage = 1;
                 }
             }
         } else if (introStage == 1) {
+            if (bufferPointer->status == Error) {
+                if (bufferPointer->result != CURLE_OK) {
+                    error = NetworkError;
+                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
+                    return;
+                }
+            } else if (bufferPointer->status == Done) {
+                status = "";
+            }
+
             ameLogoFadeIn.step((int)(dt * 1000.0f));
             if (ameLogoFadeIn.progress() >= 1.0f) {
                 introTimer = 0;
@@ -119,6 +123,16 @@ void SceneIntro::SceneUpdate(float dt) {
                 PlaySound(introSound);
             }
         } else if (introStage == 2) {
+            if (bufferPointer->status == Error) {
+                if (bufferPointer->result != CURLE_OK) {
+                    error = NetworkError;
+                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
+                    return;
+                }
+            } else if (bufferPointer->status == Done) {
+                status = "";
+            }
+
             introTimer += dt;
             if (introTimer > 2 && bufferPointer->status == Done) {
                 introTimer = 0;
