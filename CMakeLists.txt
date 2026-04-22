@@ -16,7 +16,7 @@ project(SwitchPost)
 
 set(APP_TITLE "SwitchPost")
 set(APP_AUTHOR "ameOverflow")
-set(APP_VERSION "1.0")
+set(APP_VERSION "1.0.1")
 
 set(SOURCES
         lib/qrcodegen.c
