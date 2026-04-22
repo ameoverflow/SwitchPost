@@ -1,0 +1,9 @@
+[
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "1.ogg",
+    "background": "bg.png",
+    "text": "Dzień dobry!"
+  }
+]

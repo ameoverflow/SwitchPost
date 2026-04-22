@@ -1,0 +1,138 @@
+[
+  {
+    "speakingSprite": "excited.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_1.ogg",
+    "text": "Siemka! Witaj w SwitchPost."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_2.ogg",
+    "text": "W tym krótkim samouczku pokażę Ci\njak korzystać z aplikacji\nzaczynając od menu głównego."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut0.png",
+    "voiceClip": "tut_3.ogg",
+    "text": "Na górze ekranu możesz spotrzec znaczek\nz danymi twojej przesyłki."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut0.png",
+    "voiceClip": "tut_4.ogg",
+    "text": "Zawiera on rzeczy takie jak..."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut1.png",
+    "voiceClip": "tut_5.ogg",
+    "text": "Data ostatnio aktualizowanego statusu\nprzesyłki"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut2.png",
+    "voiceClip": "tut_6.ogg",
+    "text": "Nazwa paczkomatu"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut3.png",
+    "voiceClip": "tut_7.ogg",
+    "text": "Nazwę nadawcy"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut4.png",
+    "voiceClip": "tut_8.ogg",
+    "text": "Oraz przybliżony adres docelowy przesyłki"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut5.png",
+    "voiceClip": "tut_9.ogg",
+    "text": "Używając D-Pada możesz poruszać się \npomiędzy paczkami pokazanymi\nna dole ekranu"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut5.png",
+    "voiceClip": "tut_10.ogg",
+    "text": "Po wciśnięciu (A) na którąkolwiek paczkę,\nprzeniesiesz się do menu z jej detalami."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut7.png",
+    "voiceClip": "tut_11.ogg",
+    "text": "Jeżeli paczka jest gotowa do odbioru,\nzobaczysz kod, oraz przycisk QR."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut7.png",
+    "voiceClip": "tut_12.ogg",
+    "text": "Po dotknięciu go, lub wciśnięciu (Y)\nprzeniesiesz się do menu odbioru paczki."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut8.png",
+    "voiceClip": "tut_13.ogg",
+    "text": "Na ekranie będzie wyświetlał się kod QR do\nodbioru przy użyciu skanerów dostępnych\nw paczkomatach, które..."
+  },
+  {
+    "speakingSprite": "diss_open.png",
+    "idleSprite": "diss.png",
+    "background": "tut8.png",
+    "voiceClip": "tut_14.ogg",
+    "text": "...nie lubią działać z \"ekranem konsolki\""
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut9.png",
+    "voiceClip": "tut_15.ogg",
+    "text": "Jak i przycisk do otworzenia skrytki zdalnie!"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut10.png",
+    "voiceClip": "tut_16.ogg",
+    "text": "Po dotknięciu go ukaże się pop-up\npotwierdzający że na pewno\nchcesz otworzyć skrytkę"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut10.png",
+    "voiceClip": "tut_17.ogg",
+    "text": "Jest tylko dlatego, by przypadkiem\nnie otworzyć paczkomatu."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut10.png",
+    "voiceClip": "tut_18.ogg",
+    "text": "SwitchPost nie wykrywa lokalizacji więc\npolecam uważać."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_19.ogg",
+    "text": "To by było wszystko w samouczku."
+  },
+  {
+    "speakingSprite": "excited.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_20.ogg",
+    "text": "Dziękuję za skorzystanie z SwitchPosta!\nMam nadzieje że będziesz się bawić dobrze. :)"
+  }
+]
