@@ -6,6 +6,8 @@ Nieoficjalny klient InPost Mobile na Nintendo Switch.
 
 Bazowany na [Inpost3DS](https://github.com/TehFridge/InPost3DS) autorstwa TehFridge.
 
+![screenshot.png](/.github/screenshot.png)
+
 ## Nowości w porównaniu do InPost3DS
 - Wsparcie paczek zasobów
 - Wsparcie własnych głosów aplikacji
