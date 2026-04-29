@@ -76,8 +76,10 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
         response->status = Error;
         SPDLOG_ERROR("request failed: {}", curl_easy_strerror(response->result));
     } else {
+        SPDLOG_INFO("request done, code: {}", response->code);
         if (response->code == 401) {
             // reauth
+            SPDLOG_INFO("refreshing token");
             curl_easy_reset(curl);
             curl_slist* reauthHeaders = nullptr;
             reauthHeaders = curl_slist_append(reauthHeaders, "User-Agent: InPost-Mobile/3.46.0(34600200) (Horizon 21.2.0; AW715988204; Nintendo Switch; pl)");
@@ -106,7 +108,7 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
 
             if (result == CURLE_OK) {
                 std::string requestJson(reauthBuffer->data.begin(), reauthBuffer->data.end());
-                SPDLOG_DEBUG("request done, code: {}", reauthBuffer->code);
+                SPDLOG_INFO("request done, code: {}", reauthBuffer->code);
                 SPDLOG_TRACE("data: {}", requestJson);
 
                 if (reauthBuffer->code != 200) return;
@@ -175,7 +177,7 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
                         curl_slist_free_all(retryHeaders);
                     } else {
                         response->status = Done; // :3
-                        SPDLOG_DEBUG("request done after reauthentication, code: {}", response->code);
+                        SPDLOG_INFO("request done after reauthentication, code: {}", response->code);
                         SPDLOG_TRACE("data: {}", data);
                         curl_slist_free_all(retryHeaders);
                     }
@@ -187,7 +189,6 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
         } else {
             std::string data(response->data.begin(), response->data.end());
             response->status = Done;
-            SPDLOG_DEBUG("request done, code: {}", response->code);
             SPDLOG_TRACE("data: {}", data);
         }
     }
