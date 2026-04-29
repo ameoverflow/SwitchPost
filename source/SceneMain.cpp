@@ -516,17 +516,22 @@ void SceneMain::SceneUpdate(float dt) {
             // if data is already loaded, then skip the whole shit
             if (InpostAPI::getPaczkasBuffer->status == NotStarted) {
                 InpostAPI::GetPaczkas();
-            } else if (InpostAPI::getPaczkasBuffer->status == Done && InpostAPI::getPaczkasBuffer->code == 200) {
-                if (InpostAPI::ParsePaczkas(std::string(InpostAPI::getPaczkasBuffer->data.begin(), InpostAPI::getPaczkasBuffer->data.end()))) {
+            } else if (InpostAPI::getPaczkasBuffer->status == Done) {
+                if (InpostAPI::getPaczkasBuffer->code == 200) {
+                    if (InpostAPI::ParsePaczkas(std::string(InpostAPI::getPaczkasBuffer->data.begin(), InpostAPI::getPaczkasBuffer->data.end()))) {
+                        isLoaded = true;
+                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+                    } else {
+                        errorCode = JSONError;
+                    }
+                } else if (InpostAPI::getPaczkasBuffer->code == 304) {
                     isLoaded = true;
                     selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
                 } else {
-                    errorCode = JSONError;
-                    return;
+                    errorCode = NetworkError;
                 }
-            } else if (InpostAPI::getPaczkasBuffer->status == Error || (InpostAPI::getPaczkasBuffer->status == Done && InpostAPI::getPaczkasBuffer->code != 200)) {
+            } else if (InpostAPI::getPaczkasBuffer->status == Error) {
                 errorCode = NetworkError;
-                return;
             }
         }
     }

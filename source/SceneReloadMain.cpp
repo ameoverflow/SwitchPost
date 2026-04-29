@@ -13,7 +13,6 @@ void SceneReloadMain::SceneInit() {
 }
 
 void SceneReloadMain::SceneUpdate(float dt) {
-    InpostAPI::packages.clear();
     InpostAPI::getPaczkasBuffer->data.clear();
     InpostAPI::getPaczkasBuffer->status = NotStarted;
     InpostAPI::getPaczkasBuffer->code = 0;
