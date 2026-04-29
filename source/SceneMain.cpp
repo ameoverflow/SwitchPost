@@ -77,6 +77,7 @@ void SceneMain::SceneInit() {
     promptY = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_Y.png").c_str());
     promptX = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_X.png").c_str());
     reloadButton = LoadTexture(AssetLoader::ResolveResource("sprites/refresh.png").c_str());
+    renameButton = LoadTexture(AssetLoader::ResolveResource("sprites/rename.png").c_str());
     openButton = LoadTexture(AssetLoader::ResolveResource("sprites/open_button.png").c_str());
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
@@ -408,7 +409,8 @@ void SceneMain::SceneUpdate(float dt) {
                 selectorFadePulse.seek(0);
                 selectedPackage--;
                 PlaySound(change);
-                }
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+            }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
             && !inDetails && !inputLock && std::size(InpostAPI::packages) > 0) {
@@ -416,6 +418,30 @@ void SceneMain::SceneUpdate(float dt) {
                 detailsFade.forward();
                 detailsScrollUp.forward();
                 inDetails = true;
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+            }
+
+            if (askForParcelName) {
+                swkbdCreate(&kbd, 0);
+                swkbdConfigSetType(&kbd, SwkbdType_All);
+                swkbdConfigSetStringLenMax(&kbd, 20);
+                swkbdConfigSetStringLenMin(&kbd, 0);
+                swkbdConfigSetHeaderText(&kbd, "Wprowadź nową nazwę paczki (puste przywraca domyślną nazwę)");
+                swkbdConfigSetGuideText(&kbd, "Cosplay");
+
+                rc = swkbdShow(&kbd, parcelName, sizeof(parcelName));
+                swkbdClose(&kbd);
+
+                if (R_SUCCEEDED(rc)) {
+                    Config::SetProperty(InpostAPI::packages[selectedPackage].code + "_name", std::string(parcelName));
+                    selectedPackageName = std::string(parcelName);
+                }
+                askForParcelName = false;
+            }
+
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
+            && !inDetails && !inputLock && std::size(InpostAPI::packages) > 0) {
+                askForParcelName = true;
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && !inDetails && !inputLock) {
@@ -473,6 +499,7 @@ void SceneMain::SceneUpdate(float dt) {
                         errorCode = JSONError;
                     } else {
                         isLoaded = true;
+                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
                     }
                 } else {
                     SPDLOG_ERROR("failed to load fake packages");
@@ -492,6 +519,7 @@ void SceneMain::SceneUpdate(float dt) {
             } else if (InpostAPI::getPaczkasBuffer->status == Done && InpostAPI::getPaczkasBuffer->code == 200) {
                 if (InpostAPI::ParsePaczkas(std::string(InpostAPI::getPaczkasBuffer->data.begin(), InpostAPI::getPaczkasBuffer->data.end()))) {
                     isLoaded = true;
+                    selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
                 } else {
                     errorCode = JSONError;
                     return;
@@ -550,6 +578,8 @@ void SceneMain::SceneDraw() {
 
             DrawTextureEx(promptX, {5.0f, packagesFade.peek() - 90.0f}, 0, 0.5f, WHITE);
             DrawTextureEx(reloadButton, {60.0f, packagesFade.peek() - 90.0f}, 0, 1, WHITE);
+            DrawTextureEx(promptY, {130.0f, packagesFade.peek() - 90.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(renameButton, {180.0f, packagesFade.peek() - 90.0f}, 0, 1, WHITE);
 
             if (InpostAPI::packages.size() == 0) {
                 Vector2 textSize = MeasureTextEx(mainFont, "Brak paczek :c", 42, 1);
@@ -578,8 +608,18 @@ void SceneMain::SceneDraw() {
                     textSize = MeasureTextEx(mainFont, std::string(InpostAPI::packages[selectedPackage].street + ", " + InpostAPI::packages[selectedPackage].city).c_str(), 32, 0);
                     DrawTextOutlineEx(mainFont, std::string(InpostAPI::packages[selectedPackage].street + ", " + InpostAPI::packages[selectedPackage].city).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 30}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
                 }
-                textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].senderName.c_str(), 28, 0);
-                DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+
+                if (!selectedPackageName.empty()) {
+                    textSize = MeasureTextEx(mainFont, selectedPackageName.c_str(), 28, 0);
+                    DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+                } else {
+                    textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].senderName.c_str(), 28, 0);
+                    DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+                }
+
+                if (askForParcelName) {
+                    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
+                }
 
                 DrawTexturePro(packageDetails.texture, {0, 0, (float)packageDetails.texture.width, (float)-packageDetails.texture.height},
                    (Rectangle){0, detailsScrollUp.peek(), (float)GetScreenWidth(), (float)GetScreenHeight()},
@@ -657,6 +697,7 @@ void SceneMain::SceneExit() {
     UnloadTexture(promptX);
     UnloadTexture(openButton);
     UnloadTexture(reloadButton);
+    UnloadTexture(renameButton);
     UnloadTexture(readyForPickup);
     UnloadTexture(delivered);
 }

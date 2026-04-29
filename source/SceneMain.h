@@ -7,6 +7,7 @@
 #include "InpostAPI.h"
 #include <string>
 #include "Helpers.h"
+#include <switch.h>
 
 class SceneMain : public Scene {
 public:
@@ -19,7 +20,7 @@ private:
     void ReloadScene();
 
     Texture2D GenerateQrTexture(const char* qrData);
-    Texture2D poststamp, package, loadingCircle, promptY, promptX, selectorCorner, openButton, reloadButton, delivered, readyForPickup;
+    Texture2D poststamp, package, loadingCircle, promptY, promptX, selectorCorner, openButton, reloadButton, delivered, readyForPickup, renameButton;
     Font mainFont;
     Sound change, confirmOpen, confirmClosed;
 
@@ -32,6 +33,7 @@ private:
     Texture2D qrCode;
 
     int selectedPackage;
+    std::string selectedPackageName;
     float cameraOffset = 0;
     float targetOffset = 0;
 
@@ -42,6 +44,11 @@ private:
     std::string errorDesc;
     enum LoadingError errorCode;
     bool tokensLoaded;
+
+    Result rc;
+    char parcelName[20];
+    bool askForParcelName;
+    SwkbdConfig kbd;
 };
 
 #endif //SWITCHPOST_SCENEMAIN_H
