@@ -247,12 +247,8 @@ bool InpostAPI::ParsePaczkas(std::string json) {
 
         packageObject.pickupDate = parcel.value("pickUpDate", "");
         packageObject.code = parcel.value("openCode", "");
-        packageObject.openable = parcel.contains("openCode") && !parcel["openCode"].is_null();
-
-        if (packageObject.status == "DELIVERED") {
-            packageObject.openable = false;
-            packageObject.delivered = true;
-        }
+        packageObject.openable = parcel.contains("openCode") && !parcel["openCode"].is_null() && packageObject.status != "DELIVERED";
+        packageObject.delivered = packageObject.status == "DELIVERED";
 
         if (parcel.contains("receiver") && !parcel["receiver"].is_null()) {
             nlohmann::json receiver = parcel["receiver"];
