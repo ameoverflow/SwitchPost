@@ -400,6 +400,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectorFadePulse.seek(0);
                 selectedPackage++;
                 PlaySound(change);
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)
@@ -418,7 +419,6 @@ void SceneMain::SceneUpdate(float dt) {
                 detailsFade.forward();
                 detailsScrollUp.forward();
                 inDetails = true;
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
             }
 
             if (askForParcelName) {
