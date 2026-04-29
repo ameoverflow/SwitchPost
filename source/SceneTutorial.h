@@ -32,7 +32,7 @@ private:
     std::vector<std::string> lines;
     int lineHeight;
     Font mainFont;
-    int currentFrame;
+    int currentFrame = 0;
     bool playCharacterAnim, comingFromOptions;
 
     std::string tut;
