@@ -36,6 +36,10 @@ private:
     std::string selectedPackageName;
     float cameraOffset = 0;
     float targetOffset = 0;
+    bool useTouch;
+   Vector2 touchStartPos, previousTouch;
+    bool isDragging;
+    const float dragThreshold = 10.0f;
 
     float spinnerRotation = 0;
     bool isLoaded = false;

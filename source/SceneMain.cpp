@@ -350,25 +350,82 @@ void SceneMain::SceneUpdate(float dt) {
 
         // --- handle camera ---
         {
-            float selectorWorldX = 5.0f + (package.width + 40) * selectedPackage;
-            float selectorWidth = 250;
-            float padding = 5;
+            if (!useTouch) {
+                float selectorWorldX = 5.0f + (package.width + 40) * selectedPackage;
+                float selectorWidth = 250;
+                float padding = 5;
 
-            if (selectorWorldX - targetOffset + selectorWidth + padding > GetScreenWidth()) {
-                targetOffset = selectorWorldX + selectorWidth - GetScreenWidth() + padding;
+                if (selectorWorldX - targetOffset + selectorWidth + padding > GetScreenWidth()) {
+                    targetOffset = selectorWorldX + selectorWidth - GetScreenWidth() + padding;
+                }
+                else if (selectorWorldX - targetOffset < padding) {
+                    targetOffset = selectorWorldX - padding;
+                }
+
+                if (std::fabs((targetOffset - cameraOffset) * 10.0f * dt) <= 0.1f)
+                    cameraOffset = targetOffset;
+
+                cameraOffset += (targetOffset - cameraOffset) * 10.0f * dt;
             }
-            else if (selectorWorldX - targetOffset < padding) {
-                targetOffset = selectorWorldX - padding;
-            }
-
-            if (std::fabs((targetOffset - cameraOffset) * 10.0f * dt) <= 0.1f)
-                cameraOffset = targetOffset;
-
-            cameraOffset += (targetOffset - cameraOffset) * 10.0f * dt;
         }
 
         // --- handle input ---
         {
+            if (!inDetails && GetTouchPointCount() > 0) {
+                Vector2 currentTouch = GetTouchPosition(0); // where finger is
+
+                if (!screenTouched) {
+                    touchStartPos = currentTouch; // where finger was at the very start to calculate if is outside the deadzone
+                    previousTouch = currentTouch; // where finger was previous frame
+                    isDragging = false;
+                    screenTouched = true;
+                    useTouch = true;
+                }
+
+                // if finger moves past threshold, it's a scroll, not a tap
+                if (std::abs(currentTouch.x - touchStartPos.x) > dragThreshold ||
+                    std::abs(currentTouch.y - touchStartPos.y) > dragThreshold) {
+                    isDragging = true;
+
+                    float scrollMaxOffset = 40.0f + ((float) package.width + 40) * InpostAPI::packages.size() - GetScreenWidth();
+                    if (scrollMaxOffset >= GetScreenWidth()) {
+                        cameraOffset -= (currentTouch.x - previousTouch.x);
+                        previousTouch = currentTouch;
+
+                        if (cameraOffset > scrollMaxOffset) cameraOffset = scrollMaxOffset;
+                        if (cameraOffset < 0) cameraOffset = 0;
+                    }
+                }
+            }
+            // when the finger is lifted
+            else if (screenTouched && GetTouchPointCount() == 0) {
+                if (!isDragging) {
+                    for (int i = 0; i < InpostAPI::packages.size(); i++) {
+                        // use touchStartPos here so it selects what they originally tapped
+                        Vector2 leftUpper = {40.0f + ((float) package.width + 40) * i - cameraOffset + 6, packagesFade.peek() + 6};
+                        Vector2 rightLower = { leftUpper.x + package.width, leftUpper.y + package.height };
+
+                        if (touchStartPos.x >= leftUpper.x && touchStartPos.y >= leftUpper.y &&
+                            touchStartPos.x <= rightLower.x && touchStartPos.y <= rightLower.y) {
+                            if (selectedPackage == i) {
+                                scrollOffset = 0;
+                                detailsFade.forward();
+                                detailsScrollUp.forward();
+                                inDetails = true;
+                            } else {
+                                selectedPackage = i;
+                                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                            }
+                        }
+                    }
+                }
+                screenTouched = false;
+                isDragging = false;
+                previousTouch = {0, 0};
+            }
+
+            if (GetTouchPointCount() == 0) screenTouched = false;
+
             float currentStickValue = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
 
             if (currentStickValue < -0.5f && !stickMoved &&
@@ -379,6 +436,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectedPackage--;
                 PlaySound(change);
                 selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                useTouch = false;
             }
 
             if (currentStickValue > 0.5f && !stickMoved &&
@@ -389,6 +447,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectedPackage++;
                 PlaySound(change);
                 selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                useTouch = false;
             }
 
             if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
@@ -403,6 +462,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectedPackage++;
                 PlaySound(change);
                 selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                useTouch = false;
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)
@@ -413,6 +473,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectedPackage--;
                 PlaySound(change);
                 selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                useTouch = false;
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
@@ -601,10 +662,17 @@ void SceneMain::SceneDraw() {
                 Vector2 textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].events[0].name.c_str(), 32, 1);
                 DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].events[0].name.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
 
+#ifdef DEBUG
+                std::string paczkaCounter;
+                paczkaCounter += std::to_string(cameraOffset);
+                paczkaCounter += ", ";
+                paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * InpostAPI::packages.size() - GetScreenWidth());
+#else
                 std::string paczkaCounter;
                 paczkaCounter += std::to_string(selectedPackage + 1);
                 paczkaCounter += " / ";
                 paczkaCounter += std::to_string(InpostAPI::packages.size());
+#endif
                 textSize = MeasureTextEx(mainFont, paczkaCounter.c_str(), 28, 1);
                 DrawTextOutlineEx(mainFont, paczkaCounter.c_str(), {(float)GetScreenWidth()/2 - 190, poststampFade.peek() + 100}, {textSize.x/2, textSize.y/2}, 28, 1, WHITE, BLACK, 2);
 
