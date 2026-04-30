@@ -149,7 +149,7 @@ void SceneMain::SceneUpdate(float dt) {
                 if (InpostAPI::packages[selectedPackage].openable) {
                     DrawTextPro(mainFont, "Kod odbioru", {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                     drawOffset += 37;
-                    DrawTextPro(mainFont, InpostAPI::packages[selectedPackage].code.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 50, 0, BLACK);
+                    DrawTextPro(mainFont, InpostAPI::packages[selectedPackage].pickupCode.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 50, 0, BLACK);
                     drawOffset += 55;
                     DrawRectangle(20, scrollOffset + drawOffset, GetScreenWidth() - 40, 5, {255, 204, 0, 255});
                     drawOffset += 20;
@@ -201,7 +201,7 @@ void SceneMain::SceneUpdate(float dt) {
                 if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InpostAPI::getPaczkomatStatusBuffer->status == NotStarted) {
                     InpostAPI::GetPaczkomatStatus(
                             InpostAPI::packages[selectedPackage].number,
-                            InpostAPI::packages[selectedPackage].code,
+                            InpostAPI::packages[selectedPackage].pickupCode,
                             InpostAPI::packages[selectedPackage].phoneNumber,
                             InpostAPI::packages[selectedPackage].phonePrefix,
                             InpostAPI::packages[selectedPackage].lat,
@@ -230,7 +230,7 @@ void SceneMain::SceneUpdate(float dt) {
                         touchPoint.x <= GetScreenWidth()/2 - openButton.width/2 + openButton.width && touchPoint.y <= 40 + qrCode.height + openButton.height) {
                         InpostAPI::GetPaczkomatStatus(
                                 InpostAPI::packages[selectedPackage].number,
-                                InpostAPI::packages[selectedPackage].code,
+                                InpostAPI::packages[selectedPackage].pickupCode,
                                 InpostAPI::packages[selectedPackage].phoneNumber,
                                 InpostAPI::packages[selectedPackage].phonePrefix,
                                 InpostAPI::packages[selectedPackage].lat,
@@ -400,7 +400,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectorFadePulse.seek(0);
                 selectedPackage++;
                 PlaySound(change);
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)
@@ -410,7 +410,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectorFadePulse.seek(0);
                 selectedPackage--;
                 PlaySound(change);
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
@@ -433,7 +433,7 @@ void SceneMain::SceneUpdate(float dt) {
                 swkbdClose(&kbd);
 
                 if (R_SUCCEEDED(rc)) {
-                    Config::SetProperty(InpostAPI::packages[selectedPackage].code + "_name", std::string(parcelName));
+                    Config::SetProperty(InpostAPI::packages[selectedPackage].number + "_name", std::string(parcelName));
                     selectedPackageName = std::string(parcelName);
                 }
                 askForParcelName = false;
@@ -499,7 +499,7 @@ void SceneMain::SceneUpdate(float dt) {
                         errorCode = JSONError;
                     } else {
                         isLoaded = true;
-                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
                     }
                 } else {
                     SPDLOG_ERROR("failed to load fake packages");
@@ -520,13 +520,13 @@ void SceneMain::SceneUpdate(float dt) {
                 if (InpostAPI::getPaczkasBuffer->code == 200) {
                     if (InpostAPI::ParsePaczkas(std::string(InpostAPI::getPaczkasBuffer->data.begin(), InpostAPI::getPaczkasBuffer->data.end()))) {
                         isLoaded = true;
-                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
                     } else {
                         errorCode = JSONError;
                     }
                 } else if (InpostAPI::getPaczkasBuffer->code == 304) {
                     isLoaded = true;
-                    selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].code + "_name");
+                    selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
                 } else {
                     errorCode = NetworkError;
                 }
@@ -568,6 +568,12 @@ void SceneMain::SceneDraw() {
                     DrawTextureEx(delivered, {40.0f + ((float) package.width + 40) * i - cameraOffset, packagesFade.peek()},
                                   0, 1, WHITE);
                 }
+
+#ifdef DEBUG
+                Vector2 leftUpper = {40.0f + ((float) package.width + 40) * i - cameraOffset + 6, packagesFade.peek() + 6};
+
+                DrawRectangle(leftUpper.x, leftUpper.y, package.width, package.height, {0, 255, 0, 128});
+#endif
             }
 
             if (InpostAPI::packages.size() > 0){

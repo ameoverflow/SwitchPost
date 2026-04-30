@@ -176,6 +176,11 @@ int main()
 
 #ifdef DEBUG
         DrawTextOutlineEx(GetFontDefault(), versionString.c_str(), {0, 0}, {0, 0}, 24, 2, WHITE, BLACK, 2);
+
+        for (int i = 0; i < GetTouchPointCount(); i++) {
+            Vector2 touch = GetTouchPosition(i);
+            DrawCircle(touch.x, touch.y, 50, {255, 0, 0, 128});
+        }
 #endif
 
         EndDrawing();

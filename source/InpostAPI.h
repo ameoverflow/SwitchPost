@@ -27,7 +27,7 @@ struct Package {
             street,
             phonePrefix,
             phoneNumber,
-            code,
+            pickupCode,
             qrCode,
             imageUrl,
             senderName;
