@@ -10,12 +10,12 @@
 #include "Helpers.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
 #include <string>
 #include "AssetLoader.h"
 #include "json.hpp"
 #include "MusicManager.h"
 #include "Config.h"
+#include "spdlog/sinks/daily_file_sink.h"
 
 float bgX = 0;
 float bgY = 0;
@@ -49,11 +49,11 @@ int main()
     romfsInit();
     std::filesystem::create_directory("/config");
     std::filesystem::create_directory("/config/switchpost");
-    std::shared_ptr<spdlog::sinks::sink> fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/config/switchpost/latest.log", true);
     socketInitializeDefault();
 
     // log init shit
     std::shared_ptr<spdlog::sinks::sink> consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    std::shared_ptr<spdlog::sinks::sink> fileSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>("sdmc:/config/switchpost/SwitchPost.log", 0, 0, true, 10);
     std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks { consoleSink, fileSink };
     std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
     logger->set_pattern("[%T.%e] [%s:%#] [%^%l%$] %v");
