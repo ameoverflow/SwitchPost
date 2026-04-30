@@ -378,6 +378,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectorFadePulse.seek(0);
                 selectedPackage--;
                 PlaySound(change);
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
             }
 
             if (currentStickValue > 0.5f && !stickMoved &&
@@ -387,6 +388,7 @@ void SceneMain::SceneUpdate(float dt) {
                 selectorFadePulse.seek(0);
                 selectedPackage++;
                 PlaySound(change);
+                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
             }
 
             if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
