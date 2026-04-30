@@ -49,7 +49,7 @@ set_target_properties(SwitchPost PROPERTIES
 
 set(ARCH "-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE")
 
-target_include_directories(SwitchPost PRIVATE ${LIBNX}/include ${PORTLIBS}/include ./source ./include ${PROJECT_BINARY_DIR})
+target_include_directories(SwitchPost PRIVATE ${LIBNX}/include ${PORTLIBS}/include ./source ./include ./include/raylib ${PROJECT_BINARY_DIR})
 target_link_directories(SwitchPost PRIVATE ${LIBNX}/lib ${PORTLIBS}/lib ./lib)
 target_link_libraries(SwitchPost PRIVATE curl z raylib EGL GLESv2 glapi drm_nouveau nx m)
 

@@ -32,6 +32,7 @@ private:
     std::string text = "ameOverflow";
     std::string line = "missingno.";
     std::string voice, errorCode, status;
+    std::vector<std::string> splashes;
 
     AppletType at;
 

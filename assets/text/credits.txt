@@ -54,7 +54,7 @@ I dla paru serwerów Discorda na których mogłam
 spamować postępem w robieniu tego,
 i także na DMach znajomym XD
 
-Powered by raylib 5.5
+Powered by raylib 6.0
 
 Aplikacja korzysta z API InPost Mobile
 Nie jestem powiązana z InPostem, ani dla nich nie pracuję

@@ -37,7 +37,7 @@ private:
     float cameraOffset = 0;
     float targetOffset = 0;
     bool useTouch;
-   Vector2 touchStartPos, previousTouch;
+    Vector2 touchStartPos, previousTouch;
     bool isDragging;
     const float dragThreshold = 10.0f;
 

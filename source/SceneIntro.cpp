@@ -21,23 +21,8 @@
 #include "json.hpp"
 #include "Config.h"
 
-std::string splashes[] = {
-    "now 100% more snow on the roof of amberexpo",
-    "paczkomat shitting extraordinaire",
-    "better than friday night funkin' fight me ninjamuffin",
-    "dev is fast asleep",
-    "nepnepnepnepnepnepnepnepnepnep",
-    "energy drink induced development",
-    "nintendo dont sent ninjas plz",
-    "se lecę w klapkach najka",
-    "open source forever",
-    "der polnische adventskalender",
-    "delayed splash, didnt have time",
-    "rate 5 stars and subscribe",
-    "inspired by toilet pic"
-};
-
 std::shared_ptr<ResponseBuffer> bufferPointer = std::make_shared<ResponseBuffer>();
+
 
 void SceneIntro::SceneInit() {
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
@@ -55,6 +40,14 @@ void SceneIntro::SceneInit() {
     ameLogoFadeIn = tweeny::from(0).to(255).during(100).via(tweeny::easing::quadraticIn);
     logoFadeIn.seek(0);
     ameLogoFadeIn.seek(0);
+
+    std::ifstream splashesFile(AssetLoader::ResolveResource("text/splashes.txt").c_str());
+
+    while (std::getline(splashesFile, line)) {
+        SPDLOG_TRACE("splash added: {}", line);
+        splashes.push_back(line);
+    }
+    splashesFile.close();
 
     std::srand(std::time(NULL));
     if (std::size(splashes) > 0) {

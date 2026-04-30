@@ -78,6 +78,7 @@ void AssetLoader::ResolvePacks() {
 }
 
 std::string AssetLoader::ResolveResource(std::string path) {
+    SPDLOG_DEBUG("resource requested: {}", path);
     if (SelectedPack == nullptr) {
         return std::string("romfs:/" + path);
     } else {
