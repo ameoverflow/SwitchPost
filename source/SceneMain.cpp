@@ -7,7 +7,7 @@
 #include <iostream>
 #include "switch.h"
 #include <string>
-#include "InpostAPI.h"
+#include "InPostAPI.h"
 #include <filesystem>
 #include <fstream>
 #include <spdlog/spdlog.h>
@@ -29,9 +29,9 @@ void SceneMain::ReloadScene() {
 }
 
 void SceneMain::ResetRemoteLockerData() {
-    InpostAPI::getPaczkomatStatusBuffer->status = NotStarted;
-    InpostAPI::openPaczkomatBuffer->status = NotStarted;
-    InpostAPI::terminatePaczkaBuffer->status = NotStarted;
+    InPostAPI::getPaczkomatStatusBuffer->status = NotStarted;
+    InPostAPI::openPaczkomatBuffer->status = NotStarted;
+    InPostAPI::terminatePaczkaBuffer->status = NotStarted;
 }
 
 Texture2D SceneMain::GenerateQrTexture(const char* qrData) {
@@ -146,15 +146,15 @@ void SceneMain::SceneUpdate(float dt) {
 
                 DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(),
                     {255, 255, 255, 255}, {255, 255, 140, 255});
-                if (InpostAPI::packages[selectedPackage].openable) {
+                if (InPostAPI::packages[selectedPackage].openable) {
                     DrawTextPro(mainFont, "Kod odbioru", {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                     drawOffset += 37;
-                    DrawTextPro(mainFont, InpostAPI::packages[selectedPackage].pickupCode.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 50, 0, BLACK);
+                    DrawTextPro(mainFont, InPostAPI::packages[selectedPackage].pickupCode.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 50, 0, BLACK);
                     drawOffset += 55;
                     DrawRectangle(20, scrollOffset + drawOffset, GetScreenWidth() - 40, 5, {255, 204, 0, 255});
                     drawOffset += 20;
 
-                    if (!InpostAPI::packages[selectedPackage].courier) {
+                    if (!InPostAPI::packages[selectedPackage].courier) {
                         DrawTexturePro(promptY, {0, 0, 100, 100}, {(float)GetScreenWidth() - 180, scrollOffset + 10, 80, 80}, {0, 0}, 0, WHITE);
                         DrawRectangle(GetScreenWidth() - 90, scrollOffset + 10, 80, 80, {255, 170, 0, 255});
                         Vector2 textSize = MeasureTextEx(mainFont, "QR", 50, 0);
@@ -166,7 +166,7 @@ void SceneMain::SceneUpdate(float dt) {
                 DrawTextPro(mainFont, "Historia zdarzeń", {(float)GetScreenWidth()/2, scrollOffset + drawOffset},
             {textSize.x/2, textSize.y/2}, 0, 50, 2, BLACK);
                 drawOffset += 32;
-                for (PackageEvent event : InpostAPI::packages[selectedPackage].events) {
+                for (PackageEvent event : InPostAPI::packages[selectedPackage].events) {
                     DrawTextPro(mainFont, event.date.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                     drawOffset += 37;
                     DrawTextPro(mainFont, event.name.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, BLACK);
@@ -187,9 +187,9 @@ void SceneMain::SceneUpdate(float dt) {
                     inDetails = false;
                 }
 
-                if (!inQR && InpostAPI::packages[selectedPackage].openable &&
+                if (!inQR && InPostAPI::packages[selectedPackage].openable &&
                     IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)) {
-                    qrCode = GenerateQrTexture(InpostAPI::packages[selectedPackage].qrCode.c_str());
+                    qrCode = GenerateQrTexture(InPostAPI::packages[selectedPackage].qrCode.c_str());
                     inQR = qrCode.id != 0;
                     }
 
@@ -198,26 +198,26 @@ void SceneMain::SceneUpdate(float dt) {
                     inQR = false;
                 }
 
-                if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InpostAPI::getPaczkomatStatusBuffer->status == NotStarted) {
-                    InpostAPI::GetPaczkomatStatus(
-                            InpostAPI::packages[selectedPackage].number,
-                            InpostAPI::packages[selectedPackage].pickupCode,
-                            InpostAPI::packages[selectedPackage].phoneNumber,
-                            InpostAPI::packages[selectedPackage].phonePrefix,
-                            InpostAPI::packages[selectedPackage].lat,
-                            InpostAPI::packages[selectedPackage].lon
+                if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer->status == NotStarted) {
+                    InPostAPI::GetPaczkomatStatus(
+                            InPostAPI::packages[selectedPackage].number,
+                            InPostAPI::packages[selectedPackage].pickupCode,
+                            InPostAPI::packages[selectedPackage].phoneNumber,
+                            InPostAPI::packages[selectedPackage].phonePrefix,
+                            InPostAPI::packages[selectedPackage].lat,
+                            InPostAPI::packages[selectedPackage].lon
                             );
                 }
             }
 
             // --- handle touch ---
             {
-                if (!inQR && InpostAPI::packages[selectedPackage].openable && GetTouchPointCount() > 0 && !screenTouched) {
+                if (!inQR && InPostAPI::packages[selectedPackage].openable && GetTouchPointCount() > 0 && !screenTouched) {
                     Vector2 touchPoint = GetTouchPosition(0);
                     screenTouched = true;
                     if (touchPoint.x >= GetScreenWidth() - 90 && touchPoint.y >= scrollOffset + 10 &&
                         touchPoint.x <= GetScreenWidth() - 90 + 80 && touchPoint.y <= scrollOffset + 10 + 80) {
-                        qrCode = GenerateQrTexture(InpostAPI::packages[selectedPackage].qrCode.c_str());
+                        qrCode = GenerateQrTexture(InPostAPI::packages[selectedPackage].qrCode.c_str());
                         inQR = qrCode.id != 0;
                         }
                 }
@@ -228,13 +228,13 @@ void SceneMain::SceneUpdate(float dt) {
                     screenTouched = true;
                     if (touchPoint.x >= GetScreenWidth()/2 - openButton.width/2 && touchPoint.y >= 40 + qrCode.height &&
                         touchPoint.x <= GetScreenWidth()/2 - openButton.width/2 + openButton.width && touchPoint.y <= 40 + qrCode.height + openButton.height) {
-                        InpostAPI::GetPaczkomatStatus(
-                                InpostAPI::packages[selectedPackage].number,
-                                InpostAPI::packages[selectedPackage].pickupCode,
-                                InpostAPI::packages[selectedPackage].phoneNumber,
-                                InpostAPI::packages[selectedPackage].phonePrefix,
-                                InpostAPI::packages[selectedPackage].lat,
-                                InpostAPI::packages[selectedPackage].lon
+                        InPostAPI::GetPaczkomatStatus(
+                                InPostAPI::packages[selectedPackage].number,
+                                InPostAPI::packages[selectedPackage].pickupCode,
+                                InPostAPI::packages[selectedPackage].phoneNumber,
+                                InPostAPI::packages[selectedPackage].phonePrefix,
+                                InPostAPI::packages[selectedPackage].lat,
+                                InPostAPI::packages[selectedPackage].lon
                         );
                     }
                 }
@@ -279,18 +279,18 @@ void SceneMain::SceneUpdate(float dt) {
 
             // handle qr mode and requests
             {
-                if (inQR && inOpenPaczkomat && !inConfirmClosed && InpostAPI::openPaczkomatBuffer->status == NotStarted && !inputLock) {
+                if (inQR && inOpenPaczkomat && !inConfirmClosed && InPostAPI::openPaczkomatBuffer->status == NotStarted && !inputLock) {
                     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                         inOpenPaczkomat = false;
                         ResetRemoteLockerData();
                     } else if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-                        InpostAPI::OpenPaczkomat(sessionUuid);
+                        InPostAPI::OpenPaczkomat(sessionUuid);
                     }
                 }
 
-                if (inQR && !inOpenPaczkomat && !inConfirmClosed && InpostAPI::getPaczkomatStatusBuffer->status == Done) {
-                    if (InpostAPI::getPaczkomatStatusBuffer->code == 200) {
-                        std::string rawData = std::string(InpostAPI::getPaczkomatStatusBuffer->data.begin(), InpostAPI::getPaczkomatStatusBuffer->data.end());
+                if (inQR && !inOpenPaczkomat && !inConfirmClosed && InPostAPI::getPaczkomatStatusBuffer->status == Done) {
+                    if (InPostAPI::getPaczkomatStatusBuffer->code == 200) {
+                        std::string rawData = std::string(InPostAPI::getPaczkomatStatusBuffer->data.begin(), InPostAPI::getPaczkomatStatusBuffer->data.end());
                         if (nlohmann::json::accept(rawData)) {
                             nlohmann::json statusData = nlohmann::json::parse(rawData);
                             if (statusData.contains("sessionUuid") && !statusData["sessionUuid"].is_null()) {
@@ -300,45 +300,45 @@ void SceneMain::SceneUpdate(float dt) {
                                     PlaySound(confirmOpen);
                                 }
                             } else {
-                                SPDLOG_ERROR("failed to parse session data for parcel {}", InpostAPI::packages[selectedPackage].number);
+                                SPDLOG_ERROR("failed to parse session data for parcel {}", InPostAPI::packages[selectedPackage].number);
                                 ResetRemoteLockerData();
                             }
                         } else {
-                            SPDLOG_ERROR("failed to start open session parcel {}", InpostAPI::packages[selectedPackage].number);
-                            SPDLOG_ERROR("http code: {}", InpostAPI::getPaczkomatStatusBuffer->code);
+                            SPDLOG_ERROR("failed to start open session parcel {}", InPostAPI::packages[selectedPackage].number);
+                            SPDLOG_ERROR("http code: {}", InPostAPI::getPaczkomatStatusBuffer->code);
                             ResetRemoteLockerData();
                         }
                     }
                 }
 
-                if (inQR && inOpenPaczkomat && !inConfirmClosed && InpostAPI::openPaczkomatBuffer->status == Done) {
-                    if (InpostAPI::openPaczkomatBuffer->code == 200) {
+                if (inQR && inOpenPaczkomat && !inConfirmClosed && InPostAPI::openPaczkomatBuffer->status == Done) {
+                    if (InPostAPI::openPaczkomatBuffer->code == 200) {
                         inOpenPaczkomat = false;
                         inConfirmClosed = true;
                         if (confirmClosed.frameCount > 0) {
                             PlaySound(confirmClosed);
                         }
                     } else {
-                        SPDLOG_ERROR("failed to open locker for parcel {}", InpostAPI::packages[selectedPackage].number);
-                        SPDLOG_ERROR("http code: {}", InpostAPI::openPaczkomatBuffer->code);
+                        SPDLOG_ERROR("failed to open locker for parcel {}", InPostAPI::packages[selectedPackage].number);
+                        SPDLOG_ERROR("http code: {}", InPostAPI::openPaczkomatBuffer->code);
                         inOpenPaczkomat = false;
                         ResetRemoteLockerData();
                     }
                 }
 
-                if (inQR && !inOpenPaczkomat && inConfirmClosed && InpostAPI::terminatePaczkaBuffer->status == NotStarted && !inputLock) {
+                if (inQR && !inOpenPaczkomat && inConfirmClosed && InPostAPI::terminatePaczkaBuffer->status == NotStarted && !inputLock) {
                     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                         inConfirmClosed = false;
                         ResetRemoteLockerData();
                     } else if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-                        InpostAPI::TerminatePaczka(sessionUuid);
+                        InPostAPI::TerminatePaczka(sessionUuid);
                     }
                 }
 
-                if (inQR && !inOpenPaczkomat && inConfirmClosed && InpostAPI::terminatePaczkaBuffer->status == Done) {
-                    if (InpostAPI::terminatePaczkaBuffer->code != 200) {
-                        SPDLOG_ERROR("failed to terminate session for parcel {}", InpostAPI::packages[selectedPackage].number);
-                        SPDLOG_ERROR("http code: {}", InpostAPI::terminatePaczkaBuffer->code);
+                if (inQR && !inOpenPaczkomat && inConfirmClosed && InPostAPI::terminatePaczkaBuffer->status == Done) {
+                    if (InPostAPI::terminatePaczkaBuffer->code != 200) {
+                        SPDLOG_ERROR("failed to terminate session for parcel {}", InPostAPI::packages[selectedPackage].number);
+                        SPDLOG_ERROR("http code: {}", InPostAPI::terminatePaczkaBuffer->code);
                     }
                     ReloadScene();
                 }
@@ -384,7 +384,7 @@ void SceneMain::SceneUpdate(float dt) {
                     std::abs(currentTouch.y - touchStartPos.y) > dragThreshold) {
                     isDragging = true;
 
-                    float scrollMaxOffset = 40.0f + ((float) package.width + 40) * InpostAPI::packages.size() - GetScreenWidth();
+                    float scrollMaxOffset = 40.0f + ((float) package.width + 40) * InPostAPI::packages.size() - GetScreenWidth();
                     if (scrollMaxOffset >= GetScreenWidth()) {
                         cameraOffset -= (currentTouch.x - previousTouch.x);
                         previousTouch = currentTouch;
@@ -397,7 +397,7 @@ void SceneMain::SceneUpdate(float dt) {
             // when the finger is lifted
             else if (screenTouched && GetTouchPointCount() == 0) {
                 if (!isDragging) {
-                    for (int i = 0; i < InpostAPI::packages.size(); i++) {
+                    for (int i = 0; i < InPostAPI::packages.size(); i++) {
                         // use touchStartPos here so it selects what they originally tapped
                         Vector2 leftUpper = {40.0f + ((float) package.width + 40) * i - cameraOffset + 6, packagesFade.peek() + 6};
                         Vector2 rightLower = { leftUpper.x + package.width, leftUpper.y + package.height };
@@ -411,7 +411,7 @@ void SceneMain::SceneUpdate(float dt) {
                                 inDetails = true;
                             } else {
                                 selectedPackage = i;
-                                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                                selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
                             }
                         }
                     }
@@ -426,24 +426,24 @@ void SceneMain::SceneUpdate(float dt) {
             float currentStickValue = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
 
             if (currentStickValue < -0.5f && !stickMoved &&
-            selectedPackage > 0 && std::size(InpostAPI::packages) && !inputLock && !inDetails) {
+            selectedPackage > 0 && std::size(InPostAPI::packages) && !inputLock && !inDetails) {
                 stickMoved = true;
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
                 selectedPackage--;
                 PlaySound(change);
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
                 useTouch = false;
             }
 
             if (currentStickValue > 0.5f && !stickMoved &&
-            selectedPackage < std::size(InpostAPI::packages) - 1 && std::size(InpostAPI::packages) && !inputLock && !inDetails) {
+            selectedPackage < std::size(InPostAPI::packages) - 1 && std::size(InPostAPI::packages) && !inputLock && !inDetails) {
                 stickMoved = true;
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
                 selectedPackage++;
                 PlaySound(change);
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
                 useTouch = false;
             }
 
@@ -452,29 +452,29 @@ void SceneMain::SceneUpdate(float dt) {
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) &&
-            selectedPackage < std::size(InpostAPI::packages) - 1 && std::size(InpostAPI::packages)
+            selectedPackage < std::size(InPostAPI::packages) - 1 && std::size(InPostAPI::packages)
             && !inDetails && !inputLock) {
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
                 selectedPackage++;
                 PlaySound(change);
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
                 useTouch = false;
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT)
-                && selectedPackage > 0 && std::size(InpostAPI::packages) > 0
+                && selectedPackage > 0 && std::size(InPostAPI::packages)
                 && !inDetails && !inputLock) {
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
                 selectedPackage--;
                 PlaySound(change);
-                selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
                 useTouch = false;
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
-            && !inDetails && !inputLock && std::size(InpostAPI::packages) > 0) {
+            && !inDetails && !inputLock && std::size(InPostAPI::packages) > 0) {
                 scrollOffset = 0;
                 detailsFade.forward();
                 detailsScrollUp.forward();
@@ -493,14 +493,16 @@ void SceneMain::SceneUpdate(float dt) {
                 swkbdClose(&kbd);
 
                 if (R_SUCCEEDED(rc)) {
-                    Config::SetProperty(InpostAPI::packages[selectedPackage].number + "_name", std::string(parcelName));
-                    selectedPackageName = std::string(parcelName);
+                    Config::SetProperty(InPostAPI::packages[selectedPackage].number + "_name", std::string(parcelName));
+                    if (std::size(InPostAPI::packages) > 0) {
+                        selectedPackageName = std::string(parcelName);
+                    }
                 }
                 askForParcelName = false;
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
-            && !inDetails && !inputLock && std::size(InpostAPI::packages) > 0) {
+            && !inDetails && !inputLock && std::size(InPostAPI::packages) > 0) {
                 askForParcelName = true;
             }
 
@@ -541,7 +543,7 @@ void SceneMain::SceneUpdate(float dt) {
         }
     } else {
         if (!tokensLoaded) {
-            if (!InpostAPI::LoadTokens()) {
+            if (!InPostAPI::LoadTokens()) {
                 errorCode = JSONError;
                 return;
             } else {
@@ -555,11 +557,13 @@ void SceneMain::SceneUpdate(float dt) {
                 std::stringstream buffer;
                 buffer << fakePackages.rdbuf();
                 if (nlohmann::json::accept(buffer.str())) {
-                    if (!InpostAPI::ParsePaczkas(buffer.str())) {
+                    if (!InPostAPI::ParsePaczkas(buffer.str())) {
                         errorCode = JSONError;
                     } else {
                         isLoaded = true;
-                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                        if (std::size(InPostAPI::packages) > 0) {
+                            selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
+                        }
                     }
                 } else {
                     SPDLOG_ERROR("failed to load fake packages");
@@ -574,23 +578,27 @@ void SceneMain::SceneUpdate(float dt) {
             fakePackages.close();
         } else {
             // if data is already loaded, then skip the whole shit
-            if (InpostAPI::getPaczkasBuffer->status == NotStarted) {
-                InpostAPI::GetPaczkas();
-            } else if (InpostAPI::getPaczkasBuffer->status == Done) {
-                if (InpostAPI::getPaczkasBuffer->code == 200) {
-                    if (InpostAPI::ParsePaczkas(std::string(InpostAPI::getPaczkasBuffer->data.begin(), InpostAPI::getPaczkasBuffer->data.end()))) {
+            if (InPostAPI::getPaczkasBuffer->status == NotStarted) {
+                InPostAPI::GetPaczkas();
+            } else if (InPostAPI::getPaczkasBuffer->status == Done) {
+                if (InPostAPI::getPaczkasBuffer->code == 200) {
+                    if (InPostAPI::ParsePaczkas(std::string(InPostAPI::getPaczkasBuffer->data.begin(), InPostAPI::getPaczkasBuffer->data.end()))) {
                         isLoaded = true;
-                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                        if (std::size(InPostAPI::packages) > 0) {
+                            selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
+                        }
                     } else {
                         errorCode = JSONError;
                     }
-                } else if (InpostAPI::getPaczkasBuffer->code == 304) {
+                } else if (InPostAPI::getPaczkasBuffer->code == 304) {
                     isLoaded = true;
-                    selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                    if (std::size(InPostAPI::packages) > 0) {
+                        selectedPackageName = Config::GetProperty(InPostAPI::packages[selectedPackage].number + "_name");
+                    }
                 } else {
                     errorCode = NetworkError;
                 }
-            } else if (InpostAPI::getPaczkasBuffer->status == Error) {
+            } else if (InPostAPI::getPaczkasBuffer->status == Error) {
                 errorCode = NetworkError;
             }
         }
@@ -608,20 +616,20 @@ void SceneMain::SceneDraw() {
             DrawTexturePro(poststamp, source, {dest.x + 3, dest.y + 3, dest.width, dest.height}, origin, 0.0f,
                            {0, 0, 0, 100});
             DrawTexturePro(poststamp, source, dest, {origin.x + 3, 3}, 0.0f, WHITE);
-            for (int i = 0; i < InpostAPI::packages.size(); i++) {
+            for (int i = 0; i < InPostAPI::packages.size(); i++) {
                 DrawTextureEx(package,
                               {40.0f + ((float) package.width + 40) * i - cameraOffset + 6, packagesFade.peek() + 6}, 0,
                               1, {0, 0, 0, 100});
                 DrawTextureEx(package, {40.0f + ((float) package.width + 40) * i - cameraOffset, packagesFade.peek()},
                               0, 1, WHITE);
 
-                if (InpostAPI::packages[i].openable) {
+                if (InPostAPI::packages[i].openable) {
                     DrawTextureEx(readyForPickup,
                               {40.0f + ((float) package.width + 40) * i - cameraOffset + 3, packagesFade.peek() + 3}, 0,
                               1, {0, 0, 0, 100});
                     DrawTextureEx(readyForPickup, {40.0f + ((float) package.width + 40) * i - cameraOffset, packagesFade.peek()},
                                   0, 1, WHITE);
-                } else if (InpostAPI::packages[i].delivered) {
+                } else if (InPostAPI::packages[i].delivered) {
                     DrawTextureEx(delivered,
                               {40.0f + ((float) package.width + 40) * i - cameraOffset + 3, packagesFade.peek() + 3}, 0,
                               1, {0, 0, 0, 100});
@@ -636,7 +644,7 @@ void SceneMain::SceneDraw() {
 #endif
             }
 
-            if (InpostAPI::packages.size() > 0){
+            if (InPostAPI::packages.size() > 0){
                 //DrawTextureEx(selector, { 5.0f + ((float)package.width + 40) * selectedPackage - cameraOffset, packagesFade.peek() - 30.0f}, 0, 1, WHITE);
                 float x = 5.0f + ((float)package.width + 40) * selectedPackage - cameraOffset;
                 float y = packagesFade.peek() - 30.0f;
@@ -652,47 +660,47 @@ void SceneMain::SceneDraw() {
             DrawTextureEx(promptY, {130.0f, packagesFade.peek() - 90.0f}, 0, 0.5f, WHITE);
             DrawTextureEx(renameButton, {180.0f, packagesFade.peek() - 90.0f}, 0, 1, WHITE);
 
-            if (InpostAPI::packages.size() == 0) {
+            if (InPostAPI::packages.size() == 0) {
                 Vector2 textSize = MeasureTextEx(mainFont, "Brak paczek :c", 42, 1);
                 DrawTextOutlineEx(mainFont, "Brak paczek :c", { (float)GetScreenWidth() / 2, poststampFade.peek() + poststamp.height }, {textSize.x / 2, textSize.y / 2}, 42, 0, WHITE, BLACK, 4);
             } else {
-                Vector2 textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].events[0].name.c_str(), 32, 1);
-                DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].events[0].name.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
+                Vector2 textSize = MeasureTextEx(mainFont, InPostAPI::packages[selectedPackage].events[0].name.c_str(), 32, 1);
+                DrawTextOutlineEx(mainFont, InPostAPI::packages[selectedPackage].events[0].name.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
 
 #ifdef DEBUG
                 std::string paczkaCounter;
                 paczkaCounter += std::to_string(cameraOffset);
                 paczkaCounter += ", ";
-                paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * InpostAPI::packages.size() - GetScreenWidth());
+                paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * InPostAPI::packages.size() - GetScreenWidth());
 #else
                 std::string paczkaCounter;
                 paczkaCounter += std::to_string(selectedPackage + 1);
                 paczkaCounter += " / ";
-                paczkaCounter += std::to_string(InpostAPI::packages.size());
+                paczkaCounter += std::to_string(InPostAPI::packages.size());
 #endif
                 textSize = MeasureTextEx(mainFont, paczkaCounter.c_str(), 28, 1);
                 DrawTextOutlineEx(mainFont, paczkaCounter.c_str(), {(float)GetScreenWidth()/2 - 190, poststampFade.peek() + 100}, {textSize.x/2, textSize.y/2}, 28, 1, WHITE, BLACK, 2);
 
-                textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].events[0].date.c_str(), 32, 0);
-                DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].events[0].date.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + 120}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
+                textSize = MeasureTextEx(mainFont, InPostAPI::packages[selectedPackage].events[0].date.c_str(), 32, 0);
+                DrawTextOutlineEx(mainFont, InPostAPI::packages[selectedPackage].events[0].date.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + 120}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
 
-                if (InpostAPI::packages[selectedPackage].courier) {
+                if (InPostAPI::packages[selectedPackage].courier) {
                     textSize = MeasureTextEx(mainFont, "Paczka kurierska", 40, 0);
                     DrawTextOutlineEx(mainFont, "Paczka kurierska", {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
                 } else {
-                    textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].pickupPointName.c_str(), 40, 0);
-                    DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].pickupPointName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
+                    textSize = MeasureTextEx(mainFont, InPostAPI::packages[selectedPackage].pickupPointName.c_str(), 40, 0);
+                    DrawTextOutlineEx(mainFont, InPostAPI::packages[selectedPackage].pickupPointName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
 
-                    textSize = MeasureTextEx(mainFont, std::string(InpostAPI::packages[selectedPackage].street + ", " + InpostAPI::packages[selectedPackage].city).c_str(), 32, 0);
-                    DrawTextOutlineEx(mainFont, std::string(InpostAPI::packages[selectedPackage].street + ", " + InpostAPI::packages[selectedPackage].city).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 30}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
+                    textSize = MeasureTextEx(mainFont, std::string(InPostAPI::packages[selectedPackage].street + ", " + InPostAPI::packages[selectedPackage].city).c_str(), 32, 0);
+                    DrawTextOutlineEx(mainFont, std::string(InPostAPI::packages[selectedPackage].street + ", " + InPostAPI::packages[selectedPackage].city).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 30}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
                 }
 
                 if (!selectedPackageName.empty()) {
                     textSize = MeasureTextEx(mainFont, selectedPackageName.c_str(), 28, 0);
                     DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
                 } else {
-                    textSize = MeasureTextEx(mainFont, InpostAPI::packages[selectedPackage].senderName.c_str(), 28, 0);
-                    DrawTextOutlineEx(mainFont, InpostAPI::packages[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+                    textSize = MeasureTextEx(mainFont, InPostAPI::packages[selectedPackage].senderName.c_str(), 28, 0);
+                    DrawTextOutlineEx(mainFont, InPostAPI::packages[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
                 }
 
                 if (askForParcelName) {
@@ -729,9 +737,9 @@ void SceneMain::SceneDraw() {
                     {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
             }
 
-            if (InpostAPI::getPaczkomatStatusBuffer->status == InProgress ||
-                InpostAPI::openPaczkomatBuffer->status == InProgress ||
-                InpostAPI::terminatePaczkaBuffer->status == InProgress) {
+            if (InPostAPI::getPaczkomatStatusBuffer->status == InProgress ||
+                InPostAPI::openPaczkomatBuffer->status == InProgress ||
+                InPostAPI::terminatePaczkaBuffer->status == InProgress) {
 
                 Rectangle source = { 0.0f, 0.0f, (float)loadingCircle.width, (float)loadingCircle.height };
                 Rectangle dest = { 1197, 637, (float)loadingCircle.width/2, (float)loadingCircle.height/2};

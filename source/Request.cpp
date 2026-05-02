@@ -7,7 +7,7 @@
 #include "Request.h"
 
 #include "spdlog/spdlog.h"
-#include "InpostAPI.h"
+#include "InPostAPI.h"
 #include <switch.h>
 #include <fstream>
 #include "json.hpp"
@@ -17,7 +17,7 @@ std::mutex Request::queueMutex;
 std::condition_variable_any Request::queueCv;
 std::jthread Request::worker;
 CURL* Request::curl;
-std::string Request::userAgent = "User-Agent: InPost-Mobile/3.46.0(34600200) (Horizon 22.1.0; AW715988204; Nintendo Switch; pl)";
+std::string Request::userAgent = "User-Agent: InPost-Mobile/4.9.0(40900000) (Horizon 22.1.0; AW715988204; Nintendo Switch; pl)";
 std::unique_ptr<ResponseBuffer> reauthBuffer = std::make_unique<ResponseBuffer>();
 
 void Request::LogRequestToFile(const std::string& url, const std::string& data, const std::vector<std::string> &headers) {
@@ -86,12 +86,12 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
             reauthHeaders = curl_slist_append(reauthHeaders, "Content-Type: application/json");
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
             curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-            curl_easy_setopt(curl, CURLOPT_URL, std::string(InpostAPI::baseUrl + "/v1/authenticate").c_str());
+            curl_easy_setopt(curl, CURLOPT_URL, std::string(InPostAPI::baseUrl + "/v1/authenticate").c_str());
             curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
             curl_easy_setopt(curl, CURLOPT_HTTPHEADER, reauthHeaders);
 
             nlohmann::json tokenJson;
-            tokenJson["refreshToken"] = InpostAPI::refreshToken;
+            tokenJson["refreshToken"] = InPostAPI::refreshToken;
             SPDLOG_TRACE("sending data {}", tokenJson.dump());
             std::string requestBody = tokenJson.dump();
 
@@ -119,13 +119,13 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
                     nlohmann::json data = nlohmann::json::parse(requestJson);
                     std::string authToken = data.value("authToken", "");
 
-                    if (!authToken.empty() && !InpostAPI::refreshToken.empty()) {
+                    if (!authToken.empty() && !InPostAPI::refreshToken.empty()) {
                         std::ofstream file("sdmc:/config/switchpost/token.json");
                         if (file.is_open()) {
                             nlohmann::json tokenData;
-                            tokenData["refreshToken"] = InpostAPI::refreshToken;
+                            tokenData["refreshToken"] = InPostAPI::refreshToken;
                             tokenData["authToken"] = authToken;
-                            InpostAPI::authToken = authToken;
+                            InPostAPI::authToken = authToken;
                             file << tokenData.dump();
                             file.close();
                             SPDLOG_INFO("login data saved to SD");
@@ -139,7 +139,7 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
                 curl_slist* retryHeaders = nullptr;
                 for (const std::string& header : headers) {
                     if (header.find("Authorization:") != std::string::npos) {
-                        std::string authHeader = "Authorization: " + InpostAPI::authToken;
+                        std::string authHeader = "Authorization: " + InPostAPI::authToken;
                         retryHeaders = curl_slist_append(retryHeaders, authHeader.c_str());
                     } else {
                         retryHeaders = curl_slist_append(retryHeaders, header.c_str());

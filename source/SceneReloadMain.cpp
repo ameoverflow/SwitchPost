@@ -3,7 +3,7 @@
 //
 
 #include "SceneReloadMain.h"
-#include "InpostAPI.h"
+#include "InPostAPI.h"
 #include "raylib.h"
 #include "SceneMain.h"
 #include "SceneManager.h"
@@ -13,11 +13,11 @@ void SceneReloadMain::SceneInit() {
 }
 
 void SceneReloadMain::SceneUpdate(float dt) {
-    InpostAPI::getPaczkasBuffer->data.clear();
-    InpostAPI::getPaczkasBuffer->status = NotStarted;
-    InpostAPI::getPaczkasBuffer->code = 0;
-    InpostAPI::authToken = "";
-    InpostAPI::refreshToken = "";
+    InPostAPI::getPaczkasBuffer->data.clear();
+    InPostAPI::getPaczkasBuffer->status = NotStarted;
+    InPostAPI::getPaczkasBuffer->code = 0;
+    InPostAPI::authToken = "";
+    InPostAPI::refreshToken = "";
     SceneManager::ChangeScene(std::make_unique<SceneMain>());
 }
 

@@ -2,7 +2,7 @@
 // Created by void on 23/03/2026.
 //
 
-#include "InpostAPI.h"
+#include "InPostAPI.h"
 #include "Request.h"
 #include "json.hpp"
 #include <string>
@@ -14,21 +14,22 @@
 #include <algorithm>
 #include <curl/curl.h>
 
-std::shared_ptr<ResponseBuffer> InpostAPI::sendSMSCodeBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InpostAPI::verifySMSCodeBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InpostAPI::getPaczkasBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InpostAPI::getPaczkomatStatusBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InpostAPI::openPaczkomatBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InpostAPI::terminatePaczkaBuffer = std::make_shared<ResponseBuffer>();
+std::shared_ptr<ResponseBuffer> InPostAPI::sendSMSCodeBuffer = std::make_shared<ResponseBuffer>();
+std::shared_ptr<ResponseBuffer> InPostAPI::verifySMSCodeBuffer = std::make_shared<ResponseBuffer>();
+std::shared_ptr<ResponseBuffer> InPostAPI::getPaczkasBuffer = std::make_shared<ResponseBuffer>();
+std::shared_ptr<ResponseBuffer> InPostAPI::getPaczkomatStatusBuffer = std::make_shared<ResponseBuffer>();
+std::shared_ptr<ResponseBuffer> InPostAPI::openPaczkomatBuffer = std::make_shared<ResponseBuffer>();
+std::shared_ptr<ResponseBuffer> InPostAPI::terminatePaczkaBuffer = std::make_shared<ResponseBuffer>();
 
-std::unique_ptr<std::vector<char>> InpostAPI::refreshTokenBuffer = std::make_unique<std::vector<char>>();
-std::vector<Package> InpostAPI::packages = {};
-std::string InpostAPI::refreshToken;
-std::string InpostAPI::authToken;
+std::unique_ptr<std::vector<char>> InPostAPI::refreshTokenBuffer = std::make_unique<std::vector<char>>();
+std::vector<Package> InPostAPI::packages = {};
+std::vector<Package> InPostAPI::packageArchive = {};
+std::string InPostAPI::refreshToken;
+std::string InPostAPI::authToken;
 
-std::string InpostAPI::baseUrl = std::string(BASE_URL);
+std::string InPostAPI::baseUrl = std::string(BASE_URL);
 
-std::string InpostAPI::FormatIsoToCustom(const std::string& iso_date) {
+std::string InPostAPI::FormatIsoToCustom(const std::string& iso_date) {
     std::istringstream iss{iso_date};
     std::chrono::sys_time<std::chrono::milliseconds> utc_tp;
 
@@ -56,8 +57,7 @@ std::string InpostAPI::FormatIsoToCustom(const std::string& iso_date) {
     return oss.str();
 }
 
-
-void InpostAPI::SendSMSCode(std::string phone) {
+void InPostAPI::SendSMSCode(std::string phone) {
     sendSMSCodeBuffer->data.clear();
     sendSMSCodeBuffer->status = InProgress;
     sendSMSCodeBuffer->code = 0;
@@ -66,7 +66,7 @@ void InpostAPI::SendSMSCode(std::string phone) {
     Request::QueueRequest(baseUrl + "/v1/account", json.dump(), { "Content-Type: application/json" }, sendSMSCodeBuffer);
 }
 
-void InpostAPI::VerifySMSCode(std::string phone, std::string code) {
+void InPostAPI::VerifySMSCode(std::string phone, std::string code) {
     verifySMSCodeBuffer->data.clear();
     verifySMSCodeBuffer->status = InProgress;
     verifySMSCodeBuffer->code = 0;
@@ -77,7 +77,7 @@ void InpostAPI::VerifySMSCode(std::string phone, std::string code) {
     Request::QueueRequest(baseUrl + "/v1/account/verification", json.dump(), { "Content-Type: application/json" }, verifySMSCodeBuffer);
 }
 
-void InpostAPI::GetPaczkas() {
+void InPostAPI::GetPaczkas() {
     getPaczkasBuffer->data.clear();
     getPaczkasBuffer->status = InProgress;
     getPaczkasBuffer->code = 0;
@@ -87,7 +87,7 @@ void InpostAPI::GetPaczkas() {
 // here come my favorite part of the code
 // i hope yall ready for this
 // edit: this doesnt work, idk why, it *should* work
-bool InpostAPI::RefreshTokenSync() {
+bool InPostAPI::RefreshTokenSync() {
     refreshTokenBuffer->clear();
     CURL* curl = curl_easy_init();
     curl_slist* headerList = nullptr;
@@ -154,7 +154,7 @@ bool InpostAPI::RefreshTokenSync() {
     return false;
 }
 
-size_t InpostAPI::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t InPostAPI::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t realsize = size * nmemb;
 
     if (std::vector<char>* buffer = static_cast<std::vector<char>*>(userp)) {
@@ -165,7 +165,7 @@ size_t InpostAPI::WriteCallback(void* contents, size_t size, size_t nmemb, void*
     return realsize;
 }
 
-bool InpostAPI::LoadTokens() {
+bool InPostAPI::LoadTokens() {
     // load tokens every time since its not much work and ensures app can load data
     std::ifstream token("sdmc:/config/switchpost/token.json");
     if (token.is_open()) {
@@ -191,7 +191,7 @@ bool InpostAPI::LoadTokens() {
     }
 }
 
-bool InpostAPI::ParsePaczkas(std::string json) {
+bool InPostAPI::ParsePaczkas(std::string json) {
 #ifdef DEBUG
     std::ofstream file("sdmc:/config/switchpost/parcels.json");
     if (file.is_open()) {
@@ -201,6 +201,7 @@ bool InpostAPI::ParsePaczkas(std::string json) {
 #endif
 
     packages.clear();
+    packageArchive.clear();
     if (!nlohmann::json::accept(json)) return false;
 
     nlohmann::json parcelsJson = nlohmann::json::parse(json);
@@ -259,23 +260,57 @@ bool InpostAPI::ParsePaczkas(std::string json) {
             }
         }
 
-        if (parcel.contains("eventLog") && parcel["eventLog"].is_array()) {
-            nlohmann::json eventLog = parcel["events"];
-            for (nlohmann::json event : eventLog) {
+        if (parcel.contains("events") && parcel["events"].is_array()) {
+            nlohmann::json events = parcel["events"];
+            for (nlohmann::json event : events) {
                 PackageEvent pkgEvent;
                 pkgEvent.date = FormatIsoToCustom(event.value("date", ""));
+                pkgEvent.internalDate = event.value("date", "");
                 pkgEvent.name = event.value("eventTitle", ""); // matching test_data.json key
                 packageObject.events.push_back(pkgEvent);
             }
         }
 
-        packages.push_back(packageObject);
+        if (packageObject.delivered) {
+            // add parcel accordingly to archive or current parcels
+            SPDLOG_TRACE(packageObject.events[0].internalDate);
+            std::istringstream iss{packageObject.events[0].internalDate};
+            std::chrono::sys_time<std::chrono::milliseconds> utc_tp;
+
+            iss >> std::chrono::parse("%Y-%m-%dT%H:%M:%S", utc_tp);
+            if (iss.fail()) {
+                packages.push_back(packageObject);
+                continue;
+            }
+
+            std::chrono::sys_time<std::chrono::milliseconds> now_ms =
+                std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+
+            std::chrono::milliseconds diff = now_ms - utc_tp;
+
+            if (diff > std::chrono::hours(24)) {
+                SPDLOG_TRACE("adding to archive");
+                packageArchive.push_back(packageObject);
+            } else {
+                SPDLOG_TRACE("adding to regular parcels");
+                packages.push_back(packageObject);
+            }
+        } else {
+            packages.push_back(packageObject);
+        }
     }
-    std::reverse(packages.begin(), packages.end());
+    if (!packages.empty()) {
+        SPDLOG_TRACE("reversing packages");
+        std::reverse(packages.begin(), packages.end());
+    }
+    if (!packageArchive.empty()) {
+        SPDLOG_TRACE("reversing archive");
+        std::reverse(packageArchive.begin(), packageArchive.end());
+    }
     return true;
 }
 
-void InpostAPI::GetPaczkomatStatus(std::string shipmentNumber, std::string openCode, std::string receiverPhoneNumber, std::string receiverPhonePrefix, float lat, float lon) {
+void InPostAPI::GetPaczkomatStatus(std::string shipmentNumber, std::string openCode, std::string receiverPhoneNumber, std::string receiverPhonePrefix, float lat, float lon) {
     nlohmann::ordered_json sendData;
 
     sendData["parcel"] = nlohmann::json::object();
@@ -297,7 +332,7 @@ void InpostAPI::GetPaczkomatStatus(std::string shipmentNumber, std::string openC
     Request::QueueRequest(baseUrl + "/v2/collect/validate", sendData.dump(), { "Authorization: " + authToken }, getPaczkomatStatusBuffer);
 }
 
-void InpostAPI::OpenPaczkomat(std::string uuid) {
+void InPostAPI::OpenPaczkomat(std::string uuid) {
     nlohmann::json sendData;
     sendData["sessionUuid"] = uuid;
 
@@ -308,7 +343,7 @@ void InpostAPI::OpenPaczkomat(std::string uuid) {
 }
 
 // terminator
-void InpostAPI::TerminatePaczka(std::string uuid) {
+void InPostAPI::TerminatePaczka(std::string uuid) {
     nlohmann::json sendData;
     sendData["sessionUuid"] = uuid;
 

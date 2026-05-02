@@ -11,7 +11,7 @@ ameOverflow
 OPRAWA GRAFICZNA
 
 Interfejs
-ameOveflow
+ameOverflow
 TehFridge
 
 Postacie InPost-kun i InPost-chan

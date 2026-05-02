@@ -25,11 +25,9 @@ private:
     RenderTexture2D logoRender;
     Sound collectedAll, change, confirmTutorial;
     Camera3D camera;
-    tweeny::tween<float> transititon;
-    tweeny::tween<float> rotationAnim;
-    bool isTransitioning; // :troll:
+    tweeny::tween<float> fadeOut, rotationAnim, flashbang;
+    bool isFadingOut, sceneLoaded; // :troll:
     bool inputLock, firstTimeUsingPrompt, askForTutorial, stickMoved;
-    float transitionTimer = 0;
     std::vector<std::string> options;
     int selectedOption;
 };

@@ -30,7 +30,7 @@ set(SOURCES
         source/SceneMain.cpp
         source/SceneDebug.cpp
         source/Request.cpp
-        source/InpostAPI.cpp
+        source/InPostAPI.cpp
         source/SceneCredits.cpp
         source/AssetLoader.cpp
         source/Config.cpp

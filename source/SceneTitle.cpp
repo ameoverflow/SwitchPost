@@ -25,7 +25,10 @@ void SceneTitle::SceneInit() {
     collectedAll = LoadSound(AssetLoader::ResolveResource("sounds/collectedall.wav").c_str());
     change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
 
-    transititon = tweeny::from(1.0f).to(0).during(500);
+    fadeOut = tweeny::from(0.0f).to(1.0f).during(250);
+    fadeOut.seek(0);
+    // think fast chucklenuts
+    flashbang = tweeny::from(1.0f).to(0.0f).during(250);
     rotationAnim = tweeny::from(-5.0f).to(5.0f).during(15000).via(tweeny::easing::sinusoidalInOut);
     rotationAnim.seek(0);
 
@@ -51,6 +54,11 @@ void SceneTitle::SceneInit() {
 }
 
 void SceneTitle::SceneUpdate(float dt) {
+    if (!sceneLoaded) {
+        sceneLoaded = true;
+        return;
+    }
+
     // render logo texture
     BeginTextureMode(logoRender);
 
@@ -74,8 +82,20 @@ void SceneTitle::SceneUpdate(float dt) {
         rotationAnim.forward();
     }
 
-    if (!isTransitioning && transititon.progress() <= 1.0f) {
-        transititon.step((int)(dt * 1000.0f));
+    if (sceneLoaded && flashbang.progress() <= 1.0f) {
+        flashbang.step((int)(dt * 1000.0f));
+    }
+
+    if (isFadingOut) {
+        if (fadeOut.progress() <= 0.99f) {
+            fadeOut.step((int)(dt * 1000.0f));
+        } else {
+            if (firstTimeUsingPrompt) {
+                SceneManager::ChangeScene(std::make_unique<SceneTutorial>());
+            } else {
+                SceneManager::ChangeScene(std::make_unique<SceneMain>());
+            }
+        }
     }
 
     float currentStickValue = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y);
@@ -106,7 +126,7 @@ void SceneTitle::SceneUpdate(float dt) {
         PlaySound(change);
     }
 
-    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !isTransitioning && !inputLock && !firstTimeUsingPrompt) {
+    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !isFadingOut && !inputLock && !firstTimeUsingPrompt) {
         if (selectedOption == 0) {
             if (askForTutorial) {
                 if (confirmTutorial.frameCount > 0) {
@@ -116,8 +136,7 @@ void SceneTitle::SceneUpdate(float dt) {
             } else {
                 Config::SetProperty("tutorialDone", "true");
                 inputLock = true;
-                transititon.seek(0);
-                isTransitioning = true;
+                isFadingOut = true;
             }
         } else {
             inputLock = true;
@@ -129,13 +148,11 @@ void SceneTitle::SceneUpdate(float dt) {
     if (firstTimeUsingPrompt && !inputLock && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
         Config::SetProperty("tutorialDone", "true");
         firstTimeUsingPrompt = false;
-        transititon.seek(0);
-        isTransitioning = true;
+        isFadingOut = true;
     }
 
     if (firstTimeUsingPrompt && !inputLock && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-        transititon.seek(0);
-        isTransitioning = true;
+        isFadingOut = true;
     }
 
 #ifdef DEBUG
@@ -145,20 +162,6 @@ void SceneTitle::SceneUpdate(float dt) {
         return;
     }
 #endif
-
-    if (isTransitioning)
-    {
-        transititon.step((int)(dt * 1000.0f));
-        transitionTimer += dt;
-    }
-    
-    if (transitionTimer >= 1.0f) {
-        if (firstTimeUsingPrompt) {
-            SceneManager::ChangeScene(std::make_unique<SceneTutorial>());
-        } else {
-            SceneManager::ChangeScene(std::make_unique<SceneMain>());
-        }
-    }
 }
 
 void SceneTitle::SceneDraw() {
@@ -184,10 +187,10 @@ void SceneTitle::SceneDraw() {
             {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
     }
 
-    if (isTransitioning)
-        DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), BLACK, {10,10,10,255});
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(WHITE, transititon.peek()));
+    if (isFadingOut)
+        DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(BLACK, fadeOut.peek()), ColorAlpha({10, 10, 10}, fadeOut.peek()));
 
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(WHITE, flashbang.peek()));
 }
 
 void SceneTitle::SceneExit() {

@@ -11,7 +11,7 @@
 #include "curl/curl.h"
 
 struct PackageEvent {
-    std::string name, date;
+    std::string name, date, internalDate;
 };
 
 struct Package {
@@ -39,7 +39,7 @@ struct Package {
     std::vector<PackageEvent> events;
 };
 
-class InpostAPI{
+class InPostAPI{
 public:
     static void SendSMSCode(std::string phone);
     static void VerifySMSCode(std::string phone, std::string code);
@@ -52,6 +52,7 @@ public:
     static void LockerStatus(std::string token, std::string uuid, bool opened);
     static void GetPaczkomatImage(std::string url);
     static bool ParsePaczkas(std::string json);
+    static bool LoadArchive();
     static bool LoadTokens();
     static std::shared_ptr<ResponseBuffer>
     sendSMSCodeBuffer,
@@ -63,7 +64,7 @@ public:
     openPaczkomatBuffer,
     terminatePaczkaBuffer,
     lockerStatusBuffer;
-    static std::vector<Package> packages;
+    static std::vector<Package> packages, packageArchive;
     static std::string refreshToken;
     static std::string authToken;
     static bool RefreshTokenSync();

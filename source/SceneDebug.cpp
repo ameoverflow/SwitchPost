@@ -9,7 +9,7 @@
 #include "SceneTutorial.h"
 #include <switch.h>
 
-#include "InpostAPI.h"
+#include "InPostAPI.h"
 #include "spdlog/spdlog.h"
 
 void SceneDebug::SceneInit() {
@@ -43,8 +43,8 @@ void SceneDebug::SceneUpdate(float dt) {
 
             if (R_SUCCEEDED(rc)) break;
         }
-        InpostAPI::baseUrl = std::string(baseUrl);
-        SPDLOG_DEBUG("base address set to {}", InpostAPI::baseUrl);
+        InPostAPI::baseUrl = std::string(baseUrl);
+        SPDLOG_DEBUG("base address set to {}", InPostAPI::baseUrl);
         askingForUrl = false;
     }
 
