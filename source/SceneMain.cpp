@@ -372,7 +372,7 @@ void SceneMain::SceneUpdate(float dt) {
             float currentStickValue = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
 
             if (currentStickValue < -0.5f && !stickMoved &&
-            selectedPackage > 0 && std::size(InpostAPI::packages) && !inputLock && !inDetails) {
+            selectedPackage > 0 && std::size(InpostAPI::packages) > 0 && !inputLock && !inDetails) {
                 stickMoved = true;
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
@@ -382,7 +382,7 @@ void SceneMain::SceneUpdate(float dt) {
             }
 
             if (currentStickValue > 0.5f && !stickMoved &&
-            selectedPackage < std::size(InpostAPI::packages) - 1 && std::size(InpostAPI::packages) && !inputLock && !inDetails) {
+            selectedPackage < std::size(InpostAPI::packages) - 1 && std::size(InpostAPI::packages) > 0 && !inputLock && !inDetails) {
                 stickMoved = true;
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
@@ -396,7 +396,7 @@ void SceneMain::SceneUpdate(float dt) {
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) &&
-            selectedPackage < std::size(InpostAPI::packages) - 1 && std::size(InpostAPI::packages)
+            selectedPackage < std::size(InpostAPI::packages) - 1 && std::size(InpostAPI::packages) > 0
             && !inDetails && !inputLock) {
                 selectorFadePulse.forward();
                 selectorFadePulse.seek(0);
@@ -501,7 +501,9 @@ void SceneMain::SceneUpdate(float dt) {
                         errorCode = JSONError;
                     } else {
                         isLoaded = true;
-                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                        if (std::size(InpostAPI::packages) > 0) {
+                            selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                        }
                     }
                 } else {
                     SPDLOG_ERROR("failed to load fake packages");
@@ -522,13 +524,17 @@ void SceneMain::SceneUpdate(float dt) {
                 if (InpostAPI::getPaczkasBuffer->code == 200) {
                     if (InpostAPI::ParsePaczkas(std::string(InpostAPI::getPaczkasBuffer->data.begin(), InpostAPI::getPaczkasBuffer->data.end()))) {
                         isLoaded = true;
-                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                        if (std::size(InpostAPI::packages) > 0) {
+                            selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                        }
                     } else {
                         errorCode = JSONError;
                     }
                 } else if (InpostAPI::getPaczkasBuffer->code == 304) {
                     isLoaded = true;
-                    selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                    if (std::size(InpostAPI::packages) > 0) {
+                        selectedPackageName = Config::GetProperty(InpostAPI::packages[selectedPackage].number + "_name");
+                    }
                 } else {
                     errorCode = NetworkError;
                 }
