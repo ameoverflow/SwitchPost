@@ -39,6 +39,7 @@ private:
     bool useTouch;
     Vector2 touchStartPos, previousTouch;
     bool isDragging;
+    bool isTouching;
     const float dragThreshold = 10.0f;
 
     float spinnerRotation = 0;

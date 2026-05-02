@@ -257,9 +257,6 @@ void SceneMain::SceneUpdate(float dt) {
                     if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN)) scrollOffset -= 600 * dt;
                     if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_FACE_UP)) scrollOffset += 600 * dt;
 
-                    static Vector2 previousTouch = { 0 };
-                    static bool isTouching = false;
-
                     if (GetTouchPointCount() > 0) {
                         Vector2 currentTouch = GetTouchPosition(0);
 
