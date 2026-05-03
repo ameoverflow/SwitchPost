@@ -24,13 +24,14 @@ private:
     Font mainFont;
     Sound change, confirmOpen, confirmClosed;
 
-    tweeny::tween<float> poststampFade, packagesFade, loadingFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse;
+    tweeny::tween<float> poststampFade, packagesFade, loadingFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse, modeChangeAnim;
 
-    bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, stickMoved, screenTouched;
+    bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, stickMoved, screenTouched, playModeChangeAnim;
     std::string sessionUuid;
     float scrollOffset = 0;
     RenderTexture2D packageDetails;
     Texture2D qrCode;
+    std::vector<Package>* currentDisplay;
 
     int selectedPackage;
     std::string selectedPackageName;
