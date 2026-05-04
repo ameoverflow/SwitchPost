@@ -248,7 +248,13 @@ bool InPostAPI::ParsePaczkas(std::string json) {
 
         packageObject.pickupDate = parcel.value("pickUpDate", "");
         packageObject.pickupCode = parcel.value("openCode", "");
-        packageObject.openable = parcel.contains("openCode") && !parcel["openCode"].is_null() && packageObject.status != "DELIVERED";
+
+        // this should cover all cases???
+        packageObject.openable = parcel.contains("openCode") && !parcel["openCode"].is_null() && (
+            packageObject.status == "READY_TO_PICKUP" || packageObject.status == "PICKUP_REMINDER_SENT" ||
+            packageObject.status == "PICKUP_TIME_EXPIRED" || packageObject.status == "OUT_FOR_DELIVERY_TO_ADDRESS" ||
+            packageObject.status == "PICKUP_REMINDER_SENT_ADDRESS"
+        );
         packageObject.delivered = packageObject.status == "DELIVERED";
 
         if (parcel.contains("receiver") && !parcel["receiver"].is_null()) {
@@ -271,7 +277,7 @@ bool InPostAPI::ParsePaczkas(std::string json) {
             }
         }
 
-        if (packageObject.delivered) {
+        if (packageObject.delivered || packageObject.status == "RETURNED_TO_SENDER") {
             // add parcel accordingly to archive or current parcels
             SPDLOG_TRACE(packageObject.events[0].internalDate);
             std::istringstream iss{packageObject.events[0].internalDate};

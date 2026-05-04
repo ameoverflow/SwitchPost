@@ -76,8 +76,10 @@ void SceneMain::SceneInit() {
     loadingCircle = LoadTexture(AssetLoader::ResolveResource("sprites/loading_circle.png").c_str());
     promptY = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_Y.png").c_str());
     promptX = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_X.png").c_str());
+    promptPlus = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_Plus.png").c_str());
     reloadButton = LoadTexture(AssetLoader::ResolveResource("sprites/refresh.png").c_str());
     renameButton = LoadTexture(AssetLoader::ResolveResource("sprites/rename.png").c_str());
+    archiveButton = LoadTexture(AssetLoader::ResolveResource("sprites/archive.png").c_str());
     openButton = LoadTexture(AssetLoader::ResolveResource("sprites/open_button.png").c_str());
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
@@ -692,10 +694,12 @@ void SceneMain::SceneDraw() {
                 DrawTextureEx(selectorCorner, { x - selectorFadePulse.peek(), y + 228.0f + selectorFadePulse.peek() }, 270.0f, 1.0f, WHITE);
             }
 
-            DrawTextureEx(promptX, {5.0f, packagesFade.peek() + modeChangeAnim.peek() - 90.0f}, 0, 0.5f, WHITE);
-            DrawTextureEx(reloadButton, {60.0f, packagesFade.peek() + modeChangeAnim.peek() - 90.0f}, 0, 1, WHITE);
-            DrawTextureEx(promptY, {130.0f, packagesFade.peek() + modeChangeAnim.peek() - 90.0f}, 0, 0.5f, WHITE);
-            DrawTextureEx(renameButton, {180.0f, packagesFade.peek() + modeChangeAnim.peek() - 90.0f}, 0, 1, WHITE);
+            DrawTextureEx(promptPlus, {5.0f,  410.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(reloadButton, {60.0f, 410.0f}, 0, 1, WHITE);
+            DrawTextureEx(promptY, {5.0f, 350.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(renameButton, {60.0f, 350.0f}, 0, 1, WHITE);
+            DrawTextureEx(promptX, {5.0f, 290.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(archiveButton, {60.0f, 290.0f}, 0, 1, WHITE);
 
             if ((*currentDisplay).size() == 0) {
                 Vector2 textSize = MeasureTextEx(mainFont, "Brak paczek :c", 42, 1);

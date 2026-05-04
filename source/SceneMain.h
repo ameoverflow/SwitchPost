@@ -20,7 +20,8 @@ private:
     void ReloadScene();
 
     Texture2D GenerateQrTexture(const char* qrData);
-    Texture2D poststamp, package, loadingCircle, promptY, promptX, selectorCorner, openButton, reloadButton, delivered, readyForPickup, renameButton;
+    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, selectorCorner,
+    openButton, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
     Font mainFont;
     Sound change, confirmOpen, confirmClosed;
 
@@ -48,7 +49,7 @@ private:
     bool inputLock;
 
     std::string errorDesc;
-    enum LoadingError errorCode;
+    LoadingError errorCode;
     bool tokensLoaded;
 
     Result rc;
