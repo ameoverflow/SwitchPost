@@ -84,6 +84,7 @@ void SceneMain::SceneInit() {
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
     change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
+    go = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 42, 0, 381);
     packageDetails = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
@@ -168,7 +169,7 @@ void SceneMain::SceneUpdate(float dt) {
                         DrawTextPro(mainFont, "QR", {(float)GetScreenWidth() - 50, scrollOffset + 50}, {textSize.x / 2, textSize.y / 2}, 0, 50, 0, WHITE);
                     }
                 }
-                drawOffset += 20;
+                drawOffset += 25;
                 Vector2 textSize = MeasureTextEx(mainFont, "Historia zdarzeń", 50, 2);
                 DrawTextPro(mainFont, "Historia zdarzeń", {(float)GetScreenWidth()/2, scrollOffset + drawOffset},
             {textSize.x/2, textSize.y/2}, 0, 50, 2, BLACK);
@@ -412,11 +413,13 @@ void SceneMain::SceneUpdate(float dt) {
                         if (touchStartPos.x >= leftUpper.x && touchStartPos.y >= leftUpper.y &&
                             touchStartPos.x <= rightLower.x && touchStartPos.y <= rightLower.y) {
                             if (selectedPackage == i) {
+                                PlaySound(go);
                                 scrollOffset = 0;
                                 detailsFade.forward();
                                 detailsScrollUp.forward();
                                 inDetails = true;
                             } else {
+                                PlaySound(change);
                                 selectedPackage = i;
                                 selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
                             }
@@ -482,6 +485,7 @@ void SceneMain::SceneUpdate(float dt) {
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
             && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
+                PlaySound(go);
                 scrollOffset = 0;
                 detailsFade.forward();
                 detailsScrollUp.forward();
@@ -510,6 +514,7 @@ void SceneMain::SceneUpdate(float dt) {
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
             && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
+                PlaySound(go);
                 askForParcelName = true;
             }
 
@@ -565,6 +570,9 @@ void SceneMain::SceneUpdate(float dt) {
                     currentDisplay = &InPostAPI::packages;
                 } else {
                     SPDLOG_CRITICAL("current display pointing at unknown location");
+                }
+                if (std::size((*currentDisplay)) > 0) {
+                    selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
                 }
                 modeChangeAnim.backward();
             } else if (modeChangeAnim.progress() <= 0.0f && modeChangeAnim.direction() == -1) {
@@ -815,6 +823,8 @@ void SceneMain::SceneExit() {
     UnloadRenderTexture(packageDetails);
     StopSound(change);
     UnloadSound(change);
+    StopSound(go);
+    UnloadSound(go);
     UnloadFont(mainFont);
     UnloadTexture(package);
     UnloadTexture(poststamp);

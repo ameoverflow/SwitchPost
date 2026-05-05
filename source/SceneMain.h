@@ -23,7 +23,7 @@ private:
     Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, selectorCorner,
     openButton, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
     Font mainFont;
-    Sound change, confirmOpen, confirmClosed;
+    Sound change, confirmOpen, confirmClosed, go;
 
     tweeny::tween<float> poststampFade, packagesFade, loadingFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse, modeChangeAnim;
 
