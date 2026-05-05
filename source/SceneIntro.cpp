@@ -28,6 +28,7 @@ void SceneIntro::SceneInit() {
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
     logo = LoadTexture(AssetLoader::ResolveResource("sprites/logo.png").c_str());
     introSound = LoadSound(AssetLoader::ResolveResource("sounds/intro.wav").c_str());
+    introLogo = LoadTexture("romfs:/sprites/intro_logo.png");
     introTimer = 0;
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 90, 0, 381);
     logoFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Heavy.otf", 90, 0, 381);
@@ -37,7 +38,7 @@ void SceneIntro::SceneInit() {
 
     logoFadeIn = tweeny::from(0.0f).to(0.8f).during(644);
     errorBgFade = tweeny::from(32).to(64).during(2000).via(tweeny::easing::sinusoidalInOut);
-    ameLogoFadeIn = tweeny::from(0).to(255).during(100).via(tweeny::easing::quadraticIn);
+    ameLogoFadeIn = tweeny::from(0.0f).to(1.0f).during(250).via(tweeny::easing::backOut);
     logoFadeIn.seek(0);
     ameLogoFadeIn.seek(0);
 
@@ -260,11 +261,11 @@ void SceneIntro::SceneDraw() {
         }
 
         if (introStage == 1 || introStage == 2) {
-            Vector2 textSize = MeasureTextEx(logoFont, text.c_str(), 60, 4);
-            DrawTextOutlineEx(logoFont, text.c_str(), {1280/2, 720/2},
-                              {textSize.x / 2.0f, textSize.y / 2.0f}, 60, 4, {14, 21, 49, ameLogoFadeIn.peek()}, {147, 86, 234, ameLogoFadeIn.peek()}, 7);
+            DrawTexturePro(introLogo, {0, 0, introLogo.width, introLogo.height},
+                {GetScreenWidth()/2, GetScreenHeight()/2, introLogo.width * ameLogoFadeIn.peek(), introLogo.height * ameLogoFadeIn.peek()},
+                {(introLogo.width * ameLogoFadeIn.peek())/2, (introLogo.height * ameLogoFadeIn.peek())/2}, 0, WHITE);
 
-            textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
+            Vector2 textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
             DrawTextPro(mainFont, line.c_str(), {1280/2, 720/2 + 250},
                         {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 34, 0, WHITE);
 
@@ -294,4 +295,5 @@ void SceneIntro::SceneExit() {
     UnloadFont(mainFont);
     UnloadTexture(pakuj);
     UnloadTexture(logo);
+    UnloadTexture(introLogo);
 }

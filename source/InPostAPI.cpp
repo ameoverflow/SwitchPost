@@ -249,12 +249,12 @@ bool InPostAPI::ParsePaczkas(std::string json) {
         packageObject.pickupDate = parcel.value("pickUpDate", "");
         packageObject.pickupCode = parcel.value("openCode", "");
 
-        // this should cover all cases???
+        // this covers a lot of cases i think, except paczkopunkts
         packageObject.openable = parcel.contains("openCode") && !parcel["openCode"].is_null() && (
-            packageObject.status == "READY_TO_PICKUP" || packageObject.status == "PICKUP_REMINDER_SENT" ||
-            packageObject.status == "PICKUP_TIME_EXPIRED" || packageObject.status == "OUT_FOR_DELIVERY_TO_ADDRESS" ||
-            packageObject.status == "PICKUP_REMINDER_SENT_ADDRESS"
-        );
+            packageObject.status == "READY_TO_PICKUP" ||
+            packageObject.status == "PICKUP_REMINDER_SENT" || packageObject.status == "PICKUP_TIME_EXPIRED" ||
+            packageObject.status == "OUT_FOR_DELIVERY_TO_ADDRESS" || packageObject.status == "PICKUP_REMINDER_SENT_ADDRESS"
+            );
         packageObject.delivered = packageObject.status == "DELIVERED";
 
         if (parcel.contains("receiver") && !parcel["receiver"].is_null()) {

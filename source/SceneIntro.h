@@ -16,12 +16,12 @@ public:
     void SceneUpdate(float dt) override;
     void SceneExit() override;
 private:
-    Texture2D pakuj, logo;
+    Texture2D pakuj, logo, introLogo;
     Font logoFont, mainFont;
     Sound introSound;
 
-    tweeny::tween<float> logoFadeIn;
-    tweeny::tween<int> errorBgFade, ameLogoFadeIn;
+    tweeny::tween<float> logoFadeIn, ameLogoFadeIn;
+    tweeny::tween<int> errorBgFade;
 
     int randomNum = 0;
     float introTimer = 0.0f;
@@ -29,7 +29,6 @@ private:
     float logoAlpha = 0.0f;
     LoadingError error;
 
-    std::string text = "ameOverflow";
     std::string line = "missingno.";
     std::string voice, errorCode, status;
     std::vector<std::string> splashes;
