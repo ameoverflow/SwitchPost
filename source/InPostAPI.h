@@ -44,22 +44,18 @@ public:
     static void SendSMSCode(std::string phone);
     static void VerifySMSCode(std::string phone, std::string code);
     static void GetPaczkas();
-    static void GetWyslanedPaczkas(std::string token);
-    static void GetReturnedPaczkas(std::string token);
     static void GetPaczkomatStatus(std::string shipmentNumber, std::string openCode, std::string receiverPhoneNumber, std::string receiverPhonePrefix, float lat, float lon);
     static void OpenPaczkomat(std::string uuid);
     static void TerminatePaczka(std::string uuid);
-    static void LockerStatus(std::string token, std::string uuid, bool opened);
-    static void GetPaczkomatImage(std::string url);
+    static void GetAccountInfo();
+    static std::string GetAccountName(std::string json);
     static bool ParsePaczkas(std::string json);
-    static bool LoadArchive();
     static bool LoadTokens();
     static std::shared_ptr<ResponseBuffer>
     sendSMSCodeBuffer,
     verifySMSCodeBuffer,
+    getAccountInfoBuffer,
     getPaczkasBuffer,
-    getWyslanedPaczkasBuffer,
-    getReturnedPaczkasBuffer,
     getPaczkomatStatusBuffer,
     openPaczkomatBuffer,
     terminatePaczkaBuffer,

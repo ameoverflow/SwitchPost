@@ -17,6 +17,7 @@ private:
     Font mainFont;
     Font smallFont;
     std::string version = "";
+    std::string accountName = "";
 #ifdef DEBUG
     std::string bigVersion = "DEBUG";
     Color versionColor = {81, 55, 138, 255};

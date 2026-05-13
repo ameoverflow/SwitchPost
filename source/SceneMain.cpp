@@ -582,14 +582,6 @@ void SceneMain::SceneUpdate(float dt) {
             }
         }
     } else {
-        if (!tokensLoaded) {
-            if (!InPostAPI::LoadTokens()) {
-                errorCode = JSONError;
-                return;
-            } else {
-                tokensLoaded = true;
-            }
-        }
 
         if (showFakePackages) {
             std::ifstream fakePackages("romfs:/text/test_data.json");

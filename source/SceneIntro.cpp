@@ -133,13 +133,8 @@ void SceneIntro::SceneUpdate(float dt) {
                 introStage = 3;
             }
         } else if (introStage == 3) {
-            if (std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
-                introStage = 4;
-                return;
-            }
-
             // log in
-            if (!std::filesystem::exists("sdmc:/config/switchpost/token.json") && bufferPointer->status == Done) {
+            if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
                 if (InPostAPI::sendSMSCodeBuffer->status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
@@ -197,26 +192,41 @@ void SceneIntro::SceneUpdate(float dt) {
                                 file << loginData;
                                 file.close();
                                 SPDLOG_INFO("login data saved to SD");
-                                introStage = 4;
                             } else {
                                 SPDLOG_ERROR("couldnt open token.json for writing");
                                 error = SDError;
-                                return;
                             }
                         } else {
                             error = SDError;
-                            return;
                         }
                     } else {
                         error = SDError;
-                        return;
                     }
                 } else if (InPostAPI::verifySMSCodeBuffer->status == Error ||
                            (InPostAPI::verifySMSCodeBuffer->status == Done &&
                             InPostAPI::verifySMSCodeBuffer->code != 200)) {
                     error = NetworkError;
                     SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
-                    return;
+                }
+            } else {
+                if (tokensLoaded) {
+                    if (InPostAPI::getAccountInfoBuffer->status == NotStarted) {
+                        InPostAPI::GetAccountInfo();
+                    } else if (InPostAPI::getAccountInfoBuffer->status == Done && InPostAPI::getAccountInfoBuffer->code == 200) {
+                        SPDLOG_DEBUG("account info loaded apparently?");
+                        introStage = 4;
+                    } else if (InPostAPI::getAccountInfoBuffer->status == Error ||
+                               (InPostAPI::getAccountInfoBuffer->status == Done &&
+                                InPostAPI::getAccountInfoBuffer->code != 200)) {
+                        error = NetworkError;
+                        SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
+                    }
+                } else {
+                    if (InPostAPI::LoadTokens()) {
+                        tokensLoaded = true;
+                    } else {
+                        error = JSONError;
+                    }
                 }
             }
         } else if (introStage == 4) {
@@ -239,7 +249,6 @@ void SceneIntro::SceneUpdate(float dt) {
                 SPDLOG_TRACE("voice set to {}", Config::GetProperty("voice"));
                 MusicManager::PlayMusic("music/menu_music.ogg");
                 introStage = 999;
-                return;
             }
         } else if (introStage == 999) {
             logoFadeIn.step((int)(dt * 1000));

@@ -28,6 +28,7 @@ private:
     int introStage = 0;
     float logoAlpha = 0.0f;
     LoadingError error;
+    bool tokensLoaded;
 
     std::string line = "missingno.";
     std::string voice, errorCode, status;
