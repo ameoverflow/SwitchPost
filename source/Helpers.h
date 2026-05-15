@@ -5,6 +5,7 @@
 #ifndef SWITCHPOST_HELPERS_H
 #define SWITCHPOST_HELPERS_H
 
+#include <string>
 #include <vector>
 
 #include "raylib.h"

@@ -15,7 +15,7 @@
 #include "json.hpp"
 #include "MusicManager.h"
 #include "Config.h"
-#include "spdlog/sinks/daily_file_sink.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 float bgX = 0;
 float bgY = 0;
@@ -42,18 +42,43 @@ void SpdlogRaylibCallback(int logLevel, const char *text, va_list args) {
     }
 }
 
+std::string getLogFileName() {
+    std::chrono::local_time localTime = std::chrono::locate_zone("Europe/Warsaw")->to_local(std::chrono::system_clock::now());
+    std::chrono::local_days days = std::chrono::floor<std::chrono::days>(localTime);
+    std::chrono::year_month_day ymd{days};
+
+    std::ostringstream oss;
+    oss << std::setfill('0')
+        << std::setw(2) << ymd.year() << "-"
+        << std::setw(2) << (unsigned)ymd.month() << "-"
+        << ymd.day();
+
+    int count = 1;
+    std::string name;
+
+    // find the first available number
+    do {
+        name = "sdmc:/config/switchpost/logs/" + oss.str() + "-" + std::to_string(count) + ".log";
+        count++;
+    } while (std::filesystem::exists(name));
+
+    return name;
+}
+
 int main()
 {
     // switch init shit
     appletLockExit();
     romfsInit();
-    std::filesystem::create_directory("/config");
-    std::filesystem::create_directory("/config/switchpost");
+    std::filesystem::create_directory("sdmc:/config");
+    std::filesystem::create_directory("sdmc:/config/switchpost");
+    std::filesystem::create_directory("sdmc:/config/switchpost/logs");
+    std::filesystem::create_directory("sdmc:/config/switchpost/resourcepacks");
     socketInitializeDefault();
 
     // log init shit
     std::shared_ptr<spdlog::sinks::sink> consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    std::shared_ptr<spdlog::sinks::sink> fileSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>("sdmc:/config/switchpost/SwitchPost.log", 0, 0, true, 10);
+    std::shared_ptr<spdlog::sinks::sink> fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(getLogFileName().c_str());
     std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks { consoleSink, fileSink };
     std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
     logger->set_pattern("[%T.%e] [%s:%#] [%^%l%$] %v");

@@ -46,7 +46,6 @@ std::string InPostAPI::FormatIsoToCustom(const std::string& iso_date) {
     std::chrono::year_month_day ymd{days};
     std::chrono::hh_mm_ss<std::chrono::milliseconds> hms{t - days};
 
-    // 5. use stringstream for the formatting
     std::ostringstream oss;
     oss << std::setfill('0')
         << std::setw(2) << (unsigned)ymd.day() << "."
