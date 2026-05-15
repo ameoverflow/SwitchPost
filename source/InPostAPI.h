@@ -51,7 +51,7 @@ public:
     static std::string GetAccountName(std::string json);
     static bool ParsePaczkas(std::string json);
     static bool LoadTokens();
-    static std::shared_ptr<ResponseBuffer>
+    static ResponseBuffer
     sendSMSCodeBuffer,
     verifySMSCodeBuffer,
     getAccountInfoBuffer,

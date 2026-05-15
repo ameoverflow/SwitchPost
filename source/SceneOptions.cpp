@@ -45,6 +45,11 @@ void SceneOptions::SceneInit() {
     voice = Config::GetProperty("voice");
     currentResourcePack = Config::GetProperty("resourcePack");
     oldPack = currentResourcePack;
+
+    buildInfo = std::string(APP_TITLE) + " " + std::string(APP_VERSION) + "\n\n";
+    buildInfo += "Build date: " + std::string(__DATE__) + " " + std::string(__TIME__) + "\n";
+    buildInfo += "Compiled with GCC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + "\n";
+    buildInfo += "raylib " + std::string(RAYLIB_VERSION) + "\n\n(A) Ok";
 }
 
 void SceneOptions::SceneUpdate(float dt) {
@@ -193,7 +198,11 @@ void SceneOptions::SceneUpdate(float dt) {
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
             inNoVoicePopup = false;
         }
-    } else {
+    } else if (inBuildPopup) {
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+            inBuildPopup = false;
+        }
+    } else  {
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) && !inputLock) {
             inputLock = true;
             SceneManager::ChangeScene(std::make_unique<SceneTitle>());
@@ -311,6 +320,10 @@ void SceneOptions::SceneUpdate(float dt) {
                     break;
             }
         }
+
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_MIDDLE_LEFT)) {
+            inBuildPopup = true;
+        }
     }
 }
 
@@ -377,8 +390,9 @@ void SceneOptions::SceneDraw() {
             offset += textSize.y + 10;
         }
 
+        if (inDeleteData || inNoVoicePopup || inBuildPopup) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
+
         if (inDeleteData) {
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
             Vector2 textSize = MeasureTextEx(promptFont, "Czy chcesz usunąć WSZYSTKIE dane?\nAplikacja zostanie uruchomiona ponownie, i będzie wymagane\nponowne zalogowanie się.\n\n(A) Tak      (B) Nie", 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
             DrawTextPro(promptFont, "Czy chcesz usunąć WSZYSTKIE dane?\nAplikacja zostanie uruchomiona ponownie, i będzie wymagane\nponowne zalogowanie się.\n\n(A) Tak      (B) Nie",
@@ -386,10 +400,16 @@ void SceneOptions::SceneDraw() {
         }
 
         if (inNoVoicePopup) {
-            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
             Vector2 textSize = MeasureTextEx(promptFont, "Brak samouczka dla aktualnie wybranego głosu.\n(A) Ok", 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
             DrawTextPro(promptFont, "Brak samouczka dla aktualnie wybranego głosu.\n(A) Ok",
+                {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
+        }
+
+        if (inBuildPopup) {
+            Vector2 textSize = MeasureTextEx(promptFont,  buildInfo.c_str(), 32, 0);
+            DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
+            DrawTextPro(promptFont, buildInfo.c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
     }

@@ -32,7 +32,7 @@ void SceneTitle::SceneInit() {
     rotationAnim = tweeny::from(-5.0f).to(5.0f).during(15000).via(tweeny::easing::sinusoidalInOut);
     rotationAnim.seek(0);
 
-    accountName = InPostAPI::GetAccountName(std::string(InPostAPI::getAccountInfoBuffer->data.begin(), InPostAPI::getAccountInfoBuffer->data.end()));
+    accountName = InPostAPI::GetAccountName(std::string(InPostAPI::getAccountInfoBuffer.data.begin(), InPostAPI::getAccountInfoBuffer.data.end()));
 
     options = {
             "Start",

@@ -21,7 +21,7 @@
 #include "json.hpp"
 #include "Config.h"
 
-std::shared_ptr<ResponseBuffer> bufferPointer = std::make_shared<ResponseBuffer>();
+ResponseBuffer bufferPointer;
 
 
 void SceneIntro::SceneInit() {
@@ -91,22 +91,22 @@ void SceneIntro::SceneUpdate(float dt) {
                 error = AppletError;
                 SPDLOG_CRITICAL("application running as applet");
             } else {
-                if (bufferPointer->status == NotStarted) {
+                if (bufferPointer.status == NotStarted) {
                     status = "Sprawdzanie sieci...";
-                    Request::QueueRequest("https://api-inmobile-pl.easypack24.net", "", {  }, bufferPointer);
-                    bufferPointer->status = InProgress;
-                } else if (bufferPointer->status == InProgress) {
+                    Request::QueueRequest("https://api-inmobile-pl.easypack24.net", "", {  }, &bufferPointer);
+                    bufferPointer.status = InProgress;
+                } else if (bufferPointer.status == InProgress) {
                     introStage = 1;
                 }
             }
         } else if (introStage == 1) {
-            if (bufferPointer->status == Error) {
-                if (bufferPointer->result != CURLE_OK) {
+            if (bufferPointer.status == Error) {
+                if (bufferPointer.result != CURLE_OK) {
                     error = NetworkError;
-                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
+                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer.result));
                     return;
                 }
-            } else if (bufferPointer->status == Done) {
+            } else if (bufferPointer.status == Done) {
                 status = "";
             }
 
@@ -117,25 +117,25 @@ void SceneIntro::SceneUpdate(float dt) {
                 PlaySound(introSound);
             }
         } else if (introStage == 2) {
-            if (bufferPointer->status == Error) {
-                if (bufferPointer->result != CURLE_OK) {
+            if (bufferPointer.status == Error) {
+                if (bufferPointer.result != CURLE_OK) {
                     error = NetworkError;
-                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
+                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer.result));
                     return;
                 }
-            } else if (bufferPointer->status == Done) {
+            } else if (bufferPointer.status == Done) {
                 status = "";
             }
 
             introTimer += dt;
-            if (introTimer > 2 && bufferPointer->status == Done) {
+            if (introTimer > 2 && bufferPointer.status == Done) {
                 introTimer = 0;
                 introStage = 3;
             }
         } else if (introStage == 3) {
             // log in
             if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
-                if (InPostAPI::sendSMSCodeBuffer->status == NotStarted) {
+                if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
@@ -153,8 +153,8 @@ void SceneIntro::SceneUpdate(float dt) {
                     InPostAPI::SendSMSCode(std::string(phoneNumber));
                 }
 
-                if (InPostAPI::sendSMSCodeBuffer->status == Done &&
-                    InPostAPI::verifySMSCodeBuffer->status == NotStarted) {
+                if (InPostAPI::sendSMSCodeBuffer.status == Done &&
+                    InPostAPI::verifySMSCodeBuffer.status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
@@ -170,17 +170,17 @@ void SceneIntro::SceneUpdate(float dt) {
                     }
 
                     InPostAPI::VerifySMSCode(std::string(phoneNumber), std::string(code));
-                } else if (InPostAPI::sendSMSCodeBuffer->status == Error ||
-                           (InPostAPI::sendSMSCodeBuffer->status == Done &&
-                            InPostAPI::sendSMSCodeBuffer->code != 200)) {
+                } else if (InPostAPI::sendSMSCodeBuffer.status == Error ||
+                           (InPostAPI::sendSMSCodeBuffer.status == Done &&
+                            InPostAPI::sendSMSCodeBuffer.code != 200)) {
                     error = NetworkError;
-                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                     return;
                 }
 
-                if (InPostAPI::verifySMSCodeBuffer->status == Done && InPostAPI::verifySMSCodeBuffer->code == 200) {
-                    std::string loginData(InPostAPI::verifySMSCodeBuffer->data.begin(),
-                                          InPostAPI::verifySMSCodeBuffer->data.end());
+                if (InPostAPI::verifySMSCodeBuffer.status == Done && InPostAPI::verifySMSCodeBuffer.code == 200) {
+                    std::string loginData(InPostAPI::verifySMSCodeBuffer.data.begin(),
+                                          InPostAPI::verifySMSCodeBuffer.data.end());
                     if (nlohmann::json::accept(loginData)) {
                         nlohmann::json data = nlohmann::json::parse(loginData);
                         std::string authToken = data.value("authToken", "");
@@ -202,24 +202,24 @@ void SceneIntro::SceneUpdate(float dt) {
                     } else {
                         error = SDError;
                     }
-                } else if (InPostAPI::verifySMSCodeBuffer->status == Error ||
-                           (InPostAPI::verifySMSCodeBuffer->status == Done &&
-                            InPostAPI::verifySMSCodeBuffer->code != 200)) {
+                } else if (InPostAPI::verifySMSCodeBuffer.status == Error ||
+                           (InPostAPI::verifySMSCodeBuffer.status == Done &&
+                            InPostAPI::verifySMSCodeBuffer.code != 200)) {
                     error = NetworkError;
-                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                 }
             } else {
                 if (tokensLoaded) {
-                    if (InPostAPI::getAccountInfoBuffer->status == NotStarted) {
+                    if (InPostAPI::getAccountInfoBuffer.status == NotStarted) {
                         InPostAPI::GetAccountInfo();
-                    } else if (InPostAPI::getAccountInfoBuffer->status == Done && InPostAPI::getAccountInfoBuffer->code == 200) {
+                    } else if (InPostAPI::getAccountInfoBuffer.status == Done && InPostAPI::getAccountInfoBuffer.code == 200) {
                         SPDLOG_DEBUG("account info loaded apparently?");
                         introStage = 4;
-                    } else if (InPostAPI::getAccountInfoBuffer->status == Error ||
-                               (InPostAPI::getAccountInfoBuffer->status == Done &&
-                                InPostAPI::getAccountInfoBuffer->code != 200)) {
+                    } else if (InPostAPI::getAccountInfoBuffer.status == Error ||
+                               (InPostAPI::getAccountInfoBuffer.status == Done &&
+                                InPostAPI::getAccountInfoBuffer.code != 200)) {
                         error = NetworkError;
-                        SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
+                        SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                     }
                 } else {
                     if (InPostAPI::LoadTokens()) {

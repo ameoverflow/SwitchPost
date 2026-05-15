@@ -14,13 +14,13 @@
 #include <algorithm>
 #include <curl/curl.h>
 
-std::shared_ptr<ResponseBuffer> InPostAPI::sendSMSCodeBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InPostAPI::verifySMSCodeBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InPostAPI::getAccountInfoBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InPostAPI::getPaczkasBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InPostAPI::getPaczkomatStatusBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InPostAPI::openPaczkomatBuffer = std::make_shared<ResponseBuffer>();
-std::shared_ptr<ResponseBuffer> InPostAPI::terminatePaczkaBuffer = std::make_shared<ResponseBuffer>();
+ResponseBuffer InPostAPI::sendSMSCodeBuffer;
+ResponseBuffer InPostAPI::verifySMSCodeBuffer;
+ResponseBuffer InPostAPI::getAccountInfoBuffer;
+ResponseBuffer InPostAPI::getPaczkasBuffer;
+ResponseBuffer InPostAPI::getPaczkomatStatusBuffer;
+ResponseBuffer InPostAPI::openPaczkomatBuffer;
+ResponseBuffer InPostAPI::terminatePaczkaBuffer;
 
 std::unique_ptr<std::vector<char>> InPostAPI::refreshTokenBuffer = std::make_unique<std::vector<char>>();
 std::vector<Package> InPostAPI::packages = {};
@@ -58,111 +58,30 @@ std::string InPostAPI::FormatIsoToCustom(const std::string& iso_date) {
 }
 
 void InPostAPI::SendSMSCode(std::string phone) {
-    sendSMSCodeBuffer->data.clear();
-    sendSMSCodeBuffer->status = InProgress;
-    sendSMSCodeBuffer->code = 0;
+    sendSMSCodeBuffer.data.clear();
+    sendSMSCodeBuffer.status = InProgress;
+    sendSMSCodeBuffer.code = 0;
     nlohmann::json json;
     json["phoneNumber"] = { { "prefix", "+48"}, {"value", phone.c_str()} };
-    Request::QueueRequest(baseUrl + "/v1/account", json.dump(), { "Content-Type: application/json" }, sendSMSCodeBuffer);
+    Request::QueueRequest(baseUrl + "/v1/account", json.dump(), { "Content-Type: application/json" }, &sendSMSCodeBuffer);
 }
 
 void InPostAPI::VerifySMSCode(std::string phone, std::string code) {
-    verifySMSCodeBuffer->data.clear();
-    verifySMSCodeBuffer->status = InProgress;
-    verifySMSCodeBuffer->code = 0;
+    verifySMSCodeBuffer.data.clear();
+    verifySMSCodeBuffer.status = InProgress;
+    verifySMSCodeBuffer.code = 0;
     nlohmann::json json;
     json["phoneNumber"] = { { "prefix", "+48"}, {"value", phone.c_str()} };
     json["smsCode"] = code.c_str();
     json["devicePlatform"] = "Android";
-    Request::QueueRequest(baseUrl + "/v1/account/verification", json.dump(), { "Content-Type: application/json" }, verifySMSCodeBuffer);
+    Request::QueueRequest(baseUrl + "/v1/account/verification", json.dump(), { "Content-Type: application/json" }, &verifySMSCodeBuffer);
 }
 
 void InPostAPI::GetPaczkas() {
-    getPaczkasBuffer->data.clear();
-    getPaczkasBuffer->status = InProgress;
-    getPaczkasBuffer->code = 0;
-    Request::QueueRequest(baseUrl + "/v4/parcels/tracked", "", { "Authorization: " + authToken }, getPaczkasBuffer);
-}
-
-// here come my favorite part of the code
-// i hope yall ready for this
-// edit: this doesnt work, idk why, it *should* work
-bool InPostAPI::RefreshTokenSync() {
-    refreshTokenBuffer->clear();
-    CURL* curl = curl_easy_init();
-    curl_slist* headerList = nullptr;
-    headerList = curl_slist_append(headerList, "User-Agent: InPost-Mobile/3.46.0(34600200) (Horizon 21.2.0; AW715988204; Nintendo Switch; pl)");
-    headerList = curl_slist_append(headerList, "Content-Type: application/json");
-    curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_URL, "https://api-inmobile-pl.easypack24.net/v1/authenticate");
-    curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
-
-    nlohmann::json tokenJson;
-    tokenJson["refreshToken"] = refreshToken;
-    SPDLOG_TRACE("sending data {}", tokenJson.dump());
-    std::string requestBody = tokenJson.dump();
-
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)requestBody.length());
-
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, refreshTokenBuffer.get());
-    CURLcode result = curl_easy_perform(curl);
-
-    int code;
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-
-    if (result != CURLE_OK) {
-        SPDLOG_ERROR("request failed: {}", curl_easy_strerror(result));
-
-        curl_slist_free_all(headerList);
-        curl_easy_cleanup(curl);
-    } else {
-        std::string requestJson(refreshTokenBuffer->begin(), refreshTokenBuffer->end());
-        SPDLOG_DEBUG("request done, code: {}", code);
-        SPDLOG_TRACE("data: {}", requestJson);
-
-        curl_slist_free_all(headerList);
-        curl_easy_cleanup(curl);
-
-        if (code == 200) {
-            // we have both refresh code, and auth token, rebuild the fucken json just
-            if (nlohmann::json::accept(requestJson)) {
-                nlohmann::json data = nlohmann::json::parse(requestJson);
-                authToken = data.value("authToken", "");
-
-                if (!authToken.empty() && !refreshToken.empty()) {
-                    std::ofstream file("sdmc:/config/switchpost/token.json");
-                    if (file.is_open()) {
-                        nlohmann::json tokenData;
-                        tokenData["refreshToken"] = refreshToken;
-                        tokenData["authToken"] = authToken;
-                        file << tokenData.dump();
-                        SPDLOG_INFO("login data saved to SD");
-                        return true; // :sunglasses:
-                    } else {
-                        SPDLOG_ERROR("couldnt open token.json for writing");
-                    }
-                }
-            }
-        } else {
-            SPDLOG_ERROR("smth went wrong, see logs");
-        }
-    }
-    return false;
-}
-
-size_t InPostAPI::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
-    size_t realsize = size * nmemb;
-
-    if (std::vector<char>* buffer = static_cast<std::vector<char>*>(userp)) {
-        const unsigned char* data_ptr = static_cast<const unsigned char*>(contents);
-        buffer->insert(buffer->end(), data_ptr, data_ptr + realsize);
-    }
-
-    return realsize;
+    getPaczkasBuffer.data.clear();
+    getPaczkasBuffer.status = InProgress;
+    getPaczkasBuffer.code = 0;
+    Request::QueueRequest(baseUrl + "/v4/parcels/tracked", "", { "Authorization: " + authToken }, &getPaczkasBuffer);
 }
 
 bool InPostAPI::LoadTokens() {
@@ -180,15 +99,13 @@ bool InPostAPI::LoadTokens() {
             SPDLOG_TRACE("auth: {}", authToken);
             token.close();
             return true;
-        } else {
-            SPDLOG_ERROR("failed to load tokens");
-            SPDLOG_DEBUG("{}", buffer.str());
-            token.close();
-            return false;
         }
-    } else {
+        SPDLOG_ERROR("failed to load tokens");
+        SPDLOG_DEBUG("{}", buffer.str());
+        token.close();
         return false;
     }
+    return false;
 }
 
 bool InPostAPI::ParsePaczkas(std::string json) {
@@ -332,20 +249,20 @@ void InPostAPI::GetPaczkomatStatus(std::string shipmentNumber, std::string openC
     sendData["geoPoint"]["longitude"] = lon;
     sendData["geoPoint"]["accuracy"] = 13.365;
 
-    getPaczkomatStatusBuffer->data.clear();
-    getPaczkomatStatusBuffer->status = InProgress;
-    getPaczkomatStatusBuffer->code = 0;
-    Request::QueueRequest(baseUrl + "/v2/collect/validate", sendData.dump(), { "Authorization: " + authToken }, getPaczkomatStatusBuffer);
+    getPaczkomatStatusBuffer.data.clear();
+    getPaczkomatStatusBuffer.status = InProgress;
+    getPaczkomatStatusBuffer.code = 0;
+    Request::QueueRequest(baseUrl + "/v2/collect/validate", sendData.dump(), { "Authorization: " + authToken }, &getPaczkomatStatusBuffer);
 }
 
 void InPostAPI::OpenPaczkomat(std::string uuid) {
     nlohmann::json sendData;
     sendData["sessionUuid"] = uuid;
 
-    openPaczkomatBuffer->data.clear();
-    openPaczkomatBuffer->status = InProgress;
-    openPaczkomatBuffer->code = 0;
-    Request::QueueRequest(baseUrl + "/v1/collect/compartment/open", sendData.dump(), { "Authorization: " + authToken }, openPaczkomatBuffer);
+    openPaczkomatBuffer.data.clear();
+    openPaczkomatBuffer.status = InProgress;
+    openPaczkomatBuffer.code = 0;
+    Request::QueueRequest(baseUrl + "/v1/collect/compartment/open", sendData.dump(), { "Authorization: " + authToken }, &openPaczkomatBuffer);
 }
 
 // terminator
@@ -353,17 +270,17 @@ void InPostAPI::TerminatePaczka(std::string uuid) {
     nlohmann::json sendData;
     sendData["sessionUuid"] = uuid;
 
-    terminatePaczkaBuffer->data.clear();
-    terminatePaczkaBuffer->status = InProgress;
-    terminatePaczkaBuffer->code = 0;
-    Request::QueueRequest(baseUrl + "/v1/collect/compartment/terminate", sendData.dump(), { "Authorization: " + authToken }, terminatePaczkaBuffer);
+    terminatePaczkaBuffer.data.clear();
+    terminatePaczkaBuffer.status = InProgress;
+    terminatePaczkaBuffer.code = 0;
+    Request::QueueRequest(baseUrl + "/v1/collect/compartment/terminate", sendData.dump(), { "Authorization: " + authToken }, &terminatePaczkaBuffer);
 }
 
 void InPostAPI::GetAccountInfo() {
-    getAccountInfoBuffer->data.clear();
-    getAccountInfoBuffer->status = InProgress;
-    getAccountInfoBuffer->code = 0;
-    Request::QueueRequest(baseUrl + "/izi/app/shopping/v2/profile", "", { "Authorization: " + authToken }, getAccountInfoBuffer);
+    getAccountInfoBuffer.data.clear();
+    getAccountInfoBuffer.status = InProgress;
+    getAccountInfoBuffer.code = 0;
+    Request::QueueRequest(baseUrl + "/izi/app/shopping/v2/profile", "", { "Authorization: " + authToken }, &getAccountInfoBuffer);
 }
 
 std::string InPostAPI::GetAccountName(std::string json) {

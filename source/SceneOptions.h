@@ -22,9 +22,9 @@ private:
     std::vector<std::string> options, voices;
     std::vector<ResourcePack> packList;
 
-    std::string voice, currentResourcePack, oldPack;
+    std::string voice, currentResourcePack, oldPack, buildInfo;
 
-    bool inResourcePackOptions, inVoiceOptions, inDeleteData, stickMovedY, stickMovedX, inNoVoicePopup;
+    bool inResourcePackOptions, inVoiceOptions, inDeleteData, stickMovedY, stickMovedX, inNoVoicePopup, inBuildPopup;
 
     float scrollOffset, drawOffset, targetOffset;
 };

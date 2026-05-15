@@ -18,7 +18,7 @@ std::condition_variable_any Request::queueCv;
 std::jthread Request::worker;
 CURL* Request::curl;
 std::string Request::userAgent = "User-Agent: InPost-Mobile/4.9.0(40900000) (Horizon 22.1.0; AW715988204; Nintendo Switch; pl)";
-std::unique_ptr<ResponseBuffer> reauthBuffer = std::make_unique<ResponseBuffer>();
+ResponseBuffer Request::reauthBuffer;
 
 void Request::LogRequestToFile(const std::string& url, const std::string& data, const std::vector<std::string> &headers) {
     SPDLOG_INFO("request to {}", url);
@@ -45,7 +45,7 @@ size_t Request::WriteCallback(void* contents, size_t size, size_t nmemb, void* u
 // dlaczego ten kod wygląda jak gówno?
 // bo nie miałam ochoty użerać się z curlem i gdb bo w jakimś miejscu wypierdala invalid memory access :v
 // zajebane z inpost3ds i wygląda jak gówno ale chuj, działa, jak komuś chce się naprawiać to niech jebnie PR na to
-void Request::DoRequest(std::string url, std::string data, std::vector<std::string> headers, std::shared_ptr<ResponseBuffer> response) {
+void Request::DoRequest(const std::string& url, const std::string& data, const std::vector<std::string>& headers, ResponseBuffer* response) {
     curl_easy_reset(curl);
     curl_slist* headerList = nullptr;
     for (const std::string& header : headers) {
@@ -65,7 +65,7 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
     LogRequestToFile(url, data, headers);
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response.get());
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
     response->result = curl_easy_perform(curl);
 
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
@@ -99,10 +99,10 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
             curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)requestBody.length());
 
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, reauthBuffer.get());
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reauthBuffer);
             CURLcode result = curl_easy_perform(curl);
 
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &reauthBuffer->code);
+            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &reauthBuffer.code);
 
             curl_slist_free_all(reauthHeaders);
 
@@ -112,12 +112,12 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
                 return;
             }
 
-            std::string requestJson(reauthBuffer->data.begin(), reauthBuffer->data.end());
-            SPDLOG_DEBUG("request done, code: {}", reauthBuffer->code);
+            std::string requestJson(reauthBuffer.data.begin(), reauthBuffer.data.end());
+            SPDLOG_DEBUG("request done, code: {}", reauthBuffer.code);
             SPDLOG_TRACE("data: {}", requestJson);
 
-            if (reauthBuffer->code != 200) {
-                SPDLOG_ERROR("reauthentication returned non-200: {}", reauthBuffer->code);
+            if (reauthBuffer.code != 200) {
+                SPDLOG_ERROR("reauthentication returned non-200: {}", reauthBuffer.code);
                 return;
             }
 
@@ -145,7 +145,6 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
             }
 
             SPDLOG_DEBUG("retrying original request");
-            headerList = nullptr;
             for (const std::string& header : headers) {
                 if (header.find("Authorization:") != std::string::npos) {
                     std::string authHeader = "Authorization: " + InPostAPI::authToken;
@@ -169,7 +168,7 @@ void Request::DoRequest(std::string url, std::string data, std::vector<std::stri
             }
 
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, response.get());
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
 
             response->data.clear();
             response->code = 0;
@@ -222,11 +221,11 @@ void Request::RequestThreadWorker(const std::stop_token &stoken) {
         queue.pop_front();
         lock.unlock();
 
-        DoRequest(std::move(data.url), std::move(data.data), std::move(data.headers), data.responseBuffer);
+        DoRequest(data.url, data.data, data.headers, data.responseBuffer);
     }
 }
 
-void Request::QueueRequest(std::string url, std::string data, std::vector<std::string> headers, std::shared_ptr<ResponseBuffer> response) {
+void Request::QueueRequest(const std::string& url, const std::string& data, const std::vector<std::string>& headers, ResponseBuffer* response) {
     RequestData request;
 
     request.url = url;
