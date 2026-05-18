@@ -609,7 +609,6 @@ void SceneMain::SceneUpdate(float dt) {
             }
             fakePackages.close();
         } else {
-            // if data is already loaded, then skip the whole shit
             if (InPostAPI::getPaczkasBuffer.status == NotStarted) {
                 InPostAPI::GetPaczkas();
             } else if (InPostAPI::getPaczkasBuffer.status == Done) {
@@ -632,6 +631,11 @@ void SceneMain::SceneUpdate(float dt) {
                 }
             } else if (InPostAPI::getPaczkasBuffer.status == Error) {
                 errorCode = NetworkError;
+            }
+
+            if (isLoaded && !alreadyLoggedIn) {
+                SPDLOG_INFO("Good evening professor. I see you have driven here in your Ferrari.");
+                alreadyLoggedIn = true;
             }
         }
     }

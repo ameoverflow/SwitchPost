@@ -24,4 +24,5 @@ extern bool showFakePackages;
 extern bool shouldQuit;
 extern int currentBackground;
 extern std::vector<Texture2D> backgrounds;
+extern bool alreadyLoggedIn;
 #endif //SWITCHPOST_HELPERS_H
