@@ -9,13 +9,10 @@
 #include "json.hpp"
 #include <fstream>
 
-class Config{
-    public:
-    static void LoadConfigFile(std::string filename);
-    static std::string GetProperty(std::string name);
-    static void SetProperty(std::string name, std::string value);
-    private:
-    static std::string filename;
+namespace Config {
+    void LoadConfigFile(std::string filename);
+    std::string GetProperty(std::string name);
+    void SetProperty(std::string name, std::string value);
 };
 
 

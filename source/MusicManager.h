@@ -7,15 +7,12 @@
 
 #include "raylib.h"
 
-class MusicManager{
-public:
-    static void PlayMusic(const char* file);
-    static void Update();
-    static void Stop();
-    static void Destroy();
-    static void SetVolume(float volume);
-private:
-    static Music music;
+namespace MusicManager{
+    void PlayMusic(const char* file);
+    void Update();
+    void Stop();
+    void Destroy();
+    void SetVolume(float volume);
 };
 
 

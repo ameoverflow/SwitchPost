@@ -6,7 +6,7 @@
 #include "raylib.h"
 #include "AssetLoader.h"
 
-Music MusicManager::music = { 0 };
+Music music;
 
 void MusicManager::PlayMusic(const char *file) {
     if (music.frameCount) {

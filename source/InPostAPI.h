@@ -39,19 +39,18 @@ struct Package {
     std::vector<PackageEvent> events;
 };
 
-class InPostAPI{
-public:
-    static void SendSMSCode(std::string phone);
-    static void VerifySMSCode(std::string phone, std::string code);
-    static void GetPaczkas();
-    static void GetPaczkomatStatus(std::string shipmentNumber, std::string openCode, std::string receiverPhoneNumber, std::string receiverPhonePrefix, float lat, float lon);
-    static void OpenPaczkomat(std::string uuid);
-    static void TerminatePaczka(std::string uuid);
-    static void GetAccountInfo();
-    static std::string GetAccountName(std::string json);
-    static bool ParsePaczkas(std::string json);
-    static bool LoadTokens();
-    static ResponseBuffer
+namespace InPostAPI{
+    void SendSMSCode(std::string phone);
+    void VerifySMSCode(std::string phone, std::string code);
+    void GetPaczkas();
+    void GetPaczkomatStatus(std::string shipmentNumber, std::string openCode, std::string receiverPhoneNumber, std::string receiverPhonePrefix, float lat, float lon);
+    void OpenPaczkomat(std::string uuid);
+    void TerminatePaczka(std::string uuid);
+    void GetAccountInfo();
+    std::string GetAccountName(std::string json);
+    bool ParsePaczkas(std::string json);
+    bool LoadTokens();
+    inline ResponseBuffer
     sendSMSCodeBuffer,
     verifySMSCodeBuffer,
     getAccountInfoBuffer,
@@ -60,15 +59,10 @@ public:
     openPaczkomatBuffer,
     terminatePaczkaBuffer,
     lockerStatusBuffer;
-    static std::vector<Package> packages, packageArchive;
-    static std::string refreshToken;
-    static std::string authToken;
-    static bool RefreshTokenSync();
-    static std::string baseUrl;
-private:
-    static std::string FormatIsoToCustom(const std::string& iso_date);
-    static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
-    static std::unique_ptr<std::vector<char>> refreshTokenBuffer;
+    inline std::vector<Package> packages, packageArchive;
+    inline std::string refreshToken;
+    inline std::string authToken;
+    inline std::string baseUrl = std::string(BASE_URL);
 };
 
 

@@ -12,16 +12,14 @@
 #include <fstream>
 #include <unordered_map>
 
-ResourcePack* AssetLoader::SelectedPack = nullptr;
-std::unordered_map<std::string, ResourcePack> AssetLoader::RegisteredPacks = {};
+ResourcePack* SelectedPack = nullptr;
 
 bool AssetLoader::SetResourcePack(std::string path) {
     if (RegisteredPacks.contains(path)) {
         SelectedPack = &RegisteredPacks[path];
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 void AssetLoader::ResolvePacks() {

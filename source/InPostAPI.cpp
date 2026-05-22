@@ -14,23 +14,7 @@
 #include <algorithm>
 #include <curl/curl.h>
 
-ResponseBuffer InPostAPI::sendSMSCodeBuffer;
-ResponseBuffer InPostAPI::verifySMSCodeBuffer;
-ResponseBuffer InPostAPI::getAccountInfoBuffer;
-ResponseBuffer InPostAPI::getPaczkasBuffer;
-ResponseBuffer InPostAPI::getPaczkomatStatusBuffer;
-ResponseBuffer InPostAPI::openPaczkomatBuffer;
-ResponseBuffer InPostAPI::terminatePaczkaBuffer;
-
-std::unique_ptr<std::vector<char>> InPostAPI::refreshTokenBuffer = std::make_unique<std::vector<char>>();
-std::vector<Package> InPostAPI::packages = {};
-std::vector<Package> InPostAPI::packageArchive = {};
-std::string InPostAPI::refreshToken;
-std::string InPostAPI::authToken;
-
-std::string InPostAPI::baseUrl = std::string(BASE_URL);
-
-std::string InPostAPI::FormatIsoToCustom(const std::string& iso_date) {
+std::string FormatIsoToCustom(const std::string& iso_date) {
     std::istringstream iss{iso_date};
     std::chrono::sys_time<std::chrono::milliseconds> utc_tp;
 

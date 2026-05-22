@@ -10,7 +10,7 @@
 #include <iostream>
 #include "spdlog/spdlog.h"
 
-std::string Config::filename;
+std::string filename;
 
 void Config::LoadConfigFile(std::string path) {
     filename = path;

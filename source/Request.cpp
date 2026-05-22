@@ -12,15 +12,15 @@
 #include <fstream>
 #include "json.hpp"
 
-std::list<RequestData> Request::queue;
-std::mutex Request::queueMutex;
-std::condition_variable_any Request::queueCv;
-std::jthread Request::worker;
-CURL* Request::curl;
-std::string Request::userAgent = "User-Agent: InPost-Mobile/4.9.0(40900000) (Horizon 22.1.0; AW715988204; Nintendo Switch; pl)";
-ResponseBuffer Request::reauthBuffer;
+std::list<RequestData> queue;
+std::mutex queueMutex;
+std::condition_variable_any queueCv;
+std::jthread worker;
+CURL* curl;
+std::string userAgent = "User-Agent: InPost-Mobile/4.9.0(40900000) (Horizon 22.1.0; AW715988204; Nintendo Switch; pl)";
+ResponseBuffer reauthBuffer;
 
-void Request::LogRequestToFile(const std::string& url, const std::string& data, const std::vector<std::string> &headers) {
+void LogRequestToFile(const std::string& url, const std::string& data, const std::vector<std::string> &headers) {
     SPDLOG_INFO("request to {}", url);
     if (!data.empty()) {
         SPDLOG_DEBUG("data: {}", data);
@@ -31,7 +31,7 @@ void Request::LogRequestToFile(const std::string& url, const std::string& data, 
     }
 }
 
-size_t Request::WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t realsize = size * nmemb;
 
     if (ResponseBuffer* buffer = static_cast<ResponseBuffer*>(userp)) {
@@ -199,7 +199,7 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
     }
 }
 
-void Request::RequestThreadWorker(const std::stop_token &stoken) {
+void RequestThreadWorker(const std::stop_token &stoken) {
     ResponseBuffer local_buf = {};
     SPDLOG_TRACE("worker is working");
     SPDLOG_TRACE("pinning thread to 2nd core");
@@ -221,7 +221,7 @@ void Request::RequestThreadWorker(const std::stop_token &stoken) {
         queue.pop_front();
         lock.unlock();
 
-        DoRequest(data.url, data.data, data.headers, data.responseBuffer);
+        Request::DoRequest(data.url, data.data, data.headers, data.responseBuffer);
     }
 }
 
