@@ -828,6 +828,7 @@ void SceneMain::SceneExit() {
     UnloadTexture(loadingCircle);
     UnloadTexture(promptY);
     UnloadTexture(promptX);
+    UnloadTexture(promptPlus);
     UnloadTexture(openButton);
     UnloadTexture(reloadButton);
     UnloadTexture(renameButton);

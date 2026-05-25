@@ -16,7 +16,7 @@ project(SwitchPost)
 
 set(APP_TITLE "SwitchPost")
 set(APP_AUTHOR "ameOverflow")
-set(APP_VERSION "1.0.4")
+set(APP_VERSION "1.1-dev")
 
 set(SOURCES
         lib/qrcodegen.c
@@ -62,7 +62,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     set(CMAKE_CXX_LINK_FLAGS  "${CMAKE_CXX_LINK_FLAGS} -s -O2 ${ARCH} -specs=${LIBNX}/switch.specs")
     target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO RELEASE)
 else()
-    set(APP_VERSION "${APP_VERSION}+dev")
     set(CMAKE_C_COMPILE_FLAGS "${CMAKE_C_COMPILE_FLAGS} -g3 -O0 -Wall -Wno-narrowing -Wno-error=narrowing -ffunction-sections ${ARCH}")
     set(CMAKE_CXX_COMPILE_FLAGS  "${CMAKE_CXX_COMPILE_FLAGS} -g3 -O0 -Wall -Wno-narrowing -Wno-error=narrowing -ffunction-sections ${ARCH} -fno-rtti -fno-exceptions")
     set(CMAKE_C_LINK_FLAGS  "${CMAKE_C_LINK_FLAGS} -g3 -O0 ${ARCH} -specs=${LIBNX}/switch.specs -Wl,-Map,${TARGET}.map")
