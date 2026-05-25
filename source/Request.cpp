@@ -79,6 +79,8 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
         SPDLOG_INFO("request done, code: {}", response->code);
         if (response->code == 401) {
             // reauth
+            std::string data(response->data.begin(), response->data.end());
+            SPDLOG_TRACE("data: {}", data);
             SPDLOG_INFO("refreshing token");
             curl_easy_reset(curl);
             curl_slist* reauthHeaders = nullptr;
@@ -113,13 +115,16 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
             }
 
             std::string requestJson(reauthBuffer.data.begin(), reauthBuffer.data.end());
-            SPDLOG_DEBUG("request done, code: {}", reauthBuffer.code);
-            SPDLOG_TRACE("data: {}", requestJson);
+            SPDLOG_DEBUG("reauth request done, code: {}", reauthBuffer.code);
 
             if (reauthBuffer.code != 200) {
                 SPDLOG_ERROR("reauthentication returned non-200: {}", reauthBuffer.code);
+                SPDLOG_ERROR("data: {}", requestJson);
+                response->code = reauthBuffer.code;
+                response->status = Done;
                 return;
             }
+            SPDLOG_TRACE("data: {}", requestJson);
 
             // we have both refresh code, and auth token, rebuild the fucken json just
             if (nlohmann::json::accept(requestJson)) {

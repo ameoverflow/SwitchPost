@@ -18,6 +18,7 @@ void SceneReloadMain::SceneUpdate(float dt) {
     InPostAPI::getPaczkasBuffer.code = 0;
     InPostAPI::authToken = "";
     InPostAPI::refreshToken = "";
+    InPostAPI::LoadTokens();
     SceneManager::ChangeScene(std::make_unique<SceneMain>());
 }
 

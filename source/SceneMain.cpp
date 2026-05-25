@@ -15,6 +15,7 @@
 #include "SceneManager.h"
 #include "AssetLoader.h"
 #include "Config.h"
+#include "MusicManager.h"
 #include "SceneReloadMain.h"
 #include "qrcodegen.h"
 #include "SceneError.h"
@@ -516,6 +517,7 @@ void SceneMain::SceneUpdate(float dt) {
                 modeChangeAnim.forward();
                 modeChangeAnim.seek(0);
                 playModeChangeAnim = true;
+                PlaySound(change);
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock) {
@@ -561,8 +563,10 @@ void SceneMain::SceneUpdate(float dt) {
                 useTouch = false;
                 if (currentDisplay == &InPostAPI::packages) {
                     currentDisplay = &InPostAPI::packageArchive;
+                    MusicManager::SetVolume(0.5f);
                 } else if (currentDisplay == &InPostAPI::packageArchive) {
                     currentDisplay = &InPostAPI::packages;
+                    MusicManager::SetVolume(1.0f);
                 } else {
                     SPDLOG_CRITICAL("current display pointing at unknown location");
                 }
