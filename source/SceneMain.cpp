@@ -17,6 +17,7 @@
 #include "Config.h"
 #include "SceneReloadMain.h"
 #include "qrcodegen.h"
+#include "SceneError.h"
 
 void SceneMain::ReloadScene() {
     ResetRemoteLockerData();
@@ -130,19 +131,6 @@ void SceneMain::SceneInit() {
 
 void SceneMain::SceneUpdate(float dt) {
     spinnerRotation += 180 * dt;
-    if (errorCode != None) {
-        switch (errorCode) {
-            case NetworkError:
-                errorDesc = "Błąd sieci";
-                break;
-            case JSONError:
-                errorDesc = "Błąd danych";
-                break;
-        }
-
-        return;
-    }
-
     if (isLoaded) {
         if (inDetails)
         {
@@ -392,13 +380,19 @@ void SceneMain::SceneUpdate(float dt) {
                     std::abs(currentTouch.y - touchStartPos.y) > dragThreshold) {
                     isDragging = true;
 
-                    float scrollMaxOffset = 40.0f + ((float) package.width + 40) * (*currentDisplay).size() - GetScreenWidth();
-                    if (scrollMaxOffset >= GetScreenWidth()) {
-                        cameraOffset -= (currentTouch.x - previousTouch.x);
-                        previousTouch = currentTouch;
+                    Vector2 leftUpper = {0, packagesFade.peek()};
+                    Vector2 rightLower = { GetScreenWidth(), GetScreenHeight()};
 
-                        if (cameraOffset > scrollMaxOffset) cameraOffset = scrollMaxOffset;
-                        if (cameraOffset < 0) cameraOffset = 0;
+                    if (touchStartPos.x >= leftUpper.x && touchStartPos.y >= leftUpper.y &&
+                        touchStartPos.x <= rightLower.x && touchStartPos.y <= rightLower.y) {
+                        float scrollMaxOffset = 40.0f + ((float) package.width + 40) * (*currentDisplay).size() - GetScreenWidth();
+                        if (scrollMaxOffset + GetScreenWidth() >= GetScreenWidth()) {
+                            cameraOffset -= (currentTouch.x - previousTouch.x);
+                            previousTouch = currentTouch;
+
+                            if (cameraOffset > scrollMaxOffset) cameraOffset = scrollMaxOffset;
+                            if (cameraOffset < 0) cameraOffset = 0;
+                        }
                     }
                 }
             }
@@ -564,6 +558,7 @@ void SceneMain::SceneUpdate(float dt) {
             }
             if (modeChangeAnim.progress() >= 1.0f && modeChangeAnim.direction() == 1) {
                 selectedPackage = 0;
+                useTouch = false;
                 if (currentDisplay == &InPostAPI::packages) {
                     currentDisplay = &InPostAPI::packageArchive;
                 } else if (currentDisplay == &InPostAPI::packageArchive) {
@@ -590,7 +585,7 @@ void SceneMain::SceneUpdate(float dt) {
                 buffer << fakePackages.rdbuf();
                 if (nlohmann::json::accept(buffer.str())) {
                     if (!InPostAPI::ParsePaczkas(buffer.str())) {
-                        errorCode = JSONError;
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     } else {
                         isLoaded = true;
                         if (std::size((*currentDisplay)) > 0) {
@@ -600,11 +595,11 @@ void SceneMain::SceneUpdate(float dt) {
                 } else {
                     SPDLOG_ERROR("failed to load fake packages");
                     SPDLOG_DEBUG("{}", buffer.str());
-                    errorCode = JSONError;
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     return;
                 }
             } else {
-                errorCode = JSONError;
+                SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                 return;
             }
             fakePackages.close();
@@ -619,7 +614,7 @@ void SceneMain::SceneUpdate(float dt) {
                             selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
                         }
                     } else {
-                        errorCode = JSONError;
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     }
                 } else if (InPostAPI::getPaczkasBuffer.code == 304) {
                     isLoaded = true;
@@ -627,10 +622,10 @@ void SceneMain::SceneUpdate(float dt) {
                         selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
                     }
                 } else {
-                    errorCode = NetworkError;
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                 }
             } else if (InPostAPI::getPaczkasBuffer.status == Error) {
-                errorCode = NetworkError;
+                SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
             }
 
             if (isLoaded && !alreadyLoggedIn) {
@@ -711,17 +706,15 @@ void SceneMain::SceneDraw() {
             } else {
                 Vector2 textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].events[0].name.c_str(), 32, 1);
                 DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].events[0].name.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
-
-#ifdef DEBUG
-                std::string paczkaCounter;
-                paczkaCounter += std::to_string(cameraOffset);
-                paczkaCounter += ", ";
-                paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * (*currentDisplay).size() - GetScreenWidth());
-#else
                 std::string paczkaCounter;
                 paczkaCounter += std::to_string(selectedPackage + 1);
                 paczkaCounter += " / ";
                 paczkaCounter += std::to_string((*currentDisplay).size());
+#ifdef DEBUG
+                paczkaCounter += "\n";
+                paczkaCounter += std::to_string(cameraOffset);
+                paczkaCounter += ", ";
+                paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * (*currentDisplay).size() - GetScreenWidth());
 #endif
                 textSize = MeasureTextEx(mainFont, paczkaCounter.c_str(), 28, 1);
                 DrawTextOutlineEx(mainFont, paczkaCounter.c_str(), {(float)GetScreenWidth()/2 - 190, poststampFade.peek() + modeChangeAnim.peek() + 100}, {textSize.x/2, textSize.y/2}, 28, 1, WHITE, BLACK, 2);
@@ -793,18 +786,13 @@ void SceneMain::SceneDraw() {
             }
         }
     } else {
-        if (loadingFade.progress() == 0.0f && errorCode == None) {
+        if (loadingFade.progress() == 0.0f) {
             DrawRectangleGradientV(0, 0, 1320, 720, ColorAlpha(BLACK, loadingFade.peek()), ColorAlpha({10, 10, 10, 255}, loadingFade.peek()));
             Rectangle source = { 0.0f, 0.0f, (float)loadingCircle.width, (float)loadingCircle.height };
             Rectangle dest = { 1197, 637, (float)loadingCircle.width/2, (float)loadingCircle.height/2};
             Vector2 origin = { (float)loadingCircle.width/4.0f, (float)loadingCircle.height/4.0f};
             DrawTexturePro(loadingCircle, source, { dest.x, dest.y, dest.width, dest.height}, origin, spinnerRotation, {255, 255, 255, 100});
 
-        } else if (errorCode != None) {
-            DrawRectangleGradientV(0, 0, 1320, 720, BLACK, {64, 0, 0, 255});
-            Vector2 textSize = MeasureTextEx(mainFont, errorDesc.c_str(), 50, 2);
-            DrawTextOutlineEx(mainFont, errorDesc.c_str(), {1280/2, 720/2},
-                              {textSize.x / 2.0f, textSize.y / 2.0f}, 50, 2, RED, BLACK, 3);
         } else if (loadingFade.progress() > 0.0f) {
             DrawRectangleGradientV(0, 0, 1320, 720, ColorAlpha(BLACK, loadingFade.peek()), ColorAlpha({10, 10, 10, 255}, loadingFade.peek()));
         }

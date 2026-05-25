@@ -21,13 +21,11 @@ private:
     Sound introSound;
 
     tweeny::tween<float> logoFadeIn, ameLogoFadeIn;
-    tweeny::tween<int> errorBgFade;
 
     int randomNum = 0;
     float introTimer = 0.0f;
     int introStage = 0;
     float logoAlpha = 0.0f;
-    LoadingError error;
     bool tokensLoaded;
 
     std::string line = "missingno.";

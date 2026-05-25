@@ -11,7 +11,7 @@
 #include "raylib.h"
 
 enum LoadingError {
-    None,
+    UnknownError,
     NetworkError,
     JSONError,
     SDError,

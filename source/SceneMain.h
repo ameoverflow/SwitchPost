@@ -48,8 +48,6 @@ private:
     bool isLoaded = false;
     bool inputLock;
 
-    std::string errorDesc;
-    LoadingError errorCode;
     bool tokensLoaded;
 
     Result rc;

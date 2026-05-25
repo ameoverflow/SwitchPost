@@ -37,7 +37,7 @@ set(SOURCES
         source/Config.h
         source/SceneTutorial.cpp
         source/SceneReloadMain.cpp
-        source/SceneReloadMain.h
+        source/SceneError.cpp
 )
 
 add_executable(SwitchPost ${SOURCES})

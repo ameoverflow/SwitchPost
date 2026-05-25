@@ -20,6 +20,7 @@
 #include "InPostAPI.h"
 #include "json.hpp"
 #include "Config.h"
+#include "SceneError.h"
 
 ResponseBuffer bufferPointer;
 
@@ -37,7 +38,6 @@ void SceneIntro::SceneInit() {
     voice = Config::GetProperty("voice");
 
     logoFadeIn = tweeny::from(0.0f).to(0.8f).during(644);
-    errorBgFade = tweeny::from(32).to(64).during(2000).via(tweeny::easing::sinusoidalInOut);
     ameLogoFadeIn = tweeny::from(0.0f).to(1.0f).during(250).via(tweeny::easing::backOut);
     logoFadeIn.seek(0);
     ameLogoFadeIn.seek(0);
@@ -61,35 +61,13 @@ void SceneIntro::SceneInit() {
 }
 
 void SceneIntro::SceneUpdate(float dt) {
-    errorBgFade.step((int)(dt * 1000.0f));
-    if (errorBgFade.progress() >= 1.0f && errorBgFade.direction() == 1) {
-        errorBgFade.backward();
-    } else if (errorBgFade.progress() <= 0.0f && errorBgFade.direction() == -1) {
-        errorBgFade.forward();
-    }
-
-    if (error != 0) {
-        switch (error) {
-            case NetworkError:
-                errorCode = "Błąd sieci, sprawdź połączenie z internetem";
-                break;
-            case SDError:
-                errorCode = "Błąd zapisywania konfiguracji";
-                break;
-            case AppletError:
-                errorCode = "Aplikacja uruchomiona w trybie apletu";
-                break;
-        }
-        return;
-    }
-
     if (randomNum != 67) {
         if (introStage == 0) {
             // initialize shit
             // check if its not applet mode first
             if (at != AppletType_Application && at != AppletType_SystemApplication) {
-                error = AppletError;
                 SPDLOG_CRITICAL("application running as applet");
+                SceneManager::ChangeScene(std::make_unique<SceneError>(AppletError));
             } else {
                 if (bufferPointer.status == NotStarted) {
                     status = "Sprawdzanie sieci...";
@@ -102,7 +80,7 @@ void SceneIntro::SceneUpdate(float dt) {
         } else if (introStage == 1) {
             if (bufferPointer.status == Error) {
                 if (bufferPointer.result != CURLE_OK) {
-                    error = NetworkError;
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                     SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer.result));
                     return;
                 }
@@ -119,8 +97,8 @@ void SceneIntro::SceneUpdate(float dt) {
         } else if (introStage == 2) {
             if (bufferPointer.status == Error) {
                 if (bufferPointer.result != CURLE_OK) {
-                    error = NetworkError;
                     SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer.result));
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                     return;
                 }
             } else if (bufferPointer.status == Done) {
@@ -173,8 +151,8 @@ void SceneIntro::SceneUpdate(float dt) {
                 } else if (InPostAPI::sendSMSCodeBuffer.status == Error ||
                            (InPostAPI::sendSMSCodeBuffer.status == Done &&
                             InPostAPI::sendSMSCodeBuffer.code != 200)) {
-                    error = NetworkError;
                     SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                     return;
                 }
 
@@ -194,18 +172,18 @@ void SceneIntro::SceneUpdate(float dt) {
                                 SPDLOG_INFO("login data saved to SD");
                             } else {
                                 SPDLOG_ERROR("couldnt open token.json for writing");
-                                error = SDError;
+                                SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
                             }
                         } else {
-                            error = SDError;
+                            SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
                         }
                     } else {
-                        error = SDError;
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
                     }
                 } else if (InPostAPI::verifySMSCodeBuffer.status == Error ||
                            (InPostAPI::verifySMSCodeBuffer.status == Done &&
                             InPostAPI::verifySMSCodeBuffer.code != 200)) {
-                    error = NetworkError;
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                     SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                 }
             } else {
@@ -218,14 +196,14 @@ void SceneIntro::SceneUpdate(float dt) {
                     } else if (InPostAPI::getAccountInfoBuffer.status == Error ||
                                (InPostAPI::getAccountInfoBuffer.status == Done &&
                                 InPostAPI::getAccountInfoBuffer.code != 200)) {
-                        error = NetworkError;
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                         SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                     }
                 } else {
                     if (InPostAPI::LoadTokens()) {
                         tokensLoaded = true;
                     } else {
-                        error = JSONError;
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     }
                 }
             }
@@ -261,13 +239,6 @@ void SceneIntro::SceneUpdate(float dt) {
 void SceneIntro::SceneDraw() {
     if (randomNum != 67) {
         DrawRectangleGradientV(0, 0, 1280, 720, BLACK, {10,10,10,255});
-        if (error != 0) {
-            DrawRectangleGradientV(0, 0, 1280, 720, BLACK, {errorBgFade.peek(),0,0,255});
-            Vector2 textSize = MeasureTextEx(mainFont, errorCode.c_str(), 34, 0);
-            DrawTextOutlineEx(mainFont, errorCode.c_str(), {1280/2, 720/2},
-                              {textSize.x / 2.0f, textSize.y / 2.0f}, 34, 0, RED, BLACK, 2);
-            return;
-        }
 
         if (introStage == 1 || introStage == 2) {
             DrawTexturePro(introLogo, {0, 0, introLogo.width, introLogo.height},

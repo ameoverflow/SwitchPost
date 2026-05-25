@@ -48,8 +48,8 @@ void SceneOptions::SceneInit() {
 
     buildInfo = std::string(APP_TITLE) + " " + std::string(APP_VERSION) + "\n\n";
     buildInfo += "Build date: " + std::string(__DATE__) + " " + std::string(__TIME__) + "\n";
-    buildInfo += "Compiled with GCC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + "\n";
-    buildInfo += "raylib " + std::string(RAYLIB_VERSION) + "\n\n(A) Ok";
+    buildInfo += "Compiled with GCC " + std::to_string(__GNUC__) + "." + std::to_string(__GNUC_MINOR__) + "." + std::to_string(__GNUC_PATCHLEVEL__) + "\n";buildInfo += "raylib " + std::string(RAYLIB_VERSION) + "\n";
+    buildInfo += "Horizon OS " + std::to_string(HOSVER_MAJOR(hosversionGet())) + "." + std::to_string(HOSVER_MINOR(hosversionGet())) + "." + std::to_string(HOSVER_MICRO(hosversionGet())) + "\n\n(A) Ok";
 }
 
 void SceneOptions::SceneUpdate(float dt) {

@@ -17,7 +17,7 @@ std::mutex queueMutex;
 std::condition_variable_any queueCv;
 std::jthread worker;
 CURL* curl;
-std::string userAgent = "User-Agent: InPost-Mobile/4.9.0(40900000) (Horizon 22.1.0; AW715988204; Nintendo Switch; pl)";
+std::string userAgent = "User-Agent: InPost-Mobile/4.9.0(40900000) (Horizon " + std::to_string(HOSVER_MAJOR(hosversionGet())) + "." + std::to_string(HOSVER_MINOR(hosversionGet())) + "." + std::to_string(HOSVER_MICRO(hosversionGet())) + "; AW715988204; Nintendo Switch; pl)";
 ResponseBuffer reauthBuffer;
 
 void LogRequestToFile(const std::string& url, const std::string& data, const std::vector<std::string> &headers) {
@@ -143,19 +143,18 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
                     }
                 }
             }
-
-            SPDLOG_DEBUG("retrying original request");
+            curl_slist* retryHeaders = nullptr;
             for (const std::string& header : headers) {
                 if (header.find("Authorization:") != std::string::npos) {
                     std::string authHeader = "Authorization: " + InPostAPI::authToken;
-                    headerList = curl_slist_append(headerList, authHeader.c_str());
+                    retryHeaders = curl_slist_append(retryHeaders, authHeader.c_str());
                 } else {
-                    headerList = curl_slist_append(headerList, header.c_str());
+                    retryHeaders = curl_slist_append(retryHeaders, header.c_str());
                 }
             }
             curl_easy_reset(curl);
-            headerList = curl_slist_append(headerList, userAgent.c_str());
-            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
+            retryHeaders = curl_slist_append(retryHeaders, userAgent.c_str());
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, retryHeaders);
 
             curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
             curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
@@ -163,7 +162,7 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
 
             curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
             if (!data.empty()) {
-                headerList = curl_slist_append(headerList, "Content-Type: application/json");
+                retryHeaders = curl_slist_append(retryHeaders, "Content-Type: application/json");
                 curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
             }
 
@@ -182,14 +181,13 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
                 if (response->code == 401) {
                     response->status = Error;
                     SPDLOG_ERROR("request failed after reauthentication, code: {}", response->code);
-                    curl_slist_free_all(headerList);
                 } else {
                     response->status = Done; // :3
                     SPDLOG_INFO("request done after reauthentication, code: {}", response->code);
                     std::string data(response->data.begin(), response->data.end());
                     SPDLOG_TRACE("data: {}", data);
-                    curl_slist_free_all(headerList);
                 }
+                curl_slist_free_all(retryHeaders);
             }
         } else {
             std::string data(response->data.begin(), response->data.end());

@@ -6550,7 +6550,7 @@
             "storedDate": "2025-12-13T06:11:01.000Z",
             "pickUpDate": "2025-12-13T20:54:59.877Z",
             "pickUpPoint": {
-                "name": "TESTNAZWA",
+                "name": "zwrot",
                 "location": {
                     "latitude": 50.10209,
                     "longitude": 19.95641
@@ -6602,11 +6602,11 @@
                 "canShareParcel": false,
                 "withDonations": true
             },
-            "status": "READY_TO_PICKUP",
+            "status": "RETURNED_TO_SENDER",
             "statusGroup": "DELIVERED",
             "eventLog": [
                 {
-                    "type": "PARCEL_STATUS",
+                    "type": "RETURNED_TO_SENDER",
                     "name": "DELIVERED",
                     "date": "2025-12-13T20:54:59.877Z"
                 },
@@ -6667,7 +6667,7 @@
             "events": [
                 {
                     "date": "2025-12-13T20:54:59.877Z",
-                    "eventTitle": "Doręczona",
+                    "eventTitle": "Zwrot do nadawcy",
                     "eventDescription": "Podróż przesyłki od Nadawcy do Odbiorcy zakończyła się, ale nie musi to oznaczać końca naszej znajomości :) Jeśli lubisz InPost, odwiedź nasz fanpage na Facebooku. Dziękujemy!"
                 },
                 {
