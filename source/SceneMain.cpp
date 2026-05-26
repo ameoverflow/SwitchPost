@@ -31,9 +31,9 @@ void SceneMain::ReloadScene() {
 }
 
 void SceneMain::ResetRemoteLockerData() {
-    InPostAPI::getPaczkomatStatusBuffer.status = NotStarted;
-    InPostAPI::openPaczkomatBuffer.status = NotStarted;
-    InPostAPI::terminatePaczkaBuffer.status = NotStarted;
+    InPostAPI::getPaczkomatStatusBuffer->status = NotStarted;
+    InPostAPI::openPaczkomatBuffer->status = NotStarted;
+    InPostAPI::terminatePaczkaBuffer->status = NotStarted;
 }
 
 Texture2D SceneMain::GenerateQrTexture(const char* qrData) {
@@ -195,7 +195,7 @@ void SceneMain::SceneUpdate(float dt) {
                     inQR = false;
                 }
 
-                if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer.status == NotStarted) {
+                if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer->status == NotStarted) {
                     InPostAPI::GetPaczkomatStatus(
                             (*currentDisplay)[selectedPackage].number,
                             (*currentDisplay)[selectedPackage].pickupCode,
@@ -276,7 +276,7 @@ void SceneMain::SceneUpdate(float dt) {
 
             // handle qr mode and requests
             {
-                if (inQR && inOpenPaczkomat && !inConfirmClosed && InPostAPI::openPaczkomatBuffer.status == NotStarted && !inputLock) {
+                if (inQR && inOpenPaczkomat && !inConfirmClosed && InPostAPI::openPaczkomatBuffer->status == NotStarted && !inputLock) {
                     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                         inOpenPaczkomat = false;
                         ResetRemoteLockerData();
@@ -285,9 +285,9 @@ void SceneMain::SceneUpdate(float dt) {
                     }
                 }
 
-                if (inQR && !inOpenPaczkomat && !inConfirmClosed && InPostAPI::getPaczkomatStatusBuffer.status == Done) {
-                    if (InPostAPI::getPaczkomatStatusBuffer.code == 200) {
-                        std::string rawData = std::string(InPostAPI::getPaczkomatStatusBuffer.data.begin(), InPostAPI::getPaczkomatStatusBuffer.data.end());
+                if (inQR && !inOpenPaczkomat && !inConfirmClosed && InPostAPI::getPaczkomatStatusBuffer->status == Done) {
+                    if (InPostAPI::getPaczkomatStatusBuffer->code == 200) {
+                        std::string rawData = std::string(InPostAPI::getPaczkomatStatusBuffer->data.begin(), InPostAPI::getPaczkomatStatusBuffer->data.end());
                         if (nlohmann::json::accept(rawData)) {
                             nlohmann::json statusData = nlohmann::json::parse(rawData);
                             if (statusData.contains("sessionUuid") && !statusData["sessionUuid"].is_null()) {
@@ -302,14 +302,14 @@ void SceneMain::SceneUpdate(float dt) {
                             }
                         } else {
                             SPDLOG_ERROR("failed to start open session parcel {}", (*currentDisplay)[selectedPackage].number);
-                            SPDLOG_ERROR("http code: {}", InPostAPI::getPaczkomatStatusBuffer.code);
+                            SPDLOG_ERROR("http code: {}", InPostAPI::getPaczkomatStatusBuffer->code);
                             ResetRemoteLockerData();
                         }
                     }
                 }
 
-                if (inQR && inOpenPaczkomat && !inConfirmClosed && InPostAPI::openPaczkomatBuffer.status == Done) {
-                    if (InPostAPI::openPaczkomatBuffer.code == 200) {
+                if (inQR && inOpenPaczkomat && !inConfirmClosed && InPostAPI::openPaczkomatBuffer->status == Done) {
+                    if (InPostAPI::openPaczkomatBuffer->code == 200) {
                         inOpenPaczkomat = false;
                         inConfirmClosed = true;
                         if (confirmClosed.frameCount > 0) {
@@ -317,13 +317,13 @@ void SceneMain::SceneUpdate(float dt) {
                         }
                     } else {
                         SPDLOG_ERROR("failed to open locker for parcel {}", (*currentDisplay)[selectedPackage].number);
-                        SPDLOG_ERROR("http code: {}", InPostAPI::openPaczkomatBuffer.code);
+                        SPDLOG_ERROR("http code: {}", InPostAPI::openPaczkomatBuffer->code);
                         inOpenPaczkomat = false;
                         ResetRemoteLockerData();
                     }
                 }
 
-                if (inQR && !inOpenPaczkomat && inConfirmClosed && InPostAPI::terminatePaczkaBuffer.status == NotStarted && !inputLock) {
+                if (inQR && !inOpenPaczkomat && inConfirmClosed && InPostAPI::terminatePaczkaBuffer->status == NotStarted && !inputLock) {
                     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                         inConfirmClosed = false;
                         ResetRemoteLockerData();
@@ -332,10 +332,10 @@ void SceneMain::SceneUpdate(float dt) {
                     }
                 }
 
-                if (inQR && !inOpenPaczkomat && inConfirmClosed && InPostAPI::terminatePaczkaBuffer.status == Done) {
-                    if (InPostAPI::terminatePaczkaBuffer.code != 200) {
+                if (inQR && !inOpenPaczkomat && inConfirmClosed && InPostAPI::terminatePaczkaBuffer->status == Done) {
+                    if (InPostAPI::terminatePaczkaBuffer->code != 200) {
                         SPDLOG_ERROR("failed to terminate session for parcel {}", (*currentDisplay)[selectedPackage].number);
-                        SPDLOG_ERROR("http code: {}", InPostAPI::terminatePaczkaBuffer.code);
+                        SPDLOG_ERROR("http code: {}", InPostAPI::terminatePaczkaBuffer->code);
                     }
                     ReloadScene();
                 }
@@ -608,11 +608,11 @@ void SceneMain::SceneUpdate(float dt) {
             }
             fakePackages.close();
         } else {
-            if (InPostAPI::getPaczkasBuffer.status == NotStarted) {
+            if (InPostAPI::getPaczkasBuffer->status == NotStarted) {
                 InPostAPI::GetPaczkas();
-            } else if (InPostAPI::getPaczkasBuffer.status == Done) {
-                if (InPostAPI::getPaczkasBuffer.code == 200) {
-                    if (InPostAPI::ParsePaczkas(std::string(InPostAPI::getPaczkasBuffer.data.begin(), InPostAPI::getPaczkasBuffer.data.end()))) {
+            } else if (InPostAPI::getPaczkasBuffer->status == Done) {
+                if (InPostAPI::getPaczkasBuffer->code == 200) {
+                    if (InPostAPI::ParsePaczkas(std::string(InPostAPI::getPaczkasBuffer->data.begin(), InPostAPI::getPaczkasBuffer->data.end()))) {
                         isLoaded = true;
                         if (std::size((*currentDisplay)) > 0) {
                             selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
@@ -620,7 +620,7 @@ void SceneMain::SceneUpdate(float dt) {
                     } else {
                         SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     }
-                } else if (InPostAPI::getPaczkasBuffer.code == 304) {
+                } else if (InPostAPI::getPaczkasBuffer->code == 304) {
                     isLoaded = true;
                     if (std::size((*currentDisplay)) > 0) {
                         selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
@@ -628,7 +628,7 @@ void SceneMain::SceneUpdate(float dt) {
                 } else {
                     SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                 }
-            } else if (InPostAPI::getPaczkasBuffer.status == Error) {
+            } else if (InPostAPI::getPaczkasBuffer->status == Error) {
                 SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
             }
 
@@ -779,9 +779,9 @@ void SceneMain::SceneDraw() {
                     {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
             }
 
-            if (InPostAPI::getPaczkomatStatusBuffer.status == InProgress ||
-                InPostAPI::openPaczkomatBuffer.status == InProgress ||
-                InPostAPI::terminatePaczkaBuffer.status == InProgress) {
+            if (InPostAPI::getPaczkomatStatusBuffer->status == InProgress ||
+                InPostAPI::openPaczkomatBuffer->status == InProgress ||
+                InPostAPI::terminatePaczkaBuffer->status == InProgress) {
 
                 Rectangle source = { 0.0f, 0.0f, (float)loadingCircle.width, (float)loadingCircle.height };
                 Rectangle dest = { 1197, 637, (float)loadingCircle.width/2, (float)loadingCircle.height/2};

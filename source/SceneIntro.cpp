@@ -20,10 +20,34 @@
 #include "InPostAPI.h"
 #include "json.hpp"
 #include "Config.h"
+#include "SceneDebug.h"
 #include "SceneError.h"
 
 ResponseBuffer bufferPointer;
 
+bool SceneIntro::IsConnected() {
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) {
+        SPDLOG_CRITICAL("failed to initialize nifm");
+        return false;
+    }
+
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+
+    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
+
+    nifmExit();
+
+    if (R_SUCCEEDED(rc)) {
+        if (status == NifmInternetConnectionStatus_Connected) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 void SceneIntro::SceneInit() {
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
@@ -62,32 +86,42 @@ void SceneIntro::SceneInit() {
 
 void SceneIntro::SceneUpdate(float dt) {
     if (randomNum != 67) {
+        // check for debug combination
+#ifdef DEBUG
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
+            SceneManager::ChangeScene(std::make_unique<SceneDebug>());
+        }
+#endif
         if (introStage == 0) {
             // initialize shit
-            // check if its not applet mode first
+            // check if its not applet mode
             if (at != AppletType_Application && at != AppletType_SystemApplication) {
                 SPDLOG_CRITICAL("application running as applet");
                 SceneManager::ChangeScene(std::make_unique<SceneError>(AppletError));
+                return;
+            }
+
+            if (!checkedNetwork) {
+                if (!IsConnected()) {
+                    SPDLOG_CRITICAL("not connected");
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                    return;
+                }
+                checkedNetwork = true;
             } else {
-                if (bufferPointer.status == NotStarted) {
-                    status = "Sprawdzanie sieci...";
-                    Request::QueueRequest("https://api-inmobile-pl.easypack24.net", "", {  }, &bufferPointer);
-                    bufferPointer.status = InProgress;
-                } else if (bufferPointer.status == InProgress) {
+                if (!loadedTokens) {
+                    if (std::filesystem::exists("sdmc:/config/switchpost/token.json") && !InPostAPI::LoadTokens()) {
+                        SPDLOG_CRITICAL("unable to load tokens");
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+                        return;
+                    }
+                    loadedTokens = true;
+                } else {
                     introStage = 1;
                 }
             }
-        } else if (introStage == 1) {
-            if (bufferPointer.status == Error) {
-                if (bufferPointer.result != CURLE_OK) {
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
-                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer.result));
-                    return;
-                }
-            } else if (bufferPointer.status == Done) {
-                status = "";
-            }
 
+        } else if (introStage == 1) {
             ameLogoFadeIn.step((int)(dt * 1000.0f));
             if (ameLogoFadeIn.progress() >= 1.0f) {
                 introTimer = 0;
@@ -95,25 +129,15 @@ void SceneIntro::SceneUpdate(float dt) {
                 PlaySound(introSound);
             }
         } else if (introStage == 2) {
-            if (bufferPointer.status == Error) {
-                if (bufferPointer.result != CURLE_OK) {
-                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer.result));
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
-                    return;
-                }
-            } else if (bufferPointer.status == Done) {
-                status = "";
-            }
-
             introTimer += dt;
-            if (introTimer > 2 && bufferPointer.status == Done) {
+            if (introTimer > 2) {
                 introTimer = 0;
                 introStage = 3;
             }
         } else if (introStage == 3) {
             // log in
             if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
-                if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
+                if (InPostAPI::sendSMSCodeBuffer->status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
@@ -131,8 +155,8 @@ void SceneIntro::SceneUpdate(float dt) {
                     InPostAPI::SendSMSCode(std::string(phoneNumber));
                 }
 
-                if (InPostAPI::sendSMSCodeBuffer.status == Done &&
-                    InPostAPI::verifySMSCodeBuffer.status == NotStarted) {
+                if (InPostAPI::sendSMSCodeBuffer->status == Done &&
+                    InPostAPI::verifySMSCodeBuffer->status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
@@ -148,31 +172,35 @@ void SceneIntro::SceneUpdate(float dt) {
                     }
 
                     InPostAPI::VerifySMSCode(std::string(phoneNumber), std::string(code));
-                } else if (InPostAPI::sendSMSCodeBuffer.status == Error ||
-                           (InPostAPI::sendSMSCodeBuffer.status == Done &&
-                            InPostAPI::sendSMSCodeBuffer.code != 200)) {
-                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
+                } else if (InPostAPI::sendSMSCodeBuffer->status == Error ||
+                           (InPostAPI::sendSMSCodeBuffer->status == Done &&
+                            InPostAPI::sendSMSCodeBuffer->code != 200)) {
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
                     SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                     return;
                 }
 
-                if (InPostAPI::verifySMSCodeBuffer.status == Done && InPostAPI::verifySMSCodeBuffer.code == 200) {
-                    std::string loginData(InPostAPI::verifySMSCodeBuffer.data.begin(),
-                                          InPostAPI::verifySMSCodeBuffer.data.end());
+                if (InPostAPI::verifySMSCodeBuffer->status == Done && InPostAPI::verifySMSCodeBuffer->code == 200) {
+                    std::string loginData(InPostAPI::verifySMSCodeBuffer->data.begin(),
+                                          InPostAPI::verifySMSCodeBuffer->data.end());
                     if (nlohmann::json::accept(loginData)) {
                         nlohmann::json data = nlohmann::json::parse(loginData);
                         std::string authToken = data.value("authToken", "");
                         std::string refreshToken = data.value("refreshToken", "");
 
                         if (!authToken.empty() && !refreshToken.empty()) {
-                            std::ofstream file("sdmc:/config/switchpost/token.json");
-                            if (file.is_open()) {
-                                file << loginData;
-                                file.close();
-                                SPDLOG_INFO("login data saved to SD");
+                            if (!disableSavingToSD) {
+                                std::ofstream file("sdmc:/config/switchpost/token.json");
+                                if (file.is_open()) {
+                                    file << loginData;
+                                    file.close();
+                                    SPDLOG_INFO("login data saved to SD");
+                                } else {
+                                    SPDLOG_ERROR("couldnt open token.json for writing");
+                                    SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
+                                }
                             } else {
-                                SPDLOG_ERROR("couldnt open token.json for writing");
-                                SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
+                                SPDLOG_DEBUG("saving to sd disabled");
                             }
                         } else {
                             SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
@@ -180,31 +208,23 @@ void SceneIntro::SceneUpdate(float dt) {
                     } else {
                         SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
                     }
-                } else if (InPostAPI::verifySMSCodeBuffer.status == Error ||
-                           (InPostAPI::verifySMSCodeBuffer.status == Done &&
-                            InPostAPI::verifySMSCodeBuffer.code != 200)) {
+                } else if (InPostAPI::verifySMSCodeBuffer->status == Error ||
+                           (InPostAPI::verifySMSCodeBuffer->status == Done &&
+                            InPostAPI::verifySMSCodeBuffer->code != 200)) {
                     SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
-                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
                 }
             } else {
-                if (tokensLoaded) {
-                    if (InPostAPI::getAccountInfoBuffer.status == NotStarted) {
-                        InPostAPI::GetAccountInfo();
-                    } else if (InPostAPI::getAccountInfoBuffer.status == Done && InPostAPI::getAccountInfoBuffer.code == 200) {
-                        SPDLOG_DEBUG("account info loaded apparently?");
-                        introStage = 4;
-                    } else if (InPostAPI::getAccountInfoBuffer.status == Error ||
-                               (InPostAPI::getAccountInfoBuffer.status == Done &&
-                                InPostAPI::getAccountInfoBuffer.code != 200)) {
-                        SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
-                        SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
-                    }
-                } else {
-                    if (InPostAPI::LoadTokens()) {
-                        tokensLoaded = true;
-                    } else {
-                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
-                    }
+                if (InPostAPI::getAccountInfoBuffer->status == NotStarted) {
+                    InPostAPI::GetAccountInfo();
+                } else if (InPostAPI::getAccountInfoBuffer->status == Done && InPostAPI::getAccountInfoBuffer->code == 200) {
+                    SPDLOG_DEBUG("account info loaded apparently?");
+                    introStage = 4;
+                } else if (InPostAPI::getAccountInfoBuffer->status == Error ||
+                           (InPostAPI::getAccountInfoBuffer->status == Done &&
+                            InPostAPI::getAccountInfoBuffer->code != 200)) {
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer->code));
                 }
             }
         } else if (introStage == 4) {
@@ -248,10 +268,6 @@ void SceneIntro::SceneDraw() {
             Vector2 textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
             DrawTextPro(mainFont, line.c_str(), {1280/2, 720/2 + 250},
                         {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 34, 0, WHITE);
-
-            textSize = MeasureTextEx(mainFont, status.c_str(), 28, 0);
-            DrawTextPro(mainFont, status.c_str(), {1280/2, 720/2 + 300},
-                        {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 28, 0, GRAY);
         } else if (introStage == 4) {
             if (voice != "") return;
             Vector2 textSize = MeasureTextEx(mainFont, "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak", 34, 0);

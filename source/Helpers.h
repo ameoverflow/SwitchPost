@@ -25,4 +25,6 @@ extern bool shouldQuit;
 extern int currentBackground;
 extern std::vector<Texture2D> backgrounds;
 extern bool alreadyLoggedIn;
+extern bool disableSavingToSD;
+extern bool networkTested;
 #endif //SWITCHPOST_HELPERS_H

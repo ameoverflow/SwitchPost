@@ -6,10 +6,10 @@
 #include "SceneManager.h"
 #include "SceneTitle.h"
 #include "AssetLoader.h"
-#include "SceneTutorial.h"
 #include <switch.h>
 
 #include "InPostAPI.h"
+#include "SceneIntro.h"
 #include "spdlog/spdlog.h"
 
 void SceneDebug::SceneInit() {
@@ -20,9 +20,8 @@ void SceneDebug::SceneInit() {
     options = {
             "Pokazuj testowe paczki",
             "Spakuj się do więzienia :troll:",
-            "Włącz tutorial",
             "Ustaw adres serwera InPost Mobile",
-            "Zresetuj dane"
+            "Blokada zapisu na kartę SD"
     };
 }
 
@@ -50,7 +49,7 @@ void SceneDebug::SceneUpdate(float dt) {
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) && !inputLock) {
         inputLock = true;
-        SceneManager::ChangeScene(std::make_unique<SceneTitle>());
+        SceneManager::ChangeScene(std::make_unique<SceneIntro>());
         return;
     }
 
@@ -67,20 +66,16 @@ void SceneDebug::SceneUpdate(float dt) {
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !inputLock) {
         switch (selectedOption) {
             case 0:
-                showFakePackages = true;
+                showFakePackages = !showFakePackages;
                 break;
             case 1:
                 pakujOn = true;
                 break;
             case 2:
-                inputLock = true;
-                SceneManager::ChangeScene(std::make_unique<SceneTutorial>());
-                break;
-            case 3:
                 askingForUrl = true;
                 break;
-            case 4:
-                std::filesystem::remove("sdmc:/config/switchpost/token.json");
+            case 3:
+                disableSavingToSD = !disableSavingToSD;
                 break;
         }
         PlaySound(done);
@@ -88,11 +83,20 @@ void SceneDebug::SceneUpdate(float dt) {
 }
 
 void SceneDebug::SceneDraw() {
-    DrawTextOutlineEx(mainFont, "Ultra tajne debugowe menu", {10, 10}, {0, 0}, 50, 2, WHITE, BLACK, 4);
-    int offset = 70;
+    DrawRectangle(0, 0, 1280, 720, BLACK);
+    DrawTextOutlineEx(mainFont, "Opcje uruchamiania", {10, 10}, {0, 0}, 28, 2, WHITE, BLACK, 2);
+    int offset = 32;
     for (int i = 0; i < options.size(); i++) {
-        DrawTextOutlineEx(mainFont, options[i].c_str(), {10, offset}, {0, 0}, 40, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
-        offset += MeasureTextEx(mainFont, options[i].c_str(), 40, 0).y + 10;
+        if (i == 0) {
+            DrawTextOutlineEx(mainFont, std::string(options[i] + (showFakePackages ? ": TAK": ": NIE")).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
+        } else if (i == 3) {
+            DrawTextOutlineEx(mainFont, std::string(options[i] + (disableSavingToSD ? ": TAK": ": NIE")).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
+        } else if (i == 2) {
+            DrawTextOutlineEx(mainFont, std::string(options[i] + ": " + InPostAPI::baseUrl).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
+        } else {
+            DrawTextOutlineEx(mainFont, options[i].c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
+        }
+        offset += MeasureTextEx(mainFont, options[i].c_str(), 28, 0).y + 3;
     }
     if (askingForUrl) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
     if (pakujOn) DrawTexture(pakuj, 0, 0, WHITE);

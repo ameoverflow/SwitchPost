@@ -16,6 +16,7 @@ public:
     void SceneUpdate(float dt) override;
     void SceneExit() override;
 private:
+    bool IsConnected();
     Texture2D pakuj, logo, introLogo;
     Font logoFont, mainFont;
     Sound introSound;
@@ -26,10 +27,10 @@ private:
     float introTimer = 0.0f;
     int introStage = 0;
     float logoAlpha = 0.0f;
-    bool tokensLoaded;
+    bool checkedNetwork, loadedTokens;
 
     std::string line = "missingno.";
-    std::string voice, errorCode, status;
+    std::string voice, errorCode;
     std::vector<std::string> splashes;
 
     AppletType at;

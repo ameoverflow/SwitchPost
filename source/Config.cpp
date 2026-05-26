@@ -8,6 +8,8 @@
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
+
+#include "Helpers.h"
 #include "spdlog/spdlog.h"
 
 std::string filename;
@@ -62,11 +64,15 @@ void Config::SetProperty(std::string name, std::string value) {
     }
 
     SPDLOG_TRACE("config file: {}", configData.dump());
-    std::ofstream outFile(filename);
-    if (outFile.is_open()) {
-        configData[name] = value;
-        outFile << configData.dump();
-        outFile.close();
-        SPDLOG_DEBUG("property {} set to {}", name, value);
+    if (disableSavingToSD) {
+        std::ofstream outFile(filename);
+        if (outFile.is_open()) {
+            configData[name] = value;
+            outFile << configData.dump();
+            outFile.close();
+            SPDLOG_DEBUG("property {} set to {}", name, value);
+        }
+    } else {
+        SPDLOG_DEBUG("saving to sd disabled");
     }
 }
