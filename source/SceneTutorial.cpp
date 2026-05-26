@@ -95,8 +95,6 @@ void SceneTutorial::SceneInit() {
     voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
 
     PlaySound(voiceClip);
-
-    playCharacterAnim = true;
 }
 
 void SceneTutorial::SceneUpdate(float dt) {
