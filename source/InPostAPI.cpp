@@ -259,39 +259,3 @@ void InPostAPI::TerminatePaczka(std::string uuid) {
     terminatePaczkaBuffer.code = 0;
     Request::QueueRequest(baseUrl + "/v1/collect/compartment/terminate", sendData.dump(), { "Authorization: " + authToken }, &terminatePaczkaBuffer);
 }
-
-void InPostAPI::GetAccountInfo() {
-    getAccountInfoBuffer.data.clear();
-    getAccountInfoBuffer.status = InProgress;
-    getAccountInfoBuffer.code = 0;
-    Request::QueueRequest(baseUrl + "/izi/app/shopping/v2/profile", "", { "Authorization: " + authToken }, &getAccountInfoBuffer);
-}
-
-std::string InPostAPI::GetAccountName(std::string json) {
-    if (!nlohmann::json::accept(json)) {
-        SPDLOG_ERROR("malformed account info json");
-        return "Bezimienny";
-    }
-
-    nlohmann::json accountJson = nlohmann::json::parse(json);
-
-    if (!accountJson.contains("personal") || !accountJson["personal"].is_object()) {
-        SPDLOG_ERROR("malformed account info json");
-        return "Bezimienny";
-    }
-
-    nlohmann::json personalData = accountJson["personal"];
-
-    if (personalData.contains("email") && personalData["email"].is_string()) {
-        SPDLOG_DEBUG("Returning account email");
-        return personalData["email"].get<std::string>();
-    }
-
-    if (personalData.contains("phoneNumber") && personalData["phoneNumber"].is_string()) {
-        SPDLOG_DEBUG("returning account phone no.");
-        return personalData["phoneNumber"].get<std::string>();
-    }
-
-    SPDLOG_DEBUG("idk what to return");
-    return "Bezimienny";
-}

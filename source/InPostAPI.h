@@ -46,14 +46,11 @@ namespace InPostAPI{
     void GetPaczkomatStatus(std::string shipmentNumber, std::string openCode, std::string receiverPhoneNumber, std::string receiverPhonePrefix, float lat, float lon);
     void OpenPaczkomat(std::string uuid);
     void TerminatePaczka(std::string uuid);
-    void GetAccountInfo();
-    std::string GetAccountName(std::string json);
     bool ParsePaczkas(std::string json);
     bool LoadTokens();
     inline ResponseBuffer
     sendSMSCodeBuffer,
     verifySMSCodeBuffer,
-    getAccountInfoBuffer,
     getPaczkasBuffer,
     getPaczkomatStatusBuffer,
     openPaczkomatBuffer,

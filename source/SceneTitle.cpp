@@ -32,8 +32,6 @@ void SceneTitle::SceneInit() {
     rotationAnim = tweeny::from(-5.0f).to(5.0f).during(15000).via(tweeny::easing::sinusoidalInOut);
     rotationAnim.seek(0);
 
-    accountName = InPostAPI::GetAccountName(std::string(InPostAPI::getAccountInfoBuffer->data.begin(), InPostAPI::getAccountInfoBuffer->data.end()));
-
     options = {
             "Start",
             "Opcje"
@@ -159,8 +157,6 @@ void SceneTitle::SceneUpdate(float dt) {
 }
 
 void SceneTitle::SceneDraw() {
-    DrawTextOutlineEx(mainFont, std::string("Zalogowano jako " + accountName).c_str(),
-        {30, 30}, {0, 0}, 32, 0, {255, 204, 0, 255}, BLACK, 3);
 
     DrawTexturePro(logoRender.texture, {0, 0, logoRender.texture.width, -logoRender.texture.height},
                    (Rectangle){GetScreenWidth()/2, GetScreenHeight()/2 - 150, logo.width, logo.height},

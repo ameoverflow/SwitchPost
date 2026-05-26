@@ -20,6 +20,7 @@ void Config::LoadConfigFile(std::string path) {
 
 std::string Config::GetProperty(std::string name) {
     SPDLOG_TRACE("filename: {}", filename);
+    SPDLOG_TRACE("property: {}", name);
     std::ifstream file(filename);
     if (file.is_open()) {
         std::stringstream buffer;
@@ -64,7 +65,7 @@ void Config::SetProperty(std::string name, std::string value) {
     }
 
     SPDLOG_TRACE("config file: {}", configData.dump());
-    if (disableSavingToSD) {
+    if (!disableSavingToSD) {
         std::ofstream outFile(filename);
         if (outFile.is_open()) {
             configData[name] = value;

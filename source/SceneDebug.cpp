@@ -84,8 +84,8 @@ void SceneDebug::SceneUpdate(float dt) {
 
 void SceneDebug::SceneDraw() {
     DrawRectangle(0, 0, 1280, 720, BLACK);
-    DrawTextOutlineEx(mainFont, "Opcje uruchamiania", {10, 10}, {0, 0}, 28, 2, WHITE, BLACK, 2);
-    int offset = 32;
+    DrawTextOutlineEx(mainFont, "Opcje uruchamiania", {10, 30}, {0, 0}, 28, 2, WHITE, BLACK, 2);
+    int offset = 64;
     for (int i = 0; i < options.size(); i++) {
         if (i == 0) {
             DrawTextOutlineEx(mainFont, std::string(options[i] + (showFakePackages ? ": TAK": ": NIE")).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);

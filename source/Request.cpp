@@ -10,6 +10,8 @@
 #include "InPostAPI.h"
 #include <switch.h>
 #include <fstream>
+
+#include "Helpers.h"
 #include "json.hpp"
 
 std::list<RequestData> queue;
@@ -42,163 +44,125 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     return realsize;
 }
 
-// dlaczego ten kod wygląda jak gówno?
-// bo nie miałam ochoty użerać się z curlem i gdb bo w jakimś miejscu wypierdala invalid memory access :v
-// zajebane z inpost3ds i wygląda jak gówno ale chuj, działa, jak komuś chce się naprawiać to niech jebnie PR na to
-void Request::DoRequest(const std::string& url, const std::string& data, const std::vector<std::string>& headers, ResponseBuffer* response) {
+CURLcode ExecuteHttp(const std::string& url, const std::string& data, curl_slist* headers, ResponseBuffer* response) {
+    SPDLOG_TRACE("CURL: executing a request to {}", url);
     curl_easy_reset(curl);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    if (!data.empty()) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)data.length());
+    }
+
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
+
+    return curl_easy_perform(curl);
+}
+
+void Request::DoRequest(const std::string& url, const std::string& data, const std::vector<std::string>& headers, ResponseBuffer* response) {
     curl_slist* headerList = nullptr;
     for (const std::string& header : headers) {
         headerList = curl_slist_append(headerList, header.c_str());
     }
     headerList = curl_slist_append(headerList, userAgent.c_str());
-    curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-    curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerList);
     if (!data.empty()) {
         headerList = curl_slist_append(headerList, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
     }
+
     LogRequestToFile(url, data, headers);
 
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-    response->result = curl_easy_perform(curl);
-
+    response->result = ExecuteHttp(url, data, headerList, response);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
-
     curl_slist_free_all(headerList);
 
     if (response->result != CURLE_OK) {
         response->status = Error;
         SPDLOG_ERROR("request failed: {}", curl_easy_strerror(response->result));
-    } else {
-        SPDLOG_INFO("request done, code: {}", response->code);
-        if (response->code == 401) {
-            // reauth
-            std::string data(response->data.begin(), response->data.end());
-            SPDLOG_TRACE("data: {}", data);
-            SPDLOG_INFO("refreshing token");
-            curl_easy_reset(curl);
-            curl_slist* reauthHeaders = nullptr;
-            reauthHeaders = curl_slist_append(reauthHeaders, userAgent.c_str());
-            reauthHeaders = curl_slist_append(reauthHeaders, "Content-Type: application/json");
-            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-            curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-            curl_easy_setopt(curl, CURLOPT_URL, std::string(InPostAPI::baseUrl + "/v1/authenticate").c_str());
-            curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, reauthHeaders);
+        return;
+    }
 
-            nlohmann::json tokenJson;
-            tokenJson["refreshToken"] = InPostAPI::refreshToken;
-            SPDLOG_TRACE("sending data {}", tokenJson.dump());
-            std::string requestBody = tokenJson.dump();
+    SPDLOG_INFO("request done, code: {}", response->code);
+    if (response->code != 401) {
+        response->status = Done;
+        return;
+    }
 
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, requestBody.c_str());
-            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)requestBody.length());
+    SPDLOG_INFO("reauthentication required");
+    curl_slist* reauthHeaders = nullptr;
+    reauthHeaders = curl_slist_append(reauthHeaders, userAgent.c_str());
+    reauthHeaders = curl_slist_append(reauthHeaders, "Content-Type: application/json");
 
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &reauthBuffer);
-            CURLcode result = curl_easy_perform(curl);
+    nlohmann::json tokenJson;
+    tokenJson["refreshToken"] = InPostAPI::refreshToken;
+    std::string requestBody = tokenJson.dump();
+    std::string authUrl = InPostAPI::baseUrl + "/v1/authenticate";
 
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &reauthBuffer.code);
+    reauthBuffer.data.clear();
+    CURLcode result = ExecuteHttp(authUrl, requestBody, reauthHeaders, &reauthBuffer);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &reauthBuffer.code);
+    curl_slist_free_all(reauthHeaders);
 
-            curl_slist_free_all(reauthHeaders);
+    if (result != CURLE_OK || reauthBuffer.code != 200) {
+        response->status = Error;
+        SPDLOG_ERROR("reauthentication failed, code: {}", reauthBuffer.code);
+        return;
+    }
 
-            if (result != CURLE_OK) {
-                response->status = Error;
-                SPDLOG_ERROR("reauthentication failed");
-                return;
-            }
+    std::string responseData(reauthBuffer.data.begin(), reauthBuffer.data.end());
+    if (!nlohmann::json::accept(responseData)) {
+        SPDLOG_ERROR("malformed json");
+        response->status = Error;
+        return;
+    }
 
-            std::string requestJson(reauthBuffer.data.begin(), reauthBuffer.data.end());
-            SPDLOG_DEBUG("reauth request done, code: {}", reauthBuffer.code);
+    nlohmann::json responseJson = nlohmann::json::parse(responseData);
+    std::string authToken = responseJson.value("authToken", "");
+    if (authToken.empty()) {
+        response->status = Error;
+        return;
+    }
 
-            if (reauthBuffer.code != 200) {
-                SPDLOG_ERROR("reauthentication returned non-200: {}", reauthBuffer.code);
-                SPDLOG_ERROR("data: {}", requestJson);
-                response->code = reauthBuffer.code;
-                response->status = Done;
-                return;
-            }
-            SPDLOG_TRACE("data: {}", requestJson);
+    InPostAPI::authToken = authToken;
 
-            // we have both refresh code, and auth token, rebuild the fucken json just
-            if (nlohmann::json::accept(requestJson)) {
-                SPDLOG_DEBUG("trying to save new token to file");
-                nlohmann::json data = nlohmann::json::parse(requestJson);
-                std::string authToken = data.value("authToken", "");
-
-                if (!authToken.empty() && !InPostAPI::refreshToken.empty()) {
-                    std::ofstream file("sdmc:/config/switchpost/token.json");
-                    if (file.is_open()) {
-                        nlohmann::json tokenData;
-                        tokenData["refreshToken"] = InPostAPI::refreshToken;
-                        tokenData["authToken"] = authToken;
-                        InPostAPI::authToken = authToken;
-                        file << tokenData.dump();
-                        file.close();
-                        SPDLOG_DEBUG("login data saved to SD");
-                    } else {
-                        SPDLOG_ERROR("couldnt open file for writing");
-                        return;
-                    }
-                }
-            }
-            curl_slist* retryHeaders = nullptr;
-            for (const std::string& header : headers) {
-                if (header.find("Authorization:") != std::string::npos) {
-                    std::string authHeader = "Authorization: " + InPostAPI::authToken;
-                    retryHeaders = curl_slist_append(retryHeaders, authHeader.c_str());
-                } else {
-                    retryHeaders = curl_slist_append(retryHeaders, header.c_str());
-                }
-            }
-            curl_easy_reset(curl);
-            retryHeaders = curl_slist_append(retryHeaders, userAgent.c_str());
-            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, retryHeaders);
-
-            curl_easy_setopt(curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-            curl_easy_setopt(curl, CURLOPT_TIMEOUT, 30L);
-            curl_easy_setopt(curl, CURLOPT_TCP_NODELAY, 1L);
-
-            curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-            if (!data.empty()) {
-                retryHeaders = curl_slist_append(retryHeaders, "Content-Type: application/json");
-                curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
-            }
-
-            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-            curl_easy_setopt(curl, CURLOPT_WRITEDATA, response);
-
-            response->data.clear();
-            response->code = 0;
-            response->result = curl_easy_perform(curl);
-            curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
-
-            if (response->result != CURLE_OK) {
-                response->status = Error;
-                SPDLOG_ERROR("request failed: {}", curl_easy_strerror(response->result));
-            } else {
-                if (response->code == 401) {
-                    response->status = Error;
-                    SPDLOG_ERROR("request failed after reauthentication, code: {}", response->code);
-                } else {
-                    response->status = Done; // :3
-                    SPDLOG_INFO("request done after reauthentication, code: {}", response->code);
-                    std::string data(response->data.begin(), response->data.end());
-                    SPDLOG_TRACE("data: {}", data);
-                }
-                curl_slist_free_all(retryHeaders);
-            }
-        } else {
-            std::string data(response->data.begin(), response->data.end());
-            response->status = Done;
-            SPDLOG_TRACE("data: {}", data);
+    if (!disableSavingToSD) {
+        std::ofstream file("sdmc:/config/switchpost/token.json");
+        if (file.is_open()) {
+            nlohmann::json tokenJsonFile;
+            tokenJsonFile["refreshToken"] = InPostAPI::refreshToken;
+            tokenJsonFile["authToken"] = authToken;
+            file << tokenJsonFile.dump();
+            file.close();
         }
+    }
+
+    SPDLOG_INFO("retrying request");
+    curl_slist* retryHeaders = nullptr;
+    for (const std::string& header : headers) {
+        if (header.find("Authorization:") != std::string::npos) {
+            retryHeaders = curl_slist_append(retryHeaders, std::string("Authorization: " + InPostAPI::authToken).c_str());
+        } else {
+            retryHeaders = curl_slist_append(retryHeaders, header.c_str());
+        }
+    }
+    retryHeaders = curl_slist_append(retryHeaders, userAgent.c_str());
+    if (!data.empty()) {
+        retryHeaders = curl_slist_append(retryHeaders, "Content-Type: application/json");
+    }
+
+    response->data.clear();
+    response->code = 0;
+    response->result = ExecuteHttp(url, data, retryHeaders, response);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &response->code);
+    curl_slist_free_all(retryHeaders);
+
+    if (response->result != CURLE_OK || response->code == 401) {
+        response->status = Error;
+        SPDLOG_ERROR("retry failed, code: {}", response->code);
+    } else {
+        response->status = Done;
+        SPDLOG_INFO("retry success, code: {}", response->code);
     }
 }
 
