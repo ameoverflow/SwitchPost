@@ -34,7 +34,6 @@ set(SOURCES
         source/SceneCredits.cpp
         source/AssetLoader.cpp
         source/Config.cpp
-        source/Config.h
         source/SceneTutorial.cpp
         source/SceneReloadMain.cpp
         source/SceneError.cpp
@@ -47,27 +46,20 @@ set_target_properties(SwitchPost PROPERTIES
         CXX_EXTENSIONS OFF
 )
 
-set(ARCH "-march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE")
+set(ARCH -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE)
 
 target_include_directories(SwitchPost PRIVATE ${LIBNX}/include ${PORTLIBS}/include ./source ./include ./include/raylib ${PROJECT_BINARY_DIR})
 target_link_directories(SwitchPost PRIVATE ${LIBNX}/lib ${PORTLIBS}/lib ./lib)
 target_link_libraries(SwitchPost PRIVATE curl z raylib EGL GLESv2 glapi drm_nouveau nx m)
 
-target_compile_options(SwitchPost PRIVATE -fno-rtti -fno-exceptions -fPIE)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    set(CMAKE_C_COMPILE_FLAGS "${CMAKE_C_COMPILE_FLAGS} -O2 -Wall -Wno-narrowing -Wno-error=narrowing -ffunction-sections ${ARCH}")
-    set(CMAKE_CXX_COMPILE_FLAGS  "${CMAKE_CXX_COMPILE_FLAGS} -O2 -Wall -Wno-narrowing -Wno-error=narrowing -ffunction-sections ${ARCH} -fno-rtti -fno-exceptions")
-    set(CMAKE_C_LINK_FLAGS  "${CMAKE_C_LINK_FLAGS} -s -O2 ${ARCH} -specs=${LIBNX}/switch.specs")
-    set(CMAKE_CXX_LINK_FLAGS  "${CMAKE_CXX_LINK_FLAGS} -s -O2 ${ARCH} -specs=${LIBNX}/switch.specs")
-    target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO RELEASE)
-else()
-    set(CMAKE_C_COMPILE_FLAGS "${CMAKE_C_COMPILE_FLAGS} -g3 -O0 -Wall -Wno-narrowing -Wno-error=narrowing -ffunction-sections ${ARCH}")
-    set(CMAKE_CXX_COMPILE_FLAGS  "${CMAKE_CXX_COMPILE_FLAGS} -g3 -O0 -Wall -Wno-narrowing -Wno-error=narrowing -ffunction-sections ${ARCH} -fno-rtti -fno-exceptions")
-    set(CMAKE_C_LINK_FLAGS  "${CMAKE_C_LINK_FLAGS} -g3 -O0 ${ARCH} -specs=${LIBNX}/switch.specs -Wl,-Map,${TARGET}.map")
-    set(CMAKE_CXX_LINK_FLAGS  "${CMAKE_CXX_LINK_FLAGS} -g3 -O0 ${ARCH} -specs=${LIBNX}/switch.specs -Wl,-Map,${TARGET}.map")
-    target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE DEBUG)
-endif()
+target_compile_options(SwitchPost PRIVATE
+        ${ARCH}
+        -fpermissive
+        -Wno-narrowing
+        -Wno-error=narrowing
+        -ffunction-sections
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti;-fno-exceptions>
+)
 
 target_compile_definitions(SwitchPost PRIVATE
         __SWITCH__
@@ -82,6 +74,21 @@ target_compile_definitions(SwitchPost PRIVATE
         APP_VERSION="${APP_VERSION}"
         BASE_URL="https://api-inmobile-pl.easypack24.net"
 )
+
+target_link_options(SwitchPost PRIVATE
+        ${ARCH}
+        -specs=${LIBNX}/switch.specs
+)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_options(SwitchPost PRIVATE -O2)
+    target_link_options(SwitchPost PRIVATE -s -O2)
+    target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO RELEASE)
+else()
+    target_compile_options(SwitchPost PRIVATE -g3 -O0)
+    target_link_options(SwitchPost PRIVATE -g3 -O0 -Wl,-Map,${TARGET}.map)
+    target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE DEBUG)
+endif()
 
 add_custom_command(TARGET SwitchPost POST_BUILD
         COMMAND nacptool --create ${APP_TITLE} ${APP_AUTHOR} ${APP_VERSION} $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp
