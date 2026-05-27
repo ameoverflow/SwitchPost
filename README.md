@@ -10,9 +10,10 @@ Bazowany na [InPost3DS](https://github.com/TehFridge/InPost3DS) autorstwa TehFri
 
 ## Nowości w porównaniu do InPost3DS
 - Wsparcie paczek zasobów
-- Wsparcie własnych głosów aplikacji
-- 6 różnych teł do wyboru
+- 10 różnych teł do wyboru
 - Wskaźniki paczek (czy jest gotowa do odbioru lub została odebrana)
+- Archiwum paczek
+- Możliwość zmiany nazwy paczki
 
 ## Instalacja
 
