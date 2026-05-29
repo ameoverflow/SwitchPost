@@ -8,11 +8,10 @@
 #include <string>
 #include "tweeny.h"
 #include "SceneManager.h"
-#include "SceneMain.h"
 #include "easing.h"
 #include "AssetLoader.h"
 #include "Config.h"
-#include "SceneDebug.h"
+#include "SceneLoading.h"
 #include "SceneOptions.h"
 #include "SceneTutorial.h"
 
@@ -93,7 +92,7 @@ void SceneTitle::SceneUpdate(float dt) {
             if (firstTimeUsingPrompt) {
                 SceneManager::ChangeScene(std::make_unique<SceneTutorial>());
             } else {
-                SceneManager::ChangeScene(std::make_unique<SceneMain>());
+                SceneManager::ChangeScene(std::make_unique<SceneLoading>());
             }
         }
     }

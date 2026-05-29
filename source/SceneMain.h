@@ -25,7 +25,7 @@ private:
     Font mainFont;
     Sound change, confirmOpen, confirmClosed, go;
 
-    tweeny::tween<float> poststampFade, packagesFade, loadingFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse, modeChangeAnim;
+    tweeny::tween<float> poststampFade, packagesFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse, modeChangeAnim;
 
     bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, stickMoved, screenTouched, playModeChangeAnim;
     std::string sessionUuid;
@@ -45,7 +45,6 @@ private:
     const float dragThreshold = 10.0f;
 
     float spinnerRotation = 0;
-    bool isLoaded = false;
     bool inputLock;
 
     bool tokensLoaded;

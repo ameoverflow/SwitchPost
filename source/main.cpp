@@ -138,16 +138,16 @@ int main()
     SetExitKey(0);
     SetTargetFPS(60);
 
-    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg1.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg2.png").c_str()));
-    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg10.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg3.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg4.png").c_str()));
-    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg7.png").c_str()));
-    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg9.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg5.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg6.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg7.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg8.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg9.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg10.png").c_str()));
 
     for (Texture2D background : backgrounds) {
         SetTextureWrap(background, TEXTURE_WRAP_REPEAT);

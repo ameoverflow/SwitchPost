@@ -25,11 +25,11 @@ ResponseBuffer reauthBuffer;
 void LogRequestToFile(const std::string& url, const std::string& data, const std::vector<std::string> &headers) {
     SPDLOG_INFO("request to {}", url);
     if (!data.empty()) {
-        SPDLOG_DEBUG("data: {}", data);
+        SPDLOG_TRACE("data: {}", data);
     }
-    SPDLOG_DEBUG("headers count: {}", headers.size());
+    SPDLOG_TRACE("headers count: {}", headers.size());
     for (const std::string& h : headers) {
-        SPDLOG_DEBUG("  {}", h);
+        SPDLOG_TRACE("  {}", h);
     }
 }
 
@@ -45,7 +45,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 }
 
 CURLcode ExecuteHttp(const std::string& url, const std::string& data, curl_slist* headers, ResponseBuffer* response) {
-    SPDLOG_TRACE("CURL: executing a request to {}", url);
+    SPDLOG_DEBUG("CURL: executing a request to {}", url);
     curl_easy_reset(curl);
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -168,8 +168,8 @@ void Request::DoRequest(const std::string& url, const std::string& data, const s
 
 void RequestThreadWorker(const std::stop_token &stoken) {
     ResponseBuffer local_buf = {};
-    SPDLOG_TRACE("worker is working");
-    SPDLOG_TRACE("pinning thread to 2nd core");
+    SPDLOG_DEBUG("worker is working");
+    SPDLOG_DEBUG("pinning thread to 2nd core");
     svcSetThreadCoreMask(CUR_THREAD_HANDLE, -1, 1 << 1);
     while (true) {
         std::unique_lock lock(queueMutex);
@@ -183,7 +183,7 @@ void RequestThreadWorker(const std::stop_token &stoken) {
             break;
         }
 
-        SPDLOG_TRACE("some data in queue - working on it");
+        SPDLOG_DEBUG("some data in queue - working on it");
         RequestData data = std::move(queue.front());
         queue.pop_front();
         lock.unlock();
@@ -201,10 +201,10 @@ void Request::QueueRequest(const std::string& url, const std::string& data, cons
     request.responseBuffer = response;
     {
         std::lock_guard lock(queueMutex);
-        SPDLOG_TRACE("putting request to queue");
+        SPDLOG_DEBUG("putting request to queue");
         queue.push_back(std::move(request));
     }
-    SPDLOG_TRACE("notifying queue");
+    SPDLOG_DEBUG("notifying queue");
     queueCv.notify_one();
 }
 

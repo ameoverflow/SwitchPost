@@ -38,6 +38,7 @@ std::vector<std::string> SplitString(const std::string& str,
 
 void SceneTutorial::SceneInit() {
     characterAnim = tweeny::from(-25.0f).to(0.0f).during(200).via(tweeny::easing::sinusoidalInOut);
+    backgroundPopUpAnim = tweeny::from(0.0f).to(1.0f).during(500).via(tweeny::easing::backOut);
     mainFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Light.otf", 42, 0, 381);
     textbox = LoadTexture(AssetLoader::ResolveResource("sprites/textbox.png").c_str());
     tut = Config::GetProperty("voice");
@@ -98,6 +99,10 @@ void SceneTutorial::SceneInit() {
 }
 
 void SceneTutorial::SceneUpdate(float dt) {
+    if (backgroundPopUpAnim.progress() < 1.0f ) {
+        backgroundPopUpAnim.step((int)(dt * 1000.0f));
+    }
+
     if (playCharacterAnim) {
         characterAnim.step((int)(dt * 1000.0f));
     }
@@ -132,14 +137,18 @@ void SceneTutorial::SceneUpdate(float dt) {
 
             PlaySound(voiceClip);
             playCharacterAnim = true;
+            backgroundPopUpAnim.seek(0);
         }
     }
 }
 
 void SceneTutorial::SceneDraw() {
-    DrawTextureEx(background, {(GetScreenWidth() - speakingSprite.width)/2 +
-                 speakingSprite.width - background.width/2,
-                  (GetScreenHeight() - textbox.height)/2 - background.height/2}, 0, 1, WHITE);
+    DrawTexturePro(background,
+    { 0, 0, background.width, background.height },
+    { (GetScreenWidth() - speakingSprite.width)/2.0f + speakingSprite.width, (GetScreenHeight() - textbox.height)/2.0f, background.width * backgroundPopUpAnim.peek(), background.height * backgroundPopUpAnim.peek() },
+    { (background.width * backgroundPopUpAnim.peek()) / 2.0f, (background.height * backgroundPopUpAnim.peek()) / 2.0f },
+    0.0f, WHITE);
+
     DrawTextureEx(textbox, {0, GetScreenHeight() - textbox.height}, 0, 1, WHITE);
 
     if (IsSoundPlaying(voiceClip)) {

@@ -35,8 +35,8 @@ set(SOURCES
         source/AssetLoader.cpp
         source/Config.cpp
         source/SceneTutorial.cpp
-        source/SceneReloadMain.cpp
         source/SceneError.cpp
+        source/SceneLoading.cpp
 )
 
 add_executable(SwitchPost ${SOURCES})
