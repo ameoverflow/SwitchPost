@@ -67,7 +67,7 @@ void SceneLoading::SceneUpdate(float dt) {
 }
 
 void SceneLoading::SceneDraw() {
-    DrawRectangleGradientV(0, 0, 1320, 720, ColorAlpha(BLACK, loadingFade.peek()), ColorAlpha({10, 10, 10, 255}, 1));
+    DrawRectangleGradientV(0, 0, 1320, 720, BLACK, {10, 10, 10, 255});
     Rectangle source = { 0.0f, 0.0f, (float)loadingCircle.width, (float)loadingCircle.height };
     Rectangle dest = { 1197, 637, (float)loadingCircle.width/2, (float)loadingCircle.height/2};
     Vector2 origin = { (float)loadingCircle.width/4.0f, (float)loadingCircle.height/4.0f};
