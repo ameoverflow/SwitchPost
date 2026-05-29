@@ -131,6 +131,11 @@ void SceneMain::SceneInit() {
 }
 
 void SceneMain::SceneUpdate(float dt) {
+    if (!loadingDone) {
+        loadingDone = true;
+        return;
+    }
+
     spinnerRotation += 180 * dt;
     if (inDetails)
     {

@@ -47,7 +47,7 @@ private:
     float spinnerRotation = 0;
     bool inputLock;
 
-    bool tokensLoaded;
+    bool tokensLoaded, loadingDone;
 
     Result rc;
     char parcelName[20];
