@@ -14,6 +14,7 @@
 #include "SceneManager.h"
 #include "Helpers.h"
 #include "Config.h"
+#include "MusicManager.h"
 #include "SceneMain.h"
 #include "SceneOptions.h"
 
@@ -43,8 +44,13 @@ void SceneTutorial::SceneInit() {
     textbox = LoadTexture(AssetLoader::ResolveResource("sprites/textbox.png").c_str());
     tut = Config::GetProperty("voice");
 
+    characterAnim.seek(0);
+    backgroundPopUpAnim.seek(0);
+
     Vector2 lineSize = MeasureTextEx(mainFont, "M", 32, 1);
     lineHeight = lineSize.y;
+
+    MusicManager::SetVolume(0.6f);
 
     SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data.json"));
     std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data.json"));
@@ -90,6 +96,7 @@ void SceneTutorial::SceneInit() {
     } else {
         SPDLOG_WARN("tutorial file not valid");
     }
+
     speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
     idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
     background = LoadTexture(Frames[currentFrame].background.c_str());
@@ -125,19 +132,29 @@ void SceneTutorial::SceneUpdate(float dt) {
             }
         } else {
             StopSound(voiceClip);
-            UnloadTexture(background);
-            UnloadTexture(speakingSprite);
-            UnloadTexture(idleSprite);
+
+            if (Frames[currentFrame].speakingSprite != Frames[currentFrame - 1].speakingSprite) {
+                UnloadTexture(speakingSprite);
+                speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
+            }
+
+            if (Frames[currentFrame].idleSprite != Frames[currentFrame - 1].idleSprite) {
+                UnloadTexture(idleSprite);
+                idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
+            }
+
+            if (Frames[currentFrame].background != Frames[currentFrame - 1].background) {
+                UnloadTexture(background);
+                background = LoadTexture(Frames[currentFrame].background.c_str());
+                backgroundPopUpAnim.seek(0);
+            }
+
             UnloadSound(voiceClip);
 
-            speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
-            idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
-            background = LoadTexture(Frames[currentFrame].background.c_str());
             voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
 
             PlaySound(voiceClip);
             playCharacterAnim = true;
-            backgroundPopUpAnim.seek(0);
         }
     }
 }
@@ -157,7 +174,6 @@ void SceneTutorial::SceneDraw() {
         DrawTextureEx(idleSprite, { 10, GetScreenHeight() - idleSprite.height - characterAnim.peek()}, 0, 1, WHITE);
     }
 
-    int lineOffset = 0;
     Vector2 textSize = MeasureTextEx(mainFont, Frames[currentFrame].text.c_str(), 32, 0);
     DrawTextOutlineEx(mainFont, Frames[currentFrame].text.c_str(), {speakingSprite.width + 10, GetScreenHeight() - textbox.height + 25}, {0, 0}, 32, 0, WHITE, BLACK, 2);
     textSize = MeasureTextEx(mainFont, "Naciśnij (A), aby kontynuować", 22, 0);
@@ -165,6 +181,7 @@ void SceneTutorial::SceneDraw() {
 }
 
 void SceneTutorial::SceneExit() {
+    MusicManager::SetVolume(1.0f);
     UnloadTexture(speakingSprite);
     UnloadTexture(idleSprite);
     UnloadTexture(background);
