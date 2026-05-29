@@ -18,7 +18,6 @@ public:
 private:
     float spinnerRotation = 0;
     Texture2D loadingCircle;
-    tweeny::tween<float> loadingFade;
 };
 
 

@@ -19,10 +19,6 @@ void SceneLoading::SceneInit() {
     InPostAPI::getPaczkasBuffer.code = 0;
 
     loadingCircle = LoadTexture(AssetLoader::ResolveResource("sprites/loading_circle.png").c_str());
-
-    // fade in from loading screen
-    loadingFade = tweeny::from(1.0f).to(0.0f).during(100);
-    loadingFade.seek(0);
 }
 
 void SceneLoading::SceneUpdate(float dt) {
@@ -71,16 +67,11 @@ void SceneLoading::SceneUpdate(float dt) {
 }
 
 void SceneLoading::SceneDraw() {
-    if (loadingFade.progress() == 0.0f) {
-        DrawRectangleGradientV(0, 0, 1320, 720, ColorAlpha(BLACK, loadingFade.peek()), ColorAlpha({10, 10, 10, 255}, loadingFade.peek()));
-        Rectangle source = { 0.0f, 0.0f, (float)loadingCircle.width, (float)loadingCircle.height };
-        Rectangle dest = { 1197, 637, (float)loadingCircle.width/2, (float)loadingCircle.height/2};
-        Vector2 origin = { (float)loadingCircle.width/4.0f, (float)loadingCircle.height/4.0f};
-        DrawTexturePro(loadingCircle, source, { dest.x, dest.y, dest.width, dest.height}, origin, spinnerRotation, {255, 255, 255, 100});
-
-    } else if (loadingFade.progress() > 0.0f) {
-        DrawRectangleGradientV(0, 0, 1320, 720, ColorAlpha(BLACK, loadingFade.peek()), ColorAlpha({10, 10, 10, 255}, loadingFade.peek()));
-    }
+    DrawRectangleGradientV(0, 0, 1320, 720, ColorAlpha(BLACK, loadingFade.peek()), ColorAlpha({10, 10, 10, 255}, 1));
+    Rectangle source = { 0.0f, 0.0f, (float)loadingCircle.width, (float)loadingCircle.height };
+    Rectangle dest = { 1197, 637, (float)loadingCircle.width/2, (float)loadingCircle.height/2};
+    Vector2 origin = { (float)loadingCircle.width/4.0f, (float)loadingCircle.height/4.0f};
+    DrawTexturePro(loadingCircle, source, { dest.x, dest.y, dest.width, dest.height}, origin, spinnerRotation, {255, 255, 255, 100});
 }
 
 void SceneLoading::SceneExit() {
