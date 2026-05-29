@@ -1,7 +1,7 @@
 #include "SceneManager.h"
 #include "Scene.h"
 
-std::unique_ptr<Scene> SceneManager::currentScene;
+std::unique_ptr<Scene> currentScene;
 
 void SceneManager::Update(float dt) {
     if (currentScene != nullptr) {

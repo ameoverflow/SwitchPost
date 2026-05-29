@@ -10,12 +10,12 @@
 #include "Helpers.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-#include "spdlog/sinks/basic_file_sink.h"
 #include <string>
 #include "AssetLoader.h"
 #include "json.hpp"
 #include "MusicManager.h"
 #include "Config.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 float bgX = 0;
 float bgY = 0;
@@ -42,18 +42,43 @@ void SpdlogRaylibCallback(int logLevel, const char *text, va_list args) {
     }
 }
 
+std::string getLogFileName() {
+    std::chrono::local_time localTime = std::chrono::locate_zone("Europe/Warsaw")->to_local(std::chrono::system_clock::now());
+    std::chrono::local_days days = std::chrono::floor<std::chrono::days>(localTime);
+    std::chrono::year_month_day ymd{days};
+
+    std::ostringstream oss;
+    oss << std::setfill('0')
+        << std::setw(2) << ymd.year() << "-"
+        << std::setw(2) << (unsigned)ymd.month() << "-"
+        << ymd.day();
+
+    int count = 1;
+    std::string name;
+
+    // find the first available number
+    do {
+        name = "sdmc:/config/switchpost/logs/" + oss.str() + "-" + std::to_string(count) + ".log";
+        count++;
+    } while (std::filesystem::exists(name));
+
+    return name;
+}
+
 int main()
 {
     // switch init shit
     appletLockExit();
     romfsInit();
-    std::filesystem::create_directory("/config");
-    std::filesystem::create_directory("/config/switchpost");
-    std::shared_ptr<spdlog::sinks::sink> fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/config/switchpost/latest.log", true);
+    std::filesystem::create_directory("sdmc:/config");
+    std::filesystem::create_directory("sdmc:/config/switchpost");
+    std::filesystem::create_directory("sdmc:/config/switchpost/logs");
+    std::filesystem::create_directory("sdmc:/config/switchpost/resourcepacks");
     socketInitializeDefault();
 
     // log init shit
     std::shared_ptr<spdlog::sinks::sink> consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    std::shared_ptr<spdlog::sinks::sink> fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(getLogFileName().c_str());
     std::vector<std::shared_ptr<spdlog::sinks::sink>> sinks { consoleSink, fileSink };
     std::shared_ptr<spdlog::logger> logger = std::make_shared<spdlog::logger>("multi_sink", sinks.begin(), sinks.end());
     logger->set_pattern("[%T.%e] [%s:%#] [%^%l%$] %v");
@@ -113,12 +138,16 @@ int main()
     SetExitKey(0);
     SetTargetFPS(60);
 
-    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg1.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg2.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg3.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg4.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg5.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg6.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg7.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg8.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg9.png").c_str()));
+    backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg10.png").c_str()));
 
     for (Texture2D background : backgrounds) {
         SetTextureWrap(background, TEXTURE_WRAP_REPEAT);

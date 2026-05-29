@@ -15,14 +15,11 @@ struct ResourcePack {
 };
 
 // to support resource packs
-class AssetLoader{
-public:
-    static std::string ResolveResource(std::string path);
-    static bool SetResourcePack(std::string path);
-    static std::unordered_map<std::string, ResourcePack> RegisteredPacks;
-    static void ResolvePacks();
-private:
-    static ResourcePack* SelectedPack;
+namespace AssetLoader {
+    std::string ResolveResource(std::string path);
+    bool SetResourcePack(std::string path);
+    inline std::unordered_map<std::string, ResourcePack> RegisteredPacks;
+    void ResolvePacks();
 };
 
 

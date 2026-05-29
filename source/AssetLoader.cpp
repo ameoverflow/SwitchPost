@@ -12,20 +12,18 @@
 #include <fstream>
 #include <unordered_map>
 
-ResourcePack* AssetLoader::SelectedPack = nullptr;
-std::unordered_map<std::string, ResourcePack> AssetLoader::RegisteredPacks = {};
+ResourcePack* SelectedPack = nullptr;
 
 bool AssetLoader::SetResourcePack(std::string path) {
     if (RegisteredPacks.contains(path)) {
         SelectedPack = &RegisteredPacks[path];
         return true;
-    } else {
-        return false;
     }
+    return false;
 }
 
 void AssetLoader::ResolvePacks() {
-    std::string root = "sdmc:/config/switchpost/";
+    std::string root = "sdmc:/config/switchpost/resourcepacks/";
     if (!std::filesystem::exists(root)) return;
 
     for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(root)) {
@@ -57,7 +55,7 @@ void AssetLoader::ResolvePacks() {
                     pack.name = data["name"].get<std::string>();
                     pack.author = data["author"].get<std::string>();
 
-                    std::string voicesPath = "sdmc:/config/switchpost/" + pack.directory + "/voice";
+                    std::string voicesPath = "sdmc:/config/switchpost/resourcepacks/" + pack.directory + "/voice";
                     if (std::filesystem::exists(voicesPath) && std::filesystem::is_directory(voicesPath)) {
                         for (const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(voicesPath)) {
                             if (std::filesystem::exists(entry.path().string()) && std::filesystem::is_directory(entry.path().string())) pack.voices.push_back(entry.path().filename().string());
@@ -78,11 +76,12 @@ void AssetLoader::ResolvePacks() {
 }
 
 std::string AssetLoader::ResolveResource(std::string path) {
+    SPDLOG_DEBUG("resource requested: {}", path);
     if (SelectedPack == nullptr) {
         return std::string("romfs:/" + path);
     } else {
-        return std::filesystem::exists("sdmc:/config/switchpost/" + SelectedPack->directory + "/" + path) ?
-               "sdmc:/config/switchpost/" + SelectedPack->directory + "/" + path :
+        return std::filesystem::exists("sdmc:/config/switchpost/resourcepacks/" + SelectedPack->directory + "/" + path) ?
+               "sdmc:/config/switchpost/resourcepacks/" + SelectedPack->directory + "/" + path :
                "romfs:/" + path;
     }
 }

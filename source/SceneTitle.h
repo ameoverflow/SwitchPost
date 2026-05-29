@@ -17,6 +17,7 @@ private:
     Font mainFont;
     Font smallFont;
     std::string version = "";
+    std::string accountName = "";
 #ifdef DEBUG
     std::string bigVersion = "DEBUG";
     Color versionColor = {81, 55, 138, 255};
@@ -25,11 +26,9 @@ private:
     RenderTexture2D logoRender;
     Sound collectedAll, change, confirmTutorial;
     Camera3D camera;
-    tweeny::tween<float> transititon;
-    tweeny::tween<float> rotationAnim;
-    bool isTransitioning; // :troll:
+    tweeny::tween<float> fadeOut, rotationAnim, flashbang;
+    bool isFadingOut, sceneLoaded; // :troll:
     bool inputLock, firstTimeUsingPrompt, askForTutorial, stickMoved;
-    float transitionTimer = 0;
     std::vector<std::string> options;
     int selectedOption;
 };

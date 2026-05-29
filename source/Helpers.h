@@ -5,12 +5,13 @@
 #ifndef SWITCHPOST_HELPERS_H
 #define SWITCHPOST_HELPERS_H
 
+#include <string>
 #include <vector>
 
 #include "raylib.h"
 
 enum LoadingError {
-    None,
+    UnknownError,
     NetworkError,
     JSONError,
     SDError,
@@ -23,4 +24,7 @@ extern bool showFakePackages;
 extern bool shouldQuit;
 extern int currentBackground;
 extern std::vector<Texture2D> backgrounds;
+extern bool alreadyLoggedIn;
+extern bool disableSavingToSD;
+extern bool networkTested;
 #endif //SWITCHPOST_HELPERS_H

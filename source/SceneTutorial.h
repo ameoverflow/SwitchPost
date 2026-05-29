@@ -26,7 +26,7 @@ public:
     void SceneExit() override;
 private:
     std::vector<TutorialFrame> Frames;
-    tweeny::tween<float> characterAnim;
+    tweeny::tween<float> characterAnim, backgroundPopUpAnim;
     Texture2D textbox, speakingSprite, idleSprite, background;
     Sound voiceClip;
     std::vector<std::string> lines;

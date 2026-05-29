@@ -17,32 +17,43 @@
 #include "Helpers.h"
 #include <switch.h>
 #include "AssetLoader.h"
-#include "InpostAPI.h"
+#include "InPostAPI.h"
 #include "json.hpp"
 #include "Config.h"
+#include "SceneDebug.h"
+#include "SceneError.h"
 
-std::string splashes[] = {
-    "now 100% more snow on the roof of amberexpo",
-    "paczkomat shitting extraordinaire",
-    "better than friday night funkin' fight me ninjamuffin",
-    "dev is fast asleep",
-    "nepnepnepnepnepnepnepnepnepnep",
-    "energy drink induced development",
-    "nintendo dont sent ninjas plz",
-    "se lecę w klapkach najka",
-    "open source forever",
-    "der polnische adventskalender",
-    "delayed splash, didnt have time",
-    "rate 5 stars and subscribe",
-    "inspired by toilet pic"
-};
+ResponseBuffer bufferPointer;
 
-std::shared_ptr<ResponseBuffer> bufferPointer = std::make_shared<ResponseBuffer>();
+bool SceneIntro::IsConnected() {
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) {
+        SPDLOG_CRITICAL("failed to initialize nifm");
+        return false;
+    }
+
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+
+    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
+
+    nifmExit();
+
+    if (R_SUCCEEDED(rc)) {
+        if (status == NifmInternetConnectionStatus_Connected) {
+            return true;
+        }
+    }
+
+    return false;
+}
 
 void SceneIntro::SceneInit() {
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
     logo = LoadTexture(AssetLoader::ResolveResource("sprites/logo.png").c_str());
     introSound = LoadSound(AssetLoader::ResolveResource("sounds/intro.wav").c_str());
+    introLogo = LoadTexture("romfs:/sprites/intro_logo.png");
     introTimer = 0;
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 90, 0, 381);
     logoFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Heavy.otf", 90, 0, 381);
@@ -51,10 +62,17 @@ void SceneIntro::SceneInit() {
     voice = Config::GetProperty("voice");
 
     logoFadeIn = tweeny::from(0.0f).to(0.8f).during(644);
-    errorBgFade = tweeny::from(32).to(64).during(2000).via(tweeny::easing::sinusoidalInOut);
-    ameLogoFadeIn = tweeny::from(0).to(255).during(100).via(tweeny::easing::quadraticIn);
+    ameLogoFadeIn = tweeny::from(0.0f).to(1.0f).during(250).via(tweeny::easing::backOut);
     logoFadeIn.seek(0);
     ameLogoFadeIn.seek(0);
+
+    std::ifstream splashesFile(AssetLoader::ResolveResource("text/splashes.txt").c_str());
+
+    while (std::getline(splashesFile, line)) {
+        SPDLOG_TRACE("splash added: {}", line);
+        splashes.push_back(line);
+    }
+    splashesFile.close();
 
     std::srand(std::time(NULL));
     if (std::size(splashes) > 0) {
@@ -67,55 +85,43 @@ void SceneIntro::SceneInit() {
 }
 
 void SceneIntro::SceneUpdate(float dt) {
-    errorBgFade.step((int)(dt * 1000.0f));
-    if (errorBgFade.progress() >= 1.0f && errorBgFade.direction() == 1) {
-        errorBgFade.backward();
-    } else if (errorBgFade.progress() <= 0.0f && errorBgFade.direction() == -1) {
-        errorBgFade.forward();
-    }
-
-    if (error != 0) {
-        switch (error) {
-            case NetworkError:
-                errorCode = "Błąd sieci, sprawdź połączenie z internetem";
-                break;
-            case SDError:
-                errorCode = "Błąd zapisywania konfiguracji";
-                break;
-            case AppletError:
-                errorCode = "Aplikacja uruchomiona w trybie apletu";
-                break;
-        }
-        return;
-    }
-
     if (randomNum != 67) {
+        // check for debug combination
+#ifdef DEBUG
+        if (IsGamepadButtonDown(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
+            SceneManager::ChangeScene(std::make_unique<SceneDebug>());
+        }
+#endif
         if (introStage == 0) {
             // initialize shit
-            // check if its not applet mode first
+            // check if its not applet mode
             if (at != AppletType_Application && at != AppletType_SystemApplication) {
-                error = AppletError;
                 SPDLOG_CRITICAL("application running as applet");
+                SceneManager::ChangeScene(std::make_unique<SceneError>(AppletError));
+                return;
+            }
+
+            if (!checkedNetwork) {
+                if (!IsConnected()) {
+                    SPDLOG_CRITICAL("not connected");
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                    return;
+                }
+                checkedNetwork = true;
             } else {
-                if (bufferPointer->status == NotStarted) {
-                    status = "Sprawdzanie sieci...";
-                    Request::QueueRequest("https://api-inmobile-pl.easypack24.net", "", {  }, bufferPointer);
-                    bufferPointer->status = InProgress;
-                } else if (bufferPointer->status == InProgress) {
+                if (!loadedTokens) {
+                    if (std::filesystem::exists("sdmc:/config/switchpost/token.json") && !InPostAPI::LoadTokens()) {
+                        SPDLOG_CRITICAL("unable to load tokens");
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+                        return;
+                    }
+                    loadedTokens = true;
+                } else {
                     introStage = 1;
                 }
             }
-        } else if (introStage == 1) {
-            if (bufferPointer->status == Error) {
-                if (bufferPointer->result != CURLE_OK) {
-                    error = NetworkError;
-                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
-                    return;
-                }
-            } else if (bufferPointer->status == Done) {
-                status = "";
-            }
 
+        } else if (introStage == 1) {
             ameLogoFadeIn.step((int)(dt * 1000.0f));
             if (ameLogoFadeIn.progress() >= 1.0f) {
                 introTimer = 0;
@@ -123,30 +129,15 @@ void SceneIntro::SceneUpdate(float dt) {
                 PlaySound(introSound);
             }
         } else if (introStage == 2) {
-            if (bufferPointer->status == Error) {
-                if (bufferPointer->result != CURLE_OK) {
-                    error = NetworkError;
-                    SPDLOG_CRITICAL("networking error, curl returned {} ", std::to_string(bufferPointer->result));
-                    return;
-                }
-            } else if (bufferPointer->status == Done) {
-                status = "";
-            }
-
             introTimer += dt;
-            if (introTimer > 2 && bufferPointer->status == Done) {
+            if (introTimer > 2) {
                 introTimer = 0;
                 introStage = 3;
             }
         } else if (introStage == 3) {
-            if (std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
-                introStage = 4;
-                return;
-            }
-
             // log in
-            if (!std::filesystem::exists("sdmc:/config/switchpost/token.json") && bufferPointer->status == Done) {
-                if (InpostAPI::sendSMSCodeBuffer->status == NotStarted) {
+            if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
+                if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
@@ -161,11 +152,11 @@ void SceneIntro::SceneUpdate(float dt) {
                         if (R_SUCCEEDED(rc)) break;
                     }
 
-                    InpostAPI::SendSMSCode(std::string(phoneNumber));
+                    InPostAPI::SendSMSCode(std::string(phoneNumber));
                 }
 
-                if (InpostAPI::sendSMSCodeBuffer->status == Done &&
-                    InpostAPI::verifySMSCodeBuffer->status == NotStarted) {
+                if (InPostAPI::sendSMSCodeBuffer.status == Done &&
+                    InPostAPI::verifySMSCodeBuffer.status == NotStarted) {
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
@@ -180,50 +171,51 @@ void SceneIntro::SceneUpdate(float dt) {
                         if (R_SUCCEEDED(rc)) break;
                     }
 
-                    InpostAPI::VerifySMSCode(std::string(phoneNumber), std::string(code));
-                } else if (InpostAPI::sendSMSCodeBuffer->status == Error ||
-                           (InpostAPI::sendSMSCodeBuffer->status == Done &&
-                            InpostAPI::sendSMSCodeBuffer->code != 200)) {
-                    error = NetworkError;
-                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InpostAPI::sendSMSCodeBuffer->code));
+                    InPostAPI::VerifySMSCode(std::string(phoneNumber), std::string(code));
+                } else if (InPostAPI::sendSMSCodeBuffer.status == Error ||
+                           (InPostAPI::sendSMSCodeBuffer.status == Done &&
+                            InPostAPI::sendSMSCodeBuffer.code != 200)) {
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                     return;
                 }
 
-                if (InpostAPI::verifySMSCodeBuffer->status == Done && InpostAPI::verifySMSCodeBuffer->code == 200) {
-                    std::string loginData(InpostAPI::verifySMSCodeBuffer->data.begin(),
-                                          InpostAPI::verifySMSCodeBuffer->data.end());
+                if (InPostAPI::verifySMSCodeBuffer.status == Done && InPostAPI::verifySMSCodeBuffer.code == 200) {
+                    std::string loginData(InPostAPI::verifySMSCodeBuffer.data.begin(),
+                                          InPostAPI::verifySMSCodeBuffer.data.end());
                     if (nlohmann::json::accept(loginData)) {
                         nlohmann::json data = nlohmann::json::parse(loginData);
                         std::string authToken = data.value("authToken", "");
                         std::string refreshToken = data.value("refreshToken", "");
 
                         if (!authToken.empty() && !refreshToken.empty()) {
-                            std::ofstream file("sdmc:/config/switchpost/token.json");
-                            if (file.is_open()) {
-                                file << loginData;
-                                file.close();
-                                SPDLOG_INFO("login data saved to SD");
-                                introStage = 4;
+                            if (!disableSavingToSD) {
+                                std::ofstream file("sdmc:/config/switchpost/token.json");
+                                if (file.is_open()) {
+                                    file << loginData;
+                                    file.close();
+                                    SPDLOG_INFO("login data saved to SD");
+                                } else {
+                                    SPDLOG_ERROR("couldnt open token.json for writing");
+                                    SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
+                                }
                             } else {
-                                SPDLOG_ERROR("couldnt open token.json for writing");
-                                error = SDError;
-                                return;
+                                SPDLOG_DEBUG("saving to sd disabled");
                             }
                         } else {
-                            error = SDError;
-                            return;
+                            SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
                         }
                     } else {
-                        error = SDError;
-                        return;
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
                     }
-                } else if (InpostAPI::verifySMSCodeBuffer->status == Error ||
-                           (InpostAPI::verifySMSCodeBuffer->status == Done &&
-                            InpostAPI::verifySMSCodeBuffer->code != 200)) {
-                    error = NetworkError;
-                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer->result), std::to_string(InpostAPI::sendSMSCodeBuffer->code));
-                    return;
+                } else if (InPostAPI::verifySMSCodeBuffer.status == Error ||
+                           (InPostAPI::verifySMSCodeBuffer.status == Done &&
+                            InPostAPI::verifySMSCodeBuffer.code != 200)) {
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                    SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                 }
+            } else {
+                introStage = 4;
             }
         } else if (introStage == 4) {
             if (voice != "") {
@@ -245,7 +237,6 @@ void SceneIntro::SceneUpdate(float dt) {
                 SPDLOG_TRACE("voice set to {}", Config::GetProperty("voice"));
                 MusicManager::PlayMusic("music/menu_music.ogg");
                 introStage = 999;
-                return;
             }
         } else if (introStage == 999) {
             logoFadeIn.step((int)(dt * 1000));
@@ -258,26 +249,15 @@ void SceneIntro::SceneUpdate(float dt) {
 void SceneIntro::SceneDraw() {
     if (randomNum != 67) {
         DrawRectangleGradientV(0, 0, 1280, 720, BLACK, {10,10,10,255});
-        if (error != 0) {
-            DrawRectangleGradientV(0, 0, 1280, 720, BLACK, {errorBgFade.peek(),0,0,255});
-            Vector2 textSize = MeasureTextEx(mainFont, errorCode.c_str(), 34, 0);
-            DrawTextOutlineEx(mainFont, errorCode.c_str(), {1280/2, 720/2},
-                              {textSize.x / 2.0f, textSize.y / 2.0f}, 34, 0, RED, BLACK, 2);
-            return;
-        }
 
         if (introStage == 1 || introStage == 2) {
-            Vector2 textSize = MeasureTextEx(logoFont, text.c_str(), 60, 4);
-            DrawTextOutlineEx(logoFont, text.c_str(), {1280/2, 720/2},
-                              {textSize.x / 2.0f, textSize.y / 2.0f}, 60, 4, {14, 21, 49, ameLogoFadeIn.peek()}, {147, 86, 234, ameLogoFadeIn.peek()}, 7);
+            DrawTexturePro(introLogo, {0, 0, introLogo.width, introLogo.height},
+                {GetScreenWidth()/2, GetScreenHeight()/2, introLogo.width * ameLogoFadeIn.peek(), introLogo.height * ameLogoFadeIn.peek()},
+                {(introLogo.width * ameLogoFadeIn.peek())/2, (introLogo.height * ameLogoFadeIn.peek())/2}, 0, WHITE);
 
-            textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
+            Vector2 textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
             DrawTextPro(mainFont, line.c_str(), {1280/2, 720/2 + 250},
                         {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 34, 0, WHITE);
-
-            textSize = MeasureTextEx(mainFont, status.c_str(), 28, 0);
-            DrawTextPro(mainFont, status.c_str(), {1280/2, 720/2 + 300},
-                        {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 28, 0, GRAY);
         } else if (introStage == 4) {
             if (voice != "") return;
             Vector2 textSize = MeasureTextEx(mainFont, "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak", 34, 0);
@@ -301,4 +281,5 @@ void SceneIntro::SceneExit() {
     UnloadFont(mainFont);
     UnloadTexture(pakuj);
     UnloadTexture(logo);
+    UnloadTexture(introLogo);
 }

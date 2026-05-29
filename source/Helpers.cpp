@@ -11,6 +11,9 @@ bool showFakePackages = false;
 bool shouldQuit = false;
 int currentBackground = 0;
 std::vector<Texture2D> backgrounds = {};
+bool alreadyLoggedIn = false;
+bool disableSavingToSD = false;
+bool networkTested = false;
 
 void DrawTextOutlineEx(Font font, const char* text, Vector2 position, Vector2 origin, float fontSize, float spacing, Color textColor, Color outlineColor, int thickness) {
     // calculate the actual top-left starting point based on the origin

@@ -11,11 +11,14 @@ ameOverflow
 OPRAWA GRAFICZNA
 
 Interfejs
-ameOveflow
+ameOverflow
 TehFridge
 
 Postacie InPost-kun i InPost-chan
 Sansy (@fedora_maniac)
+
+Logo w intro aplikacji
+Lena (@LoonaDev)
 
 
 
@@ -38,10 +41,6 @@ Tomoko Sasaki
 
 
 
-TESTERZY
-
-Misaki
-
 Dodatkowe podziękowania:
 
 TomekTTX
@@ -54,7 +53,7 @@ I dla paru serwerów Discorda na których mogłam
 spamować postępem w robieniu tego,
 i także na DMach znajomym XD
 
-Powered by raylib 5.5
+Powered by raylib 6.0
 
 Aplikacja korzysta z API InPost Mobile
 Nie jestem powiązana z InPostem, ani dla nich nie pracuję
