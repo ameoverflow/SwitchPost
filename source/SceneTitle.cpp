@@ -39,10 +39,10 @@ void SceneTitle::SceneInit() {
     version = "SwitchPost ";
     version += std::string(APP_VERSION);
 
-    std::string tutorialViewed = Config::GetProperty("tutorialDone");
-    std::string voice = Config::GetProperty("voice");
-    std::string currentPack = Config::GetProperty("resourcePack");
-    if ((tutorialViewed == "" || tutorialViewed != "true") && voice != "" && voice != "none"
+    bool tutorialViewed = Config::openedFile.tutorialDone;
+    std::string voice = Config::openedFile.voice;
+    std::string currentPack = Config::openedFile.resourcePack;
+    if (!tutorialViewed && voice != "" && voice != "none"
         && std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + voice + "/data.json"))) {
         askForTutorial = true;
     }
@@ -133,7 +133,7 @@ void SceneTitle::SceneUpdate(float dt) {
                 }
                 firstTimeUsingPrompt = true;
             } else {
-                Config::SetProperty("tutorialDone", "true");
+                Config::openedFile.tutorialDone = true;
                 inputLock = true;
                 isFadingOut = true;
             }
@@ -145,7 +145,7 @@ void SceneTitle::SceneUpdate(float dt) {
     }
 
     if (firstTimeUsingPrompt && !inputLock && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-        Config::SetProperty("tutorialDone", "true");
+        Config::openedFile.tutorialDone = true;
         firstTimeUsingPrompt = false;
         isFadingOut = true;
     }

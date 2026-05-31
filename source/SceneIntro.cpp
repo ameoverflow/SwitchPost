@@ -59,7 +59,7 @@ void SceneIntro::SceneInit() {
     logoFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Heavy.otf", 90, 0, 381);
     introStage = 0;
     at = appletGetAppletType();
-    voice = Config::GetProperty("voice");
+    voice = Config::openedFile.voice;
 
     logoFadeIn = tweeny::from(0.0f).to(0.8f).during(644);
     ameLogoFadeIn = tweeny::from(0.0f).to(1.0f).during(250).via(tweeny::easing::backOut);
@@ -228,13 +228,13 @@ void SceneIntro::SceneUpdate(float dt) {
             IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) ||
             IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                 if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-                    Config::SetProperty("voice", "male");
+                    Config::openedFile.voice = "male";
                 } else if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP)) {
-                    Config::SetProperty("voice", "female");
+                    Config::openedFile.voice = "female";
                 } else {
-                    Config::SetProperty("voice", "none");
+                    Config::openedFile.voice = "none";
                 }
-                SPDLOG_TRACE("voice set to {}", Config::GetProperty("voice"));
+                SPDLOG_TRACE("voice set to {}", Config::openedFile.voice);
                 MusicManager::PlayMusic("music/menu_music.ogg");
                 introStage = 999;
             }

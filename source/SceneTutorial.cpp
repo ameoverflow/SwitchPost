@@ -42,7 +42,7 @@ void SceneTutorial::SceneInit() {
     backgroundPopUpAnim = tweeny::from(0.0f).to(1.0f).during(500).via(tweeny::easing::backOut);
     mainFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Light.otf", 42, 0, 381);
     textbox = LoadTexture(AssetLoader::ResolveResource("sprites/textbox.png").c_str());
-    tut = Config::GetProperty("voice");
+    tut = Config::openedFile.voice;
 
     characterAnim.seek(0);
     backgroundPopUpAnim.seek(0);
@@ -124,7 +124,7 @@ void SceneTutorial::SceneUpdate(float dt) {
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
         currentFrame++;
         if (currentFrame == Frames.size()) {
-            Config::SetProperty("tutorialDone", "true");
+            Config::openedFile.tutorialDone = true;
             if (comingFromOptions) {
                 SceneManager::ChangeScene(std::make_unique<SceneOptions>());
             } else {

@@ -22,7 +22,7 @@ private:
     std::vector<std::string> options, voices;
     std::vector<ResourcePack> packList;
 
-    std::string voice, currentResourcePack, oldPack, buildInfo;
+    std::string oldPack, buildInfo;
 
     bool inResourcePackOptions, inVoiceOptions, inDeleteData, stickMovedY, stickMovedX, inNoVoicePopup, inBuildPopup;
 

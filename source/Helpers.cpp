@@ -9,7 +9,6 @@
 
 bool showFakePackages = false;
 bool shouldQuit = false;
-int currentBackground = 0;
 std::vector<Texture2D> backgrounds = {};
 bool alreadyLoggedIn = false;
 bool disableSavingToSD = false;

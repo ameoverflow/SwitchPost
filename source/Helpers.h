@@ -22,7 +22,6 @@ void DrawTextOutlineEx(Font font, const char* text, Vector2 position, Vector2 or
 float GetMappedAxis(float raw_val, float max_out, float deadzone = 0.1f);
 extern bool showFakePackages;
 extern bool shouldQuit;
-extern int currentBackground;
 extern std::vector<Texture2D> backgrounds;
 extern bool alreadyLoggedIn;
 extern bool disableSavingToSD;

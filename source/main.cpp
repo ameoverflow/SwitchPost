@@ -91,18 +91,18 @@ int main()
     fflush(stdout);
 
     SPDLOG_INFO("reading config file...");
-    Config::LoadConfigFile("sdmc:/config/switchpost/config.json");
+    Config::OpenFile("sdmc:/config/switchpost/config.cfg");
 
     SPDLOG_INFO("resolving resource packs...");
     AssetLoader::ResolvePacks();
 
-    std::string resourcePack = Config::GetProperty("resourcePack");
-    std::string voice = Config::GetProperty("voice");
+    std::string resourcePack = Config::openedFile.resourcePack;
+    std::string voice = Config::openedFile.voice;
 
     //reset pack to default if it doesnt exist and isnt default
     if (!resourcePack.empty() && !AssetLoader::RegisteredPacks.contains(resourcePack)) {
         SPDLOG_ERROR("resource pack {} not found", resourcePack);
-        Config::SetProperty("resourcePack", "");
+        Config::openedFile.resourcePack = "";
         resourcePack = "";
     } else if (!resourcePack.empty() && AssetLoader::RegisteredPacks.contains(resourcePack)) {
         AssetLoader::SetResourcePack(resourcePack);
@@ -114,14 +114,14 @@ int main()
         if (!voice.empty() && voice != "none" && voice != "male" && voice != "female") {
             std::vector<std::string> voicesList = AssetLoader::RegisteredPacks[resourcePack].voices;
             if (std::find(voicesList.begin(), voicesList.end(), voice) == voicesList.end()) {
-                Config::SetProperty("voice", "");
+                Config::openedFile.voice = "none";
                 SPDLOG_ERROR("voice {} not found in currently selected pack {}", voice, resourcePack);
                 voice = "";
             }
         }
     } else {
         if (!voice.empty() && voice != "none" && voice != "male" && voice != "female") {
-            Config::SetProperty("voice", "");
+            Config::openedFile.voice = "none";
             SPDLOG_ERROR("voice {} not found in default pack", voice);
             voice = "";
         }
@@ -153,20 +153,9 @@ int main()
         SetTextureWrap(background, TEXTURE_WRAP_REPEAT);
     }
 
-    std::string bg = Config::GetProperty("background");
-
-    std::from_chars_result toint = std::from_chars(bg.data(), bg.data() + bg.size(), currentBackground);
-
-    if (toint.ec != std::errc()) {
-        SPDLOG_ERROR("invalid background selected: {}", currentBackground);
-        currentBackground = 0;
-        Config::SetProperty("background", "0");
-    }
-
-    if (currentBackground > std::size(backgrounds) - 1) {
-        SPDLOG_ERROR("invalid background selected: selected background > {}", currentBackground);
-        currentBackground = 0;
-        Config::SetProperty("background", "0");
+    if (Config::openedFile.background > std::size(backgrounds) - 1) {
+        SPDLOG_ERROR("invalid background selected: selected background > {}", Config::openedFile.background);
+        Config::openedFile.background = 0;
     }
 
     SceneManager::Init(std::make_unique<SceneIntro>());
@@ -199,7 +188,7 @@ int main()
         BeginDrawing();
 
             ClearBackground(BLACK);
-            DrawTexturePro(backgrounds[currentBackground], { bgX, bgY, GetScreenWidth() - bgX, GetScreenHeight() - bgY}, {0, 0, GetScreenWidth() - bgX, GetScreenHeight() - bgY}, {0, 0}, 0, WHITE);
+            DrawTexturePro(backgrounds[Config::openedFile.background], { bgX, bgY, GetScreenWidth() - bgX, GetScreenHeight() - bgY}, {0, 0, GetScreenWidth() - bgX, GetScreenHeight() - bgY}, {0, 0}, 0, WHITE);
 
             SceneManager::Draw();
 
@@ -221,6 +210,8 @@ int main()
         UnloadTexture(background);
     }
     UnloadMusicStream(menuMusic);
+
+    Config::SaveFile();
 
     CloseAudioDevice();
 

@@ -90,7 +90,7 @@ void SceneMain::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 42, 0, 381);
     packageDetails = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
-    std::string voice = Config::GetProperty("voice");
+    std::string voice = Config::openedFile.voice;
     if (voice != "none" && !voice.empty() && std::filesystem::exists(AssetLoader::ResolveResource("voice/" + voice + "/confirm_closed.ogg"))) {
         confirmClosed = LoadSound(AssetLoader::ResolveResource("voice/" + voice + "/confirm_closed.ogg").c_str());
     }
@@ -126,7 +126,7 @@ void SceneMain::SceneInit() {
     modeChangeAnim.seek(0);
 
     if (std::size((*currentDisplay)) > 0) {
-        selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+        selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
     }
 }
 
@@ -420,7 +420,7 @@ void SceneMain::SceneUpdate(float dt) {
                         } else {
                             PlaySound(change);
                             selectedPackage = i;
-                            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+                            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
                         }
                     }
                 }
@@ -441,7 +441,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage--;
             PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
 
@@ -452,7 +452,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage++;
             PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
 
@@ -467,7 +467,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage++;
             PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
 
@@ -478,7 +478,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage--;
             PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
 
@@ -503,7 +503,7 @@ void SceneMain::SceneUpdate(float dt) {
             swkbdClose(&kbd);
 
             if (R_SUCCEEDED(rc)) {
-                Config::SetProperty((*currentDisplay)[selectedPackage].number + "_name", std::string(parcelName));
+                Config::openedFile.parcelNames.insert_or_assign((*currentDisplay)[selectedPackage].number, std::string(parcelName));
                 if (std::size((*currentDisplay)) > 0) {
                     selectedPackageName = std::string(parcelName);
                 }
@@ -575,7 +575,7 @@ void SceneMain::SceneUpdate(float dt) {
                 SPDLOG_CRITICAL("current display pointing at unknown location");
             }
             if (std::size((*currentDisplay)) > 0) {
-                selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+                selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             }
             modeChangeAnim.backward();
         } else if (modeChangeAnim.progress() <= 0.0f && modeChangeAnim.direction() == -1) {

@@ -42,9 +42,7 @@ void SceneOptions::SceneInit() {
         packList.push_back(kvp.second);
     }
 
-    voice = Config::GetProperty("voice");
-    currentResourcePack = Config::GetProperty("resourcePack");
-    oldPack = currentResourcePack;
+    oldPack = Config::openedFile.resourcePack;
 
     buildInfo = std::string(APP_TITLE) + " " + std::string(APP_VERSION) + "\n\n";
     buildInfo += "Build date: " + std::string(__DATE__) + " " + std::string(__TIME__) + "\n";
@@ -118,18 +116,18 @@ void SceneOptions::SceneUpdate(float dt) {
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !inputLock) {
             if (selectedSubOption == 0) {
-                currentResourcePack = "";
+                Config::openedFile.resourcePack = "";
             } else {
-                currentResourcePack = packList[selectedSubOption].directory;
+                Config::openedFile.resourcePack = packList[selectedSubOption].directory;
             }
 
             //reset voice to none if voice doesnt exist in current pack
-            if (currentResourcePack == "") {
-                if (voice != "none" && voice != "male" && voice != "female") voice = "none";
+            if (Config::openedFile.resourcePack == "") {
+                if (Config::openedFile.voice != "none" && Config::openedFile.voice != "male" && Config::openedFile.voice != "female") Config::openedFile.voice = "none";
             } else {
-                if (voice != "none" && voice != "male" && voice != "female") {
-                    std::vector<std::string> voicesList = AssetLoader::RegisteredPacks[currentResourcePack].voices;
-                    if (std::find(voicesList.begin(), voicesList.end(), voice) == voicesList.end()) voice = "none";
+                if (Config::openedFile.voice != "none" && Config::openedFile.voice != "male" && Config::openedFile.voice != "female") {
+                    std::vector<std::string> voicesList = AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].voices;
+                    if (std::find(voicesList.begin(), voicesList.end(), Config::openedFile.voice) == voicesList.end()) Config::openedFile.voice = "none";
                 }
             }
 
@@ -172,13 +170,13 @@ void SceneOptions::SceneUpdate(float dt) {
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !inputLock) {
             if (selectedSubOption == 0) {
-                voice = "none";
+                Config::openedFile.voice = "none";
             } else if (selectedSubOption == 1) {
-                voice = "male";
+                Config::openedFile.voice = "male";
             } else if (selectedSubOption == 2) {
-                voice = "female";
+                Config::openedFile.voice = "female";
             } else {
-                voice = voices[selectedSubOption];
+                Config::openedFile.voice = voices[selectedSubOption];
             }
             PlaySound(done);
             inVoiceOptions = false;
@@ -234,15 +232,15 @@ void SceneOptions::SceneUpdate(float dt) {
         {
             float currentStickValue = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
 
-            if (currentStickValue < -0.5f && !stickMovedX && !inputLock && currentBackground > 0 && selectedOption == 2) {
+            if (currentStickValue < -0.5f && !stickMovedX && !inputLock && Config::openedFile.background > 0 && selectedOption == 2) {
                 stickMovedX = true;
-                currentBackground--;
+                Config::openedFile.background--;
                 PlaySound(change);
             }
 
-            if (currentStickValue > 0.5f && !stickMovedX && !inputLock && currentBackground < std::size(backgrounds) - 1 && selectedOption == 2) {
+            if (currentStickValue > 0.5f && !stickMovedX && !inputLock && Config::openedFile.background < std::size(backgrounds) - 1 && selectedOption == 2) {
                 stickMovedX = true;
-                currentBackground++;
+                Config::openedFile.background++;
                 PlaySound(change);
             }
 
@@ -266,13 +264,13 @@ void SceneOptions::SceneUpdate(float dt) {
 
         // read dpad left right
         {
-            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT) && currentBackground > 0 && !inputLock && selectedOption == 2) {
-                currentBackground--;
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT) && Config::openedFile.background > 0 && !inputLock && selectedOption == 2) {
+                Config::openedFile.background--;
                 PlaySound(change);
             }
 
-            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) && currentBackground < std::size(backgrounds) - 1 && !inputLock && selectedOption == 2) {
-                currentBackground++;
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) && Config::openedFile.background < std::size(backgrounds) - 1 && !inputLock && selectedOption == 2) {
+                Config::openedFile.background++;
                 PlaySound(change);
             }
         }
@@ -289,7 +287,7 @@ void SceneOptions::SceneUpdate(float dt) {
                             "Damski"
                     };
 
-                    for (std::string packVoice : AssetLoader::RegisteredPacks[currentResourcePack].voices) {
+                    for (std::string packVoice : AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].voices) {
                         voices.push_back(packVoice);
                     }
 
@@ -303,7 +301,7 @@ void SceneOptions::SceneUpdate(float dt) {
                     inResourcePackOptions = true;
                     break;
                 case 3:
-                    if (voice.empty() || voice == "none" || !std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + voice + "/data.json"))) {
+                    if (Config::openedFile.voice.empty() || Config::openedFile.voice == "none" || !std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data.json"))) {
                         inNoVoicePopup = true;
                     } else {
                         SceneManager::ChangeScene(std::make_unique<SceneTutorial>(true));
@@ -351,7 +349,7 @@ void SceneOptions::SceneDraw() {
     } else {
         Vector2 textSize = MeasureTextEx(mainFont, "Opcje", 100, 0);
         DrawTextOutlineEx(mainFont, "Opcje", {GetScreenWidth()/2, 100}, {textSize.x/2, textSize.y/2}, 100, 2, WHITE, BLACK, 6);
-        if (oldPack != currentResourcePack) {
+        if (oldPack != Config::openedFile.resourcePack) {
             textSize = MeasureTextEx(mainFont, "Zmiana paczki zasobów wymaga restartu aplikacji", 42, 0);
             DrawTextOutlineEx(mainFont, "Zmiana paczki zasobów wymaga restartu aplikacji", {GetScreenWidth()/2, GetScreenHeight()/2 + 300}, {textSize.x/2, textSize.y/2}, 42, 0, RED, BLACK, 4);
         }
@@ -360,28 +358,28 @@ void SceneOptions::SceneDraw() {
             Vector2 textSize = MeasureTextEx(mainFont, options[i].c_str(), 50, 0);
             if (i == 0) {
                 std::string text = "Głos: ";
-                if (voice == "male") {
+                if (Config::openedFile.voice == "male") {
                     text += "męski";
-                } else if (voice == "female") {
+                } else if (Config::openedFile.voice == "female") {
                     text += "damski";
-                } else if (voice == "none") {
+                } else if (Config::openedFile.voice == "none") {
                     text += "brak";
                 } else {
-                    text += "inny (" + voice + ")";
+                    text += "inny (" + Config::openedFile.voice + ")";
                 }
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else if (i == 1) {
                 std::string text = "Paczka zasobów: ";
-                if (currentResourcePack == "" || !AssetLoader::RegisteredPacks.contains(currentResourcePack)) {
+                if (Config::openedFile.resourcePack == "" || !AssetLoader::RegisteredPacks.contains(Config::openedFile.resourcePack)) {
                     text += "domyślna";
                 } else {
-                    text += AssetLoader::RegisteredPacks[currentResourcePack].name;
+                    text += AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].name;
                 }
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else if (i == 2) {
-                std::string text = "Tło: < " + std::to_string(currentBackground + 1) + " >";
+                std::string text = "Tło: < " + std::to_string(Config::openedFile.background + 1) + " >";
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else {
@@ -416,11 +414,6 @@ void SceneOptions::SceneDraw() {
 }
 
 void SceneOptions::SceneExit() {
-    if (!inDeleteData) {
-        Config::SetProperty("voice", voice);
-        Config::SetProperty("resourcePack", currentResourcePack);
-        Config::SetProperty("background", std::to_string(currentBackground));
-    }
     StopSound(done);
     StopSound(change);
     UnloadFont(mainFont);
