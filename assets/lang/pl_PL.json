@@ -15,7 +15,7 @@
   "main.current": "Obecne paczki",
   "main.no_parcels": "Brak paczek :c",
   "main.courier": "Paczka kurierska",
-  "main.remote.open": "zy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie",
+  "main.remote.open": "Czy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie",
   "main.remote.picked_up": "Czy paczka została odebrana?\n\n(A) Tak      (B) Nie",
   "options.resource_pack.select": "Wybierz paczkę zasobów",
   "options.voice.select": "Wybierz głos",
