@@ -4,6 +4,7 @@
 
 #ifndef SWITCHPOST_SCENEERROR_H
 #define SWITCHPOST_SCENEERROR_H
+#include <switch.h>
 #include "Helpers.h"
 #include "Scene.h"
 #include "tween.h"
@@ -24,5 +25,9 @@ private:
     tweeny::tween<int> errorBgFade;
     Font mainFont;
     std::string errorDesc;
-    std::string GetLogFileName();
+    Result rc;
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+    float networkCheckTimeout;
 };

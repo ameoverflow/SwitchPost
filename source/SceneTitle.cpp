@@ -81,9 +81,11 @@ void SceneTitle::SceneUpdate(float dt) {
         rotationAnim.forward();
     }
 
-    if (sceneLoaded && flashbang.progress() <= 1.0f) {
+    if (sceneLoaded && flashbang.progress() <= 1.0f && !skipFlashbang) {
         flashbang.step((int)(dt * 1000.0f));
     }
+
+    if (sceneLoaded && flashbang.progress() == 1.0f && !skipFlashbang) skipFlashbang = true;
 
     if (isFadingOut) {
         if (fadeOut.progress() <= 0.99f) {
@@ -182,7 +184,8 @@ void SceneTitle::SceneDraw() {
     if (isFadingOut)
         DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(BLACK, fadeOut.peek()), ColorAlpha({10, 10, 10}, fadeOut.peek()));
 
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(WHITE, flashbang.peek()));
+    if (!skipFlashbang)
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(WHITE, flashbang.peek()));
 }
 
 void SceneTitle::SceneExit() {

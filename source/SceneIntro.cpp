@@ -104,7 +104,7 @@ void SceneIntro::SceneUpdate(float dt) {
             if (!checkedNetwork) {
                 if (!IsConnected()) {
                     SPDLOG_CRITICAL("not connected");
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NotConnectedError));
                     return;
                 }
                 checkedNetwork = true;

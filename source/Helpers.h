@@ -13,6 +13,7 @@
 enum LoadingError {
     UnknownError,
     NetworkError,
+    NotConnectedError,
     JSONError,
     SDError,
     AppletError
@@ -26,4 +27,5 @@ extern std::vector<Texture2D> backgrounds;
 extern bool alreadyLoggedIn;
 extern bool disableSavingToSD;
 extern bool networkTested;
+extern bool skipFlashbang;
 #endif //SWITCHPOST_HELPERS_H
