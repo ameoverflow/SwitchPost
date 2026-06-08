@@ -84,14 +84,20 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
     target_compile_options(SwitchPost PRIVATE -O2)
     target_link_options(SwitchPost PRIVATE -s -O2)
     target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO RELEASE)
+
+    add_custom_command(TARGET SwitchPost POST_BUILD
+            COMMAND nacptool --create ${APP_TITLE} ${APP_AUTHOR} ${APP_VERSION} $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp
+            COMMAND elf2nro $<TARGET_FILE:SwitchPost> $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nro --nacp=$<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp --romfsdir=${PROJECT_SOURCE_DIR}/assets --icon=${PROJECT_SOURCE_DIR}/assets/sprites/inpost_logo.jpg
+            COMMENT "Converting ELF to NRO"
+    )
 else()
     target_compile_options(SwitchPost PRIVATE -g3 -O0)
     target_link_options(SwitchPost PRIVATE -g3 -O0 -Wl,-Map,${TARGET}.map)
     target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE DEBUG)
-endif()
 
-add_custom_command(TARGET SwitchPost POST_BUILD
-        COMMAND nacptool --create ${APP_TITLE} ${APP_AUTHOR} ${APP_VERSION} $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp
-        COMMAND elf2nro $<TARGET_FILE:SwitchPost> $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nro --nacp=$<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp --romfsdir=${PROJECT_SOURCE_DIR}/assets --icon=${PROJECT_SOURCE_DIR}/assets/sprites/inpost_logo.jpg
-        COMMENT "Converting ELF to NRO"
-)
+    add_custom_command(TARGET SwitchPost POST_BUILD
+            COMMAND nacptool --create \"${APP_TITLE} (DEBUG)\" ${APP_AUTHOR} ${APP_VERSION} $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp
+            COMMAND elf2nro $<TARGET_FILE:SwitchPost> $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nro --nacp=$<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp --romfsdir=${PROJECT_SOURCE_DIR}/assets --icon=${PROJECT_SOURCE_DIR}/assets/sprites/inpost_logo.jpg
+            COMMENT "Converting ELF to NRO"
+    )
+endif()
