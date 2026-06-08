@@ -47,7 +47,7 @@ void AssetLoader::ResolvePacks() {
                     if (!data.contains("name") || data["name"].is_null() ||
                         !data.contains("author") || data["author"].is_null() ||
                         !data.contains("version") || data["version"].is_null() ||
-                        data.value("version", 0) != 1) {
+                        data.value("version", 0) != 2) {
                         SPDLOG_WARN("pack {} is not valid", entry.path().filename().string());
                         continue;
                     }
