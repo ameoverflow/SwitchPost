@@ -10,25 +10,27 @@
 #include "spdlog/spdlog.h"
 #include <switch.h>
 
+#include "i18n.h"
+
 void SceneError::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 90, 0, 381);
     errorBgFade = tweeny::from(32).to(64).during(2000).via(tweeny::easing::sinusoidalInOut);
-    errorDesc = "Wystąpił błąd:\n";
+    errorDesc = i18n::GetString("error.title");
     switch (errorCode) {
         case NetworkError:
-            errorDesc += "Błąd połączenia";
+            errorDesc += i18n::GetString("error.network");
             break;
         case NotConnectedError:
-            errorDesc += "Brak połączenia z internetem";
+            errorDesc += i18n::GetString("error.not_connected");
             break;
         case SDError:
-            errorDesc += "Błąd zapisywania konfiguracji";
+            errorDesc += i18n::GetString("error.sd");
             break;
         case AppletError:
-            errorDesc += "Aplikacja uruchomiona w trybie apletu";
+            errorDesc += i18n::GetString("error.applet");
             break;
         case JSONError:
-            errorDesc = "Błąd danych";
+            errorDesc = i18n::GetString("error.json");
             break;
     }
 

@@ -11,6 +11,7 @@
 #include "easing.h"
 #include "AssetLoader.h"
 #include "Config.h"
+#include "i18n.h"
 #include "SceneLoading.h"
 #include "SceneOptions.h"
 #include "SceneTutorial.h"
@@ -32,8 +33,8 @@ void SceneTitle::SceneInit() {
     rotationAnim.seek(0);
 
     options = {
-            "Start",
-            "Opcje"
+        i18n::GetString("title.start"),
+        i18n::GetString("options")
     };
 
     version = "SwitchPost ";

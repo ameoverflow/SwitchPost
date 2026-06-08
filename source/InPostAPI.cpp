@@ -167,13 +167,13 @@ bool InPostAPI::ParsePaczkas(std::string json) {
             }
         }
 
-        if (parcel.contains("events") && parcel["events"].is_array()) {
-            nlohmann::json events = parcel["events"];
+        if (parcel.contains("eventLog") && parcel["eventLog"].is_array()) {
+            nlohmann::json events = parcel["eventLog"];
             for (nlohmann::json event : events) {
                 PackageEvent pkgEvent;
                 pkgEvent.date = FormatIsoToCustom(event.value("date", ""));
                 pkgEvent.internalDate = event.value("date", "");
-                pkgEvent.name = event.value("eventTitle", ""); // matching test_data.json key
+                pkgEvent.name = event.value("name", ""); // matching test_data.json key
                 packageObject.events.push_back(pkgEvent);
             }
         }

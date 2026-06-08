@@ -10,6 +10,7 @@
 #include "SceneCredits.h"
 #include <switch.h>
 
+#include "i18n.h"
 #include "MusicManager.h"
 #include "SceneIntro.h"
 #include "SceneTutorial.h"
@@ -20,12 +21,12 @@ void SceneOptions::SceneInit() {
     change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
     done = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     options = {
-            "Głos: ",
-            "Paczka zasobów: ",
-            "Tło: ",
-            "Pokaż samouczek",
-            "Wyczyść dane",
-            "Autorzy"
+            i18n::GetString("options.voice"),
+            i18n::GetString("options.resource_pack"),
+            i18n::GetString("options.background"),
+            i18n::GetString("options.show_tutorial"),
+            i18n::GetString("options.clear_data"),
+            i18n::GetString("options.credits")
     };
 
     voices = {
@@ -35,7 +36,7 @@ void SceneOptions::SceneInit() {
     };
 
     packList = {
-            {"", "domyślna", "ameOverflow"},
+            {"", i18n::GetString("options.resource_pack.default"), "ameOverflow"},
     };
 
     for (std::pair<std::string, ResourcePack> kvp : AssetLoader::RegisteredPacks) {
@@ -282,9 +283,9 @@ void SceneOptions::SceneUpdate(float dt) {
                 case 0:
                     voices.clear();
                     voices = {
-                            "Brak",
-                            "Męski",
-                            "Damski"
+                            i18n::GetString("options.voice.none"),
+                            i18n::GetString("options.voice.male"),
+                        i18n::GetString("options.voice.female")
                     };
 
                     for (std::string packVoice : AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].voices) {
@@ -327,8 +328,8 @@ void SceneOptions::SceneUpdate(float dt) {
 
 void SceneOptions::SceneDraw() {
     if (inResourcePackOptions) {
-        Vector2 textSize = MeasureTextEx(mainFont, "Wybierz paczkę zasobów", 70, 2);
-        DrawTextOutlineEx(mainFont, "Wybierz paczkę zasobów", {GetScreenWidth()/2, 20 - scrollOffset}, {textSize.x/2, 0}, 70, 2, WHITE, BLACK, 4);
+        Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("options.resource_pack.select").c_str(), 70, 2);
+        DrawTextOutlineEx(mainFont, i18n::GetString("options.resource_pack.select").c_str(), {GetScreenWidth()/2, 20 - scrollOffset}, {textSize.x/2, 0}, 70, 2, WHITE, BLACK, 4);
         drawOffset = 100;
         for (int i = 0; i < packList.size(); i++) {
             textSize = MeasureTextEx(mainFont, std::string(packList[i].author + " - " + packList[i].name).c_str(), 40, 0);
@@ -337,8 +338,8 @@ void SceneOptions::SceneDraw() {
             drawOffset += textSize.y + 10;
         }
     } else if (inVoiceOptions) {
-        Vector2 textSize = MeasureTextEx(mainFont, "Wybierz głos", 70, 2);
-        DrawTextOutlineEx(mainFont, "Wybierz głos", {GetScreenWidth()/2, 20 - scrollOffset}, {textSize.x/2, 0}, 70, 2, WHITE, BLACK, 4);
+        Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("options.voice.select").c_str(), 70, 2);
+        DrawTextOutlineEx(mainFont, i18n::GetString("options.voice.select").c_str(), {GetScreenWidth()/2, 20 - scrollOffset}, {textSize.x/2, 0}, 70, 2, WHITE, BLACK, 4);
         drawOffset = 100;
         for (int i = 0; i < voices.size(); i++) {
             textSize = MeasureTextEx(mainFont, voices[i].c_str(), 40, 0);
@@ -347,39 +348,39 @@ void SceneOptions::SceneDraw() {
             drawOffset += textSize.y + 10;
         }
     } else {
-        Vector2 textSize = MeasureTextEx(mainFont, "Opcje", 100, 0);
-        DrawTextOutlineEx(mainFont, "Opcje", {GetScreenWidth()/2, 100}, {textSize.x/2, textSize.y/2}, 100, 2, WHITE, BLACK, 6);
+        Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("options").c_str(), 100, 0);
+        DrawTextOutlineEx(mainFont, i18n::GetString("options").c_str(), {GetScreenWidth()/2, 100}, {textSize.x/2, textSize.y/2}, 100, 2, WHITE, BLACK, 6);
         if (oldPack != Config::openedFile.resourcePack) {
-            textSize = MeasureTextEx(mainFont, "Zmiana paczki zasobów wymaga restartu aplikacji", 42, 0);
-            DrawTextOutlineEx(mainFont, "Zmiana paczki zasobów wymaga restartu aplikacji", {GetScreenWidth()/2, GetScreenHeight()/2 + 300}, {textSize.x/2, textSize.y/2}, 42, 0, RED, BLACK, 4);
+            textSize = MeasureTextEx(mainFont, i18n::GetString("options.resource_pack.restart").c_str(), 42, 0);
+            DrawTextOutlineEx(mainFont, i18n::GetString("options.resource_pack.restart").c_str(), {GetScreenWidth()/2, GetScreenHeight()/2 + 300}, {textSize.x/2, textSize.y/2}, 42, 0, RED, BLACK, 4);
         }
         int offset = 250;
         for (int i = 0; i < options.size(); i++) {
             Vector2 textSize = MeasureTextEx(mainFont, options[i].c_str(), 50, 0);
             if (i == 0) {
-                std::string text = "Głos: ";
+                std::string text = i18n::GetString("options.voice");
                 if (Config::openedFile.voice == "male") {
-                    text += "męski";
+                    text += i18n::GetString("options.voice.male");
                 } else if (Config::openedFile.voice == "female") {
-                    text += "damski";
+                    text +=  i18n::GetString("options.voice.female");
                 } else if (Config::openedFile.voice == "none") {
-                    text += "brak";
+                    text +=  i18n::GetString("options.voice.none");
                 } else {
-                    text += "inny (" + Config::openedFile.voice + ")";
+                    text +=  i18n::GetString("options.voice.other") + " (" + Config::openedFile.voice + ")";
                 }
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else if (i == 1) {
-                std::string text = "Paczka zasobów: ";
+                std::string text =  i18n::GetString("options.resource_pack");
                 if (Config::openedFile.resourcePack == "" || !AssetLoader::RegisteredPacks.contains(Config::openedFile.resourcePack)) {
-                    text += "domyślna";
+                    text +=  i18n::GetString("options.resource_pack.default");
                 } else {
                     text += AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].name;
                 }
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else if (i == 2) {
-                std::string text = "Tło: < " + std::to_string(Config::openedFile.background + 1) + " >";
+                std::string text = i18n::GetString("options.background") + ": < " + std::to_string(Config::openedFile.background + 1) + " >";
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else {
@@ -391,16 +392,16 @@ void SceneOptions::SceneDraw() {
         if (inDeleteData || inNoVoicePopup || inBuildPopup) DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
 
         if (inDeleteData) {
-            Vector2 textSize = MeasureTextEx(promptFont, "Czy chcesz usunąć WSZYSTKIE dane?\nAplikacja zostanie uruchomiona ponownie, i będzie wymagane\nponowne zalogowanie się.\n\n(A) Tak      (B) Nie", 32, 0);
+            Vector2 textSize = MeasureTextEx(promptFont, i18n::GetString("options.clear_data.warning").c_str(), 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-            DrawTextPro(promptFont, "Czy chcesz usunąć WSZYSTKIE dane?\nAplikacja zostanie uruchomiona ponownie, i będzie wymagane\nponowne zalogowanie się.\n\n(A) Tak      (B) Nie",
+            DrawTextPro(promptFont, i18n::GetString("options.clear_data.warning").c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
 
         if (inNoVoicePopup) {
-            Vector2 textSize = MeasureTextEx(promptFont, "Brak samouczka dla aktualnie wybranego głosu.\n(A) Ok", 32, 0);
+            Vector2 textSize = MeasureTextEx(promptFont, i18n::GetString("options.tutorial.no_voice").c_str(), 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-            DrawTextPro(promptFont, "Brak samouczka dla aktualnie wybranego głosu.\n(A) Ok",
+            DrawTextPro(promptFont, i18n::GetString("options.tutorial.no_voice").c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
 

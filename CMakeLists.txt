@@ -37,6 +37,8 @@ set(SOURCES
         source/SceneTutorial.cpp
         source/SceneError.cpp
         source/SceneLoading.cpp
+        source/i18n.cpp
+        source/i18n.h
 )
 
 add_executable(SwitchPost ${SOURCES})
@@ -96,7 +98,7 @@ else()
     target_compile_definitions(SwitchPost PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE DEBUG)
 
     add_custom_command(TARGET SwitchPost POST_BUILD
-            COMMAND nacptool --create \"${APP_TITLE} (DEBUG)\" ${APP_AUTHOR} ${APP_VERSION} $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp
+            COMMAND nacptool --create \"${APP_TITLE} DEBUG\" ${APP_AUTHOR} ${APP_VERSION} $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp
             COMMAND elf2nro $<TARGET_FILE:SwitchPost> $<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nro --nacp=$<TARGET_FILE_DIR:SwitchPost>/${PROJECT_NAME}.nacp --romfsdir=${PROJECT_SOURCE_DIR}/assets --icon=${PROJECT_SOURCE_DIR}/assets/sprites/inpost_logo.jpg
             COMMENT "Converting ELF to NRO"
     )

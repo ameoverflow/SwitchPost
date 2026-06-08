@@ -15,6 +15,7 @@
 #include "SceneManager.h"
 #include "AssetLoader.h"
 #include "Config.h"
+#include "i18n.h"
 #include "MusicManager.h"
 #include "qrcodegen.h"
 #include "SceneError.h"
@@ -69,6 +70,14 @@ Texture2D SceneMain::GenerateQrTexture(const char* qrData) {
     Texture2D tex = LoadTextureFromImage(img);
     UnloadImage(img); // free the cpu ram, it's on the gpu now
     return tex;
+}
+
+
+// yyyyhhhhh
+std::string ToLowercase(std::string text) {
+    std::transform(text.begin(), text.end(), text.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    return text;
 }
 
 void SceneMain::SceneInit() {
@@ -148,7 +157,7 @@ void SceneMain::SceneUpdate(float dt) {
             DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(),
                 {255, 255, 255, 255}, {255, 255, 140, 255});
             if ((*currentDisplay)[selectedPackage].openable) {
-                DrawTextPro(mainFont, "Kod odbioru", {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
+                DrawTextPro(mainFont, i18n::GetString("main.history.code").c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                 drawOffset += 37;
                 DrawTextPro(mainFont, (*currentDisplay)[selectedPackage].pickupCode.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 50, 0, BLACK);
                 drawOffset += 55;
@@ -163,14 +172,14 @@ void SceneMain::SceneUpdate(float dt) {
                 }
             }
             drawOffset += 25;
-            Vector2 textSize = MeasureTextEx(mainFont, "Historia zdarzeń", 50, 2);
-            DrawTextPro(mainFont, "Historia zdarzeń", {(float)GetScreenWidth()/2, scrollOffset + drawOffset},
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.history").c_str(), 50, 2);
+            DrawTextPro(mainFont, i18n::GetString("main.history").c_str(), {(float)GetScreenWidth()/2, scrollOffset + drawOffset},
         {textSize.x/2, textSize.y/2}, 0, 50, 2, BLACK);
             drawOffset += 32;
             for (PackageEvent event : (*currentDisplay)[selectedPackage].events) {
                 DrawTextPro(mainFont, event.date.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                 drawOffset += 37;
-                DrawTextPro(mainFont, event.name.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, BLACK);
+                DrawTextPro(mainFont, i18n::GetString(ToLowercase(event.name)).c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, BLACK);
                 drawOffset += 47;
                 DrawLine(20, scrollOffset + drawOffset, GetScreenWidth() - 20, scrollOffset + drawOffset, GRAY);
                 drawOffset += 10;
@@ -496,7 +505,7 @@ void SceneMain::SceneUpdate(float dt) {
             swkbdConfigSetType(&kbd, SwkbdType_All);
             swkbdConfigSetStringLenMax(&kbd, 20);
             swkbdConfigSetStringLenMin(&kbd, 0);
-            swkbdConfigSetHeaderText(&kbd, "Wprowadź nową nazwę paczki (puste przywraca domyślną nazwę)");
+            swkbdConfigSetHeaderText(&kbd, i18n::GetString("main.new_name.prompt").c_str());
             swkbdConfigSetGuideText(&kbd, "Cosplay");
 
             rc = swkbdShow(&kbd, parcelName, sizeof(parcelName));
@@ -590,9 +599,9 @@ void SceneMain::SceneDraw() {
     if (!inQR) {
         if (currentDisplay == &InPostAPI::packageArchive) {
             DrawRectangle(0, 0, 1280, 720, {0, 0, 0, 192});
-            DrawTextOutlineEx(mainFont, "Archiwum paczek", {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.archive").c_str(), {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
         } else if (currentDisplay == &InPostAPI::packages) {
-            DrawTextOutlineEx(mainFont, "Obecne paczki", {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.current").c_str(), {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
         }
 
         Rectangle source = {0.0f, 0.0f, (float) poststamp.width, (float) poststamp.height};
@@ -650,11 +659,11 @@ void SceneMain::SceneDraw() {
         DrawTextureEx(archiveButton, {60.0f, 290.0f}, 0, 1, WHITE);
 
         if ((*currentDisplay).size() == 0) {
-            Vector2 textSize = MeasureTextEx(mainFont, "Brak paczek :c", 42, 1);
-            DrawTextOutlineEx(mainFont, "Brak paczek :c", { (float)GetScreenWidth() / 2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height }, {textSize.x / 2, textSize.y / 2}, 42, 0, WHITE, BLACK, 4);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.no_parcels").c_str(), 42, 1);
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.no_parcels").c_str(), { (float)GetScreenWidth() / 2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height }, {textSize.x / 2, textSize.y / 2}, 42, 0, WHITE, BLACK, 4);
         } else {
-            Vector2 textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].events[0].name.c_str(), 32, 1);
-            DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].events[0].name.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString(ToLowercase((*currentDisplay)[selectedPackage].events[0].name)).c_str(), 32, 1);
+            DrawTextOutlineEx(mainFont, i18n::GetString(ToLowercase((*currentDisplay)[selectedPackage].events[0].name)).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
             std::string paczkaCounter;
             paczkaCounter += std::to_string(selectedPackage + 1);
             paczkaCounter += " / ";
@@ -672,8 +681,8 @@ void SceneMain::SceneDraw() {
             DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].events[0].date.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 120}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
 
             if ((*currentDisplay)[selectedPackage].courier) {
-                textSize = MeasureTextEx(mainFont, "Paczka kurierska", 40, 0);
-                DrawTextOutlineEx(mainFont, "Paczka kurierska", {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
+                textSize = MeasureTextEx(mainFont, i18n::GetString("main.courier").c_str(), 40, 0);
+                DrawTextOutlineEx(mainFont, i18n::GetString("main.courier").c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
             } else {
                 textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].pickupPointName.c_str(), 40, 0);
                 DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].pickupPointName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
@@ -711,16 +720,16 @@ void SceneMain::SceneDraw() {
         }
 
         if (inOpenPaczkomat) {
-            Vector2 textSize = MeasureTextEx(mainFont, "Czy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie", 32, 0);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.remote.open").c_str(), 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-            DrawTextPro(mainFont, "Czy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie",
+            DrawTextPro(mainFont, i18n::GetString("main.remote.open").c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
 
         if (inConfirmClosed) {
-            Vector2 textSize = MeasureTextEx(mainFont, "Czy paczka została odebrana?\n\n(A) Tak      (B) Nie", 32, 0);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.remote.picked_up").c_str(), 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-            DrawTextPro(mainFont, "Czy paczka została odebrana?\n\n(A) Tak      (B) Nie",
+            DrawTextPro(mainFont, i18n::GetString("main.remote.picked_up").c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
 

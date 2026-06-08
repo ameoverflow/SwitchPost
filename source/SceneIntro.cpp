@@ -20,6 +20,7 @@
 #include "InPostAPI.h"
 #include "json.hpp"
 #include "Config.h"
+#include "i18n.h"
 #include "SceneDebug.h"
 #include "SceneError.h"
 
@@ -143,8 +144,8 @@ void SceneIntro::SceneUpdate(float dt) {
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
                         swkbdConfigSetStringLenMax(&kbd, 9);
                         swkbdConfigSetStringLenMin(&kbd, 9);
-                        swkbdConfigSetHeaderText(&kbd, "Wprowadź numer telefonu");
-                        swkbdConfigSetGuideText(&kbd, "600100100");
+                        swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.phone").c_str());
+                        swkbdConfigSetGuideText(&kbd, i18n::GetString("intro.sms").c_str());
 
                         rc = swkbdShow(&kbd, phoneNumber, sizeof(phoneNumber));
                         swkbdClose(&kbd);

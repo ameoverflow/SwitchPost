@@ -8,6 +8,7 @@
 #include "AssetLoader.h"
 #include <switch.h>
 
+#include "i18n.h"
 #include "InPostAPI.h"
 #include "SceneIntro.h"
 #include "spdlog/spdlog.h"
@@ -18,10 +19,10 @@ void SceneDebug::SceneInit() {
     done = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
     options = {
-            "Pokazuj testowe paczki",
-            "Spakuj się do więzienia :troll:",
-            "Ustaw adres serwera InPost Mobile",
-            "Blokada zapisu na kartę SD"
+            i18n::GetString("debug.show_test"),
+            i18n::GetString("debug.pack"),
+            i18n::GetString("debug.set_address"),
+            i18n::GetString("debug.sd_lock")
     };
 }
 
@@ -34,7 +35,7 @@ void SceneDebug::SceneUpdate(float dt) {
             swkbdConfigSetType(&kbd, SwkbdType_Normal);
             swkbdConfigSetStringLenMax(&kbd, 64);
             swkbdConfigSetStringLenMin(&kbd, 7);
-            swkbdConfigSetHeaderText(&kbd, "Wprowadź adres URL serwera");
+            swkbdConfigSetHeaderText(&kbd,  i18n::GetString("debug.set_address.prompt").c_str());
             swkbdConfigSetGuideText(&kbd, "http://127.0.0.1:8000");
 
             rc = swkbdShow(&kbd, baseUrl, sizeof(baseUrl));
@@ -84,13 +85,13 @@ void SceneDebug::SceneUpdate(float dt) {
 
 void SceneDebug::SceneDraw() {
     DrawRectangle(0, 0, 1280, 720, BLACK);
-    DrawTextOutlineEx(mainFont, "Opcje uruchamiania", {10, 30}, {0, 0}, 28, 2, WHITE, BLACK, 2);
+    DrawTextOutlineEx(mainFont, i18n::GetString("debug.startup_options").c_str(), {10, 30}, {0, 0}, 28, 2, WHITE, BLACK, 2);
     int offset = 64;
     for (int i = 0; i < options.size(); i++) {
         if (i == 0) {
-            DrawTextOutlineEx(mainFont, std::string(options[i] + (showFakePackages ? ": TAK": ": NIE")).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
+            DrawTextOutlineEx(mainFont, std::string(options[i] + (showFakePackages ? ": " + i18n::GetString("generic.yes"): ": " + i18n::GetString("generic.no"))).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
         } else if (i == 3) {
-            DrawTextOutlineEx(mainFont, std::string(options[i] + (disableSavingToSD ? ": TAK": ": NIE")).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
+            DrawTextOutlineEx(mainFont, std::string(options[i] + (disableSavingToSD ? ": " + i18n::GetString("generic.yes"): ": " + i18n::GetString("generic.no"))).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
         } else if (i == 2) {
             DrawTextOutlineEx(mainFont, std::string(options[i] + ": " + InPostAPI::baseUrl).c_str(), {10, offset}, {0, 0}, 28, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 2);
         } else {

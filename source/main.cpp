@@ -15,6 +15,7 @@
 #include "json.hpp"
 #include "MusicManager.h"
 #include "Config.h"
+#include "i18n.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
 float bgX = 0;
@@ -126,6 +127,8 @@ int main()
             voice = "";
         }
     }
+
+    i18n::SetLanguage("en_US");
 
     Request::StartThread();
 

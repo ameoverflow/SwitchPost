@@ -14,6 +14,7 @@
 #include "SceneManager.h"
 #include "Helpers.h"
 #include "Config.h"
+#include "i18n.h"
 #include "MusicManager.h"
 #include "SceneMain.h"
 #include "SceneOptions.h"
@@ -176,8 +177,8 @@ void SceneTutorial::SceneDraw() {
 
     Vector2 textSize = MeasureTextEx(mainFont, Frames[currentFrame].text.c_str(), 32, 0);
     DrawTextOutlineEx(mainFont, Frames[currentFrame].text.c_str(), {speakingSprite.width + 10, GetScreenHeight() - textbox.height + 25}, {0, 0}, 32, 0, WHITE, BLACK, 2);
-    textSize = MeasureTextEx(mainFont, "Naciśnij (A), aby kontynuować", 22, 0);
-    DrawTextOutlineEx(mainFont, "Naciśnij (A), aby kontynuować", {483, GetScreenHeight() - textSize.y}, {0, 0}, 22, 0, {255, 204, 0, 255}, BLACK, 1);
+    textSize = MeasureTextEx(mainFont, i18n::GetString("tutorial.continue").c_str(), 22, 0);
+    DrawTextOutlineEx(mainFont, i18n::GetString("tutorial.continue").c_str(), {483, GetScreenHeight() - textSize.y}, {0, 0}, 22, 0, {255, 204, 0, 255}, BLACK, 1);
 }
 
 void SceneTutorial::SceneExit() {
