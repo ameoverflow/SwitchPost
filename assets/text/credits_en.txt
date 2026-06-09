@@ -58,7 +58,7 @@ Powered by raylib 6.0
 App uses InPost Mobile API
 I'm not associated with InPost, nor work for them
 
-All trademarks belong to their respective owners
+All trademarks are the property of their respective owners
 
 
 :3

@@ -37,8 +37,8 @@ void SceneOptions::SceneInit() {
     };
 
     languages = {
-        "English (US)",
-        "Polski (Polska)"
+        "English",
+        "Polski"
     };
 
     packList = {
@@ -161,9 +161,9 @@ void SceneOptions::SceneUpdate(float dt) {
     } else if (inLanguageOptions && !inDeleteData && !inNoVoicePopup) {
         HandleSelectMenu(std::size(languages), inLanguageOptions, [this]() {
             if (selectedSubOption == 0) {
-                Config::openedFile.language = "en_US";
+                Config::openedFile.language = "en";
             } else if (selectedSubOption == 1) {
-                Config::openedFile.language = "pl_PL";
+                Config::openedFile.language = "pl";
             }
             i18n::SetLanguage(Config::openedFile.language);
 

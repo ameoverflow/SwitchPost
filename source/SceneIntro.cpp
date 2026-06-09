@@ -146,9 +146,9 @@ void SceneIntro::SceneUpdate(float dt) {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) ||
             IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                 if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-                    Config::openedFile.language = "en_US";
+                    Config::openedFile.language = "en";
                 } else {
-                    Config::openedFile.language = "pl_PL";
+                    Config::openedFile.language = "pl";
                 }
                 i18n::SetLanguage(Config::openedFile.language);
                 SPDLOG_TRACE("language set to {}", Config::openedFile.language);
@@ -280,8 +280,8 @@ void SceneIntro::SceneDraw() {
                         {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 34, 0, WHITE);
         } else if (introStage == 3) {
             if (language != "") return;
-            Vector2 textSize = MeasureTextEx(mainFont, "Select language\nWybierz język\n\n(A) English (US)\n(B) Polski (Polska)", 34, 0);
-            DrawTextPro(mainFont, "Select language\nWybierz język\n\n(A) English (US)\n(B) Polski (Polska)",
+            Vector2 textSize = MeasureTextEx(mainFont, "Select language\nWybierz język\n\n(A) English\n(B) Polski", 34, 0);
+            DrawTextPro(mainFont, "Select language\nWybierz język\n\n(A) English\n(B) Polski",
                         {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 34, 0, WHITE);
         } else if (introStage == 5) {
             if (voice != "") return;

@@ -99,6 +99,7 @@ int main()
 
     std::string resourcePack = Config::openedFile.resourcePack;
     std::string voice = Config::openedFile.voice;
+    std::string language = Config::openedFile.language;
 
     //reset pack to default if it doesnt exist and isnt default
     if (!resourcePack.empty() && !AssetLoader::RegisteredPacks.contains(resourcePack)) {
@@ -128,7 +129,12 @@ int main()
         }
     }
 
-    i18n::SetLanguage("en_US");
+    if (language != "en" && language != "pl") {
+        i18n::SetLanguage("en");
+        Config::openedFile.language = "";
+    } else {
+        i18n::SetLanguage(language);
+    }
 
     Request::StartThread();
 
