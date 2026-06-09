@@ -24,7 +24,7 @@ private:
 #endif
     Texture2D logo;
     RenderTexture2D logoRender;
-    Sound collectedAll, change, confirmTutorial;
+    Sound confirmTutorial;
     Camera3D camera;
     tweeny::tween<float> fadeOut, rotationAnim, flashbang;
     bool isFadingOut, sceneLoaded; // :troll:

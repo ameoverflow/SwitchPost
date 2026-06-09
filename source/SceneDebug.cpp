@@ -11,12 +11,11 @@
 #include "i18n.h"
 #include "InPostAPI.h"
 #include "SceneIntro.h"
+#include "SoundManager.h"
 #include "spdlog/spdlog.h"
 
 void SceneDebug::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Bold.ttf", 50, 0, 381);
-    change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
-    done = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
     options = {
             i18n::GetString("debug.show_test"),
@@ -56,12 +55,12 @@ void SceneDebug::SceneUpdate(float dt) {
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP) && selectedOption > 0 && !inputLock) {
         selectedOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN) && selectedOption < std::size(options) - 1 && !inputLock) {
         selectedOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !inputLock) {
@@ -79,7 +78,7 @@ void SceneDebug::SceneUpdate(float dt) {
                 disableSavingToSD = !disableSavingToSD;
                 break;
         }
-        PlaySound(done);
+        SoundManager::PlaySound(GoSound);
     }
 }
 
@@ -104,10 +103,6 @@ void SceneDebug::SceneDraw() {
 }
 
 void SceneDebug::SceneExit() {
-    StopSound(done);
-    StopSound(change);
     UnloadFont(mainFont);
-    UnloadSound(done);
-    UnloadSound(change);
     UnloadTexture(pakuj);
 }

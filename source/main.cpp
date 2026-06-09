@@ -16,6 +16,7 @@
 #include "MusicManager.h"
 #include "Config.h"
 #include "i18n.h"
+#include "SoundManager.h"
 #include "spdlog/sinks/basic_file_sink.h"
 
 float bgX = 0;
@@ -147,6 +148,8 @@ int main()
     SetExitKey(0);
     SetTargetFPS(60);
 
+    SoundManager::Init();
+
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg1.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg2.png").c_str()));
     backgrounds.push_back(LoadTexture(AssetLoader::ResolveResource("sprites/bg3.png").c_str()));
@@ -219,6 +222,8 @@ int main()
         UnloadTexture(background);
     }
     UnloadMusicStream(menuMusic);
+
+    SoundManager::Destroy();
 
     Config::SaveFile();
 

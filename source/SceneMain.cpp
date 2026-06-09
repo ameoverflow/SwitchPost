@@ -20,6 +20,7 @@
 #include "qrcodegen.h"
 #include "SceneError.h"
 #include "SceneLoading.h"
+#include "SoundManager.h"
 
 void SceneMain::ReloadScene() {
     ResetRemoteLockerData();
@@ -94,8 +95,6 @@ void SceneMain::SceneInit() {
     openButton = LoadTexture(AssetLoader::ResolveResource("sprites/open_button.png").c_str());
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
-    change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
-    go = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 42, 0, 381);
     packageDetails = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
 
@@ -421,13 +420,13 @@ void SceneMain::SceneUpdate(float dt) {
                     if (touchStartPos.x >= leftUpper.x && touchStartPos.y >= leftUpper.y &&
                         touchStartPos.x <= rightLower.x && touchStartPos.y <= rightLower.y) {
                         if (selectedPackage == i) {
-                            PlaySound(go);
+                            SoundManager::PlaySound(GoSound);
                             scrollOffset = 0;
                             detailsFade.forward();
                             detailsScrollUp.forward();
                             inDetails = true;
                         } else {
-                            PlaySound(change);
+                            SoundManager::PlaySound(ChangeSound);
                             selectedPackage = i;
                             selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
                         }
@@ -449,7 +448,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage--;
-            PlaySound(change);
+            SoundManager::PlaySound(ChangeSound);
             selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
@@ -460,7 +459,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage++;
-            PlaySound(change);
+            SoundManager::PlaySound(ChangeSound);
             selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
@@ -475,7 +474,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage++;
-            PlaySound(change);
+            SoundManager::PlaySound(ChangeSound);
             selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
@@ -486,14 +485,14 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage--;
-            PlaySound(change);
+            SoundManager::PlaySound(ChangeSound);
             selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
             useTouch = false;
         }
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
         && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
-            PlaySound(go);
+            SoundManager::PlaySound(GoSound);
             scrollOffset = 0;
             detailsFade.forward();
             detailsScrollUp.forward();
@@ -522,7 +521,7 @@ void SceneMain::SceneUpdate(float dt) {
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
         && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
-            PlaySound(go);
+            SoundManager::PlaySound(GoSound);
             askForParcelName = true;
         }
 
@@ -530,7 +529,7 @@ void SceneMain::SceneUpdate(float dt) {
             modeChangeAnim.forward();
             modeChangeAnim.seek(0);
             playModeChangeAnim = true;
-            PlaySound(change);
+            SoundManager::PlaySound(ChangeSound);
         }
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock) {
@@ -751,10 +750,6 @@ void SceneMain::SceneExit() {
     StopSound(confirmOpen);
     UnloadSound(confirmOpen);
     UnloadRenderTexture(packageDetails);
-    StopSound(change);
-    UnloadSound(change);
-    StopSound(go);
-    UnloadSound(go);
     UnloadFont(mainFont);
     UnloadTexture(package);
     UnloadTexture(poststamp);

@@ -14,12 +14,11 @@
 #include "MusicManager.h"
 #include "SceneIntro.h"
 #include "SceneTutorial.h"
+#include "SoundManager.h"
 
 void SceneOptions::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Bold.ttf", 50, 0, 381);
     promptFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 50, 0, 381);
-    change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
-    done = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     options = {
             i18n::GetString("options.language"),
             i18n::GetString("options.voice"),
@@ -68,13 +67,13 @@ void SceneOptions::HandleSelectMenu(size_t listSize, bool& activeMenu, std::func
     if (currentStickValue > 0.5f && !stickMovedY && selectedSubOption > 0 && !inputLock) {
         stickMovedY = true;
         selectedSubOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (currentStickValue < -0.5f && !stickMovedY && selectedSubOption < listSize - 1 && !inputLock) {
         stickMovedY = true;
         selectedSubOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
@@ -83,17 +82,17 @@ void SceneOptions::HandleSelectMenu(size_t listSize, bool& activeMenu, std::func
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP) && selectedSubOption > 0 && !inputLock) {
         selectedSubOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN) && selectedSubOption < listSize - 1 && !inputLock) {
         selectedSubOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
         onConfirm();
-        PlaySound(done);
+        SoundManager::PlaySound(GoSound);
         activeMenu = false;
     }
 }
@@ -213,13 +212,13 @@ void SceneOptions::SceneUpdate(float dt) {
             if (currentStickValue > 0.5f && !stickMovedY && selectedOption > 0 && !inputLock) {
                 stickMovedY = true;
                 selectedOption--;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
 
             if (currentStickValue < -0.5f && !stickMovedY && selectedOption < std::size(options) - 1 && !inputLock) {
                 stickMovedY = true;
                 selectedOption++;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
 
             if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
@@ -234,13 +233,13 @@ void SceneOptions::SceneUpdate(float dt) {
             if (currentStickValue < -0.5f && !stickMovedX && !inputLock && Config::openedFile.background > 0 && selectedOption == 2) {
                 stickMovedX = true;
                 Config::openedFile.background--;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
 
             if (currentStickValue > 0.5f && !stickMovedX && !inputLock && Config::openedFile.background < std::size(backgrounds) - 1 && selectedOption == 2) {
                 stickMovedX = true;
                 Config::openedFile.background++;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
 
             if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
@@ -252,12 +251,12 @@ void SceneOptions::SceneUpdate(float dt) {
         {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP) && selectedOption > 0 && !inputLock) {
                 selectedOption--;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN) && selectedOption < std::size(options) - 1 && !inputLock) {
                 selectedOption++;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
         }
 
@@ -265,18 +264,18 @@ void SceneOptions::SceneUpdate(float dt) {
         {
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT) && Config::openedFile.background > 0 && !inputLock && selectedOption == 3) {
                 Config::openedFile.background--;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
 
             if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) && Config::openedFile.background < std::size(backgrounds) - 1 && !inputLock && selectedOption == 3) {
                 Config::openedFile.background++;
-                PlaySound(change);
+                SoundManager::PlaySound(ChangeSound);
             }
         }
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !inputLock) {
             if (selectedOption == 3) return;
-            PlaySound(done);
+            SoundManager::PlaySound(GoSound);
             switch (selectedOption) {
                 case 0:
                     selectedSubOption = 0;
@@ -433,10 +432,6 @@ void SceneOptions::SceneDraw() {
 }
 
 void SceneOptions::SceneExit() {
-    StopSound(done);
-    StopSound(change);
     UnloadFont(mainFont);
     UnloadFont(promptFont);
-    UnloadSound(done);
-    UnloadSound(change);
 }

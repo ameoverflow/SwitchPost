@@ -301,7 +301,6 @@ void SceneIntro::SceneDraw() {
 }
 
 void SceneIntro::SceneExit() {
-    UnloadSound(introSound);
     UnloadFont(logoFont);
     UnloadFont(mainFont);
     UnloadTexture(pakuj);

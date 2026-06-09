@@ -38,7 +38,7 @@ set(SOURCES
         source/SceneError.cpp
         source/SceneLoading.cpp
         source/i18n.cpp
-        source/i18n.h
+        source/SoundManager.cpp
 )
 
 add_executable(SwitchPost ${SOURCES})

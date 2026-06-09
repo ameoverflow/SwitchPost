@@ -19,7 +19,6 @@ private:
 
     Font mainFont, promptFont;
     int selectedOption, selectedSubOption;
-    Sound change, done;
     bool inputLock;
 
     std::vector<std::string> options, voices, languages;

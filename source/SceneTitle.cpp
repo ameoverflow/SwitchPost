@@ -15,6 +15,7 @@
 #include "SceneLoading.h"
 #include "SceneOptions.h"
 #include "SceneTutorial.h"
+#include "SoundManager.h"
 
 
 void SceneTitle::SceneInit() {
@@ -22,8 +23,6 @@ void SceneTitle::SceneInit() {
     smallFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 24, 0, 381);
     logo = LoadTexture(AssetLoader::ResolveResource("sprites/logo.png").c_str());
     logoRender = LoadRenderTexture(logo.width, logo.height);
-    collectedAll = LoadSound(AssetLoader::ResolveResource("sounds/collectedall.wav").c_str());
-    change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
 
     fadeOut = tweeny::from(0.0f).to(1.0f).during(250);
     fadeOut.seek(0);
@@ -54,11 +53,6 @@ void SceneTitle::SceneInit() {
 }
 
 void SceneTitle::SceneUpdate(float dt) {
-    if (!sceneLoaded) {
-        sceneLoaded = true;
-        return;
-    }
-
     // render logo texture
     BeginTextureMode(logoRender);
 
@@ -80,6 +74,11 @@ void SceneTitle::SceneUpdate(float dt) {
         rotationAnim.backward();
     } else if (rotationAnim.progress() <= 0.0f && rotationAnim.direction() == -1) {
         rotationAnim.forward();
+    }
+
+    if (!sceneLoaded) {
+        sceneLoaded = true;
+        return;
     }
 
     if (sceneLoaded && flashbang.progress() <= 1.0f && !skipFlashbang) {
@@ -105,13 +104,13 @@ void SceneTitle::SceneUpdate(float dt) {
     if (currentStickValue > 0.5f && !stickMoved && selectedOption > 0 && !inputLock && !firstTimeUsingPrompt) {
         stickMoved = true;
         selectedOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (currentStickValue < -0.5f && !stickMoved && selectedOption < std::size(options) - 1 && !inputLock && !firstTimeUsingPrompt) {
         stickMoved = true;
         selectedOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
@@ -120,12 +119,12 @@ void SceneTitle::SceneUpdate(float dt) {
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP) && selectedOption > 0 && !inputLock && !firstTimeUsingPrompt) {
         selectedOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN) && selectedOption < std::size(options) - 1 && !inputLock && !firstTimeUsingPrompt) {
         selectedOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !isFadingOut && !inputLock && !firstTimeUsingPrompt) {
@@ -136,12 +135,14 @@ void SceneTitle::SceneUpdate(float dt) {
                 }
                 firstTimeUsingPrompt = true;
             } else {
+                SoundManager::PlaySound(CollectedAllSound);
                 Config::openedFile.tutorialDone = true;
                 inputLock = true;
                 isFadingOut = true;
             }
         } else {
             inputLock = true;
+            SoundManager::PlaySound(GoSound);
             SceneManager::ChangeScene(std::make_unique<SceneOptions>());
         }
         return;
@@ -192,12 +193,8 @@ void SceneTitle::SceneDraw() {
 void SceneTitle::SceneExit() {
     StopSound(confirmTutorial);
     UnloadSound(confirmTutorial);
-    StopSound(collectedAll);
-    StopSound(change);
     UnloadFont(mainFont);
     UnloadFont(smallFont);
     UnloadTexture(logo);
     UnloadRenderTexture(logoRender);
-    UnloadSound(collectedAll);
-    UnloadSound(change);
 }

@@ -16,7 +16,6 @@ public:
 private:
     Font mainFont;
     int selectedOption;
-    Sound change, done;
     Texture2D pakuj;
     bool inputLock, pakujOn;
     std::vector<std::string> options;
