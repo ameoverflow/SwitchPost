@@ -61,6 +61,7 @@ void SceneIntro::SceneInit() {
     introStage = 0;
     at = appletGetAppletType();
     voice = Config::openedFile.voice;
+    language = Config::openedFile.language;
 
     logoFadeIn = tweeny::from(0.0f).to(0.8f).during(644);
     ameLogoFadeIn = tweeny::from(0.0f).to(1.0f).during(250).via(tweeny::easing::backOut);
@@ -136,6 +137,24 @@ void SceneIntro::SceneUpdate(float dt) {
                 introStage = 3;
             }
         } else if (introStage == 3) {
+            SPDLOG_DEBUG("language is {}", language);
+            if (language != "") {
+                introStage = 4;
+                return;
+            }
+
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) ||
+            IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+                if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+                    Config::openedFile.language = "en_US";
+                } else {
+                    Config::openedFile.language = "pl_PL";
+                }
+                i18n::SetLanguage(Config::openedFile.language);
+                SPDLOG_TRACE("language set to {}", Config::openedFile.language);
+                introStage = 4;
+            }
+        } else if (introStage == 4) {
             // log in
             if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
                 if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
@@ -145,7 +164,7 @@ void SceneIntro::SceneUpdate(float dt) {
                         swkbdConfigSetStringLenMax(&kbd, 9);
                         swkbdConfigSetStringLenMin(&kbd, 9);
                         swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.phone").c_str());
-                        swkbdConfigSetGuideText(&kbd, i18n::GetString("intro.sms").c_str());
+                        swkbdConfigSetGuideText(&kbd, "600100100");
 
                         rc = swkbdShow(&kbd, phoneNumber, sizeof(phoneNumber));
                         swkbdClose(&kbd);
@@ -163,7 +182,7 @@ void SceneIntro::SceneUpdate(float dt) {
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
                         swkbdConfigSetStringLenMax(&kbd, 6);
                         swkbdConfigSetStringLenMin(&kbd, 6);
-                        swkbdConfigSetHeaderText(&kbd, "Wprowadź kod SMS");
+                        swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.sms").c_str());
                         swkbdConfigSetGuideText(&kbd, "123456");
 
                         rc = swkbdShow(&kbd, code, sizeof(code));
@@ -216,9 +235,9 @@ void SceneIntro::SceneUpdate(float dt) {
                     SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                 }
             } else {
-                introStage = 4;
+                introStage = 5;
             }
-        } else if (introStage == 4) {
+        } else if (introStage == 5) {
             if (voice != "") {
                 introStage = 999;
                 MusicManager::PlayMusic("music/menu_music.ogg");
@@ -259,10 +278,15 @@ void SceneIntro::SceneDraw() {
             Vector2 textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
             DrawTextPro(mainFont, line.c_str(), {1280/2, 720/2 + 250},
                         {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 34, 0, WHITE);
-        } else if (introStage == 4) {
+        } else if (introStage == 3) {
+            if (language != "") return;
+            Vector2 textSize = MeasureTextEx(mainFont, "Select language\nWybierz język\n\n(A) English (US)\n(B) Polski (Polska)", 34, 0);
+            DrawTextPro(mainFont, "Select language\nWybierz język\n\n(A) English (US)\n(B) Polski (Polska)",
+                        {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 34, 0, WHITE);
+        } else if (introStage == 5) {
             if (voice != "") return;
-            Vector2 textSize = MeasureTextEx(mainFont, "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak", 34, 0);
-            DrawTextPro(mainFont, "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak",
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("intro.voice_select").c_str(), 34, 0);
+            DrawTextPro(mainFont, i18n::GetString("intro.voice_select").c_str(),
                         {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 34, 0, WHITE);
         } else if (introStage == 999) {
             Rectangle source = { 0.0f, 0.0f, (float)logo.width, (float)logo.height };

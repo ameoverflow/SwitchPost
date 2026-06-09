@@ -8,7 +8,6 @@
 #include "json.hpp"
 #include <fstream>
 #include <iostream>
-
 #include "Helpers.h"
 #include "spdlog/spdlog.h"
 
@@ -37,6 +36,7 @@ void Config::OpenFile(std::string filename) {
     newConfig.resourcePack = configData.value("resourcePack", "");
     newConfig.tutorialDone = configData.value("tutorialDone", false);
     newConfig.voice = configData.value("voice", "");
+    newConfig.language = configData.value("language", "");
 
     if (configData.contains("parcelNames") && configData["parcelNames"].is_array()) {
         nlohmann::json parcelsArray = configData["parcelNames"];
@@ -61,6 +61,7 @@ void Config::SaveFile() {
     configData["resourcePack"] = openedFile.resourcePack;
     configData["tutorialDone"] = openedFile.tutorialDone;
     configData["voice"] = openedFile.voice;
+    configData["language"] = openedFile.language;
     configData["parcelNames"] = nlohmann::json::array();
 
     for (const std::pair<const std::string, std::string>& item : openedFile.parcelNames) {

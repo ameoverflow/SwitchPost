@@ -16,6 +16,7 @@ struct ConfigFile {
     bool tutorialDone;
     std::string voice;
     std::string filename;
+    std::string language;
 };
 
 namespace Config {

@@ -1,4 +1,5 @@
 {
+  "self": "Polski (Polska)",
   "credits.return": "Wciśnij (B) żeby wrócić do menu głównego",
   "debug.startup_options": "Opcje uruchamiania",
   "debug.show_test": "Pokazuj testowe paczki",
@@ -16,6 +17,7 @@
   "error.json": "Błąd danych",
   "intro.phone": "Wprowadź numer telefonu",
   "intro.sms": "Wprowadź kod SMS",
+  "intro.voice_select": "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak",
   "main.archive": "Archiwum paczek",
   "main.current": "Obecne paczki",
   "main.no_parcels": "Brak paczek :c",
@@ -42,6 +44,8 @@
   "options.show_tutorial": "Pokaż samouczek",
   "options.credits": "Autorzy",
   "options.clear_data": "Wyczyść dane",
+  "options.language": "Język",
+  "options.language.select": "Wybierz język",
   "title.start": "Start",
   "title.tutorial": "Czy korzystasz z SwitchPost pierwszy raz?\n\n(A) Tak      (B) Nie",
   "tutorial.continue": "Naciśnij (A), aby kontynuować",

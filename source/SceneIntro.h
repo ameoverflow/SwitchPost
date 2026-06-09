@@ -30,7 +30,7 @@ private:
     bool checkedNetwork, loadedTokens;
 
     std::string line = "missingno.";
-    std::string voice, errorCode;
+    std::string voice, errorCode, language;
     std::vector<std::string> splashes;
 
     AppletType at;
