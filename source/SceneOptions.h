@@ -14,6 +14,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "options"; }
 private:
     void HandleSelectMenu(size_t listSize, bool &activeMenu, std::function<void()> onConfirm);
 

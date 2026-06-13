@@ -53,8 +53,8 @@ void SceneTutorial::SceneInit() {
 
     MusicManager::SetVolume(0.6f);
 
-    SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data.json"));
-    std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data.json"));
+    SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data_pl.json"));
+    std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data_pl.json"));
     if (file.is_open()) {
         std::stringstream buffer;
         buffer << file.rdbuf();
@@ -91,19 +91,19 @@ void SceneTutorial::SceneInit() {
                 Frames.push_back(frame);
                 SPDLOG_INFO("registered frame");
             }
+
+            speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
+            idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
+            background = LoadTexture(Frames[currentFrame].background.c_str());
+            voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
+
+            PlaySound(voiceClip);
         } else {
             SPDLOG_WARN("tutorial file not valid");
         }
     } else {
         SPDLOG_WARN("tutorial file not valid");
     }
-
-    speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
-    idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
-    background = LoadTexture(Frames[currentFrame].background.c_str());
-    voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
-
-    PlaySound(voiceClip);
 }
 
 void SceneTutorial::SceneUpdate(float dt) {

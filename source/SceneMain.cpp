@@ -44,10 +44,9 @@ Texture2D SceneMain::GenerateQrTexture(const char* qrData) {
 
     if (!qrData || strlen(qrData) == 0) return { 0 };
 
-    bool ok = qrcodegen_encodeText(qrData, tempBuffer, qrcode, qrcodegen_Ecc_MEDIUM,
+    if (!qrcodegen_encodeText(qrData, tempBuffer, qrcode, qrcodegen_Ecc_MEDIUM,
                                    qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX,
-                                   qrcodegen_Mask_AUTO, true);
-    if (!ok) return { 0 };
+                                   qrcodegen_Mask_AUTO, true)) return { 0 };
 
     int qrSize = qrcodegen_getSize(qrcode);
     int scale = 15; // how big each module is in the texture

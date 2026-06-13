@@ -13,6 +13,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "title"; }
 private:
     Font mainFont;
     Font smallFont;

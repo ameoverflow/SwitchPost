@@ -41,3 +41,10 @@ void SceneManager::Exit() {
         currentScene->SceneExit();
     }
 }
+
+std::string SceneManager::Identify() {
+    if (currentScene != nullptr) {
+        return currentScene->SceneIdentify();
+    }
+    return "none";
+}

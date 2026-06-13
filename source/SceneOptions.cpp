@@ -175,13 +175,11 @@ void SceneOptions::SceneUpdate(float dt) {
                 i18n::GetString("options.clear_data"),
                 i18n::GetString("options.credits")
             };
-            packList = {
-                {"", i18n::GetString("options.resource_pack.default"), "ameOverflow"},
-            };
+            packList[0] = {"", i18n::GetString("options.resource_pack.default"), "ameOverflow"};
         });
     } else if (inDeleteData) {
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-            std::filesystem::remove("sdmc:/config/switchpost/config.cfg");
+            std::filesystem::remove("sdmc:/config/switchpost/options.json");
             std::filesystem::remove("sdmc:/config/switchpost/token.json");
             MusicManager::Stop();
             SceneManager::ChangeScene(std::make_unique<SceneIntro>());
@@ -305,7 +303,7 @@ void SceneOptions::SceneUpdate(float dt) {
                     inResourcePackOptions = true;
                     break;
                 case 4:
-                    if (Config::openedFile.voice.empty() || Config::openedFile.voice == "none" || !std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data.json"))) {
+                    if (Config::openedFile.voice.empty() || Config::openedFile.voice == "none" || !std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data_pl.json"))) {
                         inNoVoicePopup = true;
                     } else {
                         SceneManager::ChangeScene(std::make_unique<SceneTutorial>(true));

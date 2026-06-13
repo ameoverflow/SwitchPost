@@ -24,6 +24,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "tutorial"; }
 private:
     std::vector<TutorialFrame> Frames;
     tweeny::tween<float> characterAnim, backgroundPopUpAnim;

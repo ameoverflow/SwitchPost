@@ -93,7 +93,7 @@ int main()
     fflush(stdout);
 
     SPDLOG_INFO("reading config file...");
-    Config::OpenFile("sdmc:/config/switchpost/config.cfg");
+    Config::OpenFile("sdmc:/config/switchpost/options.json");
 
     SPDLOG_INFO("resolving resource packs...");
     AssetLoader::ResolvePacks();
@@ -188,7 +188,8 @@ int main()
         versionString += std::string(BUILD_TYPE);
         versionString += "), ";
         versionString += std::to_string(GetFPS());
-        versionString += " FPS";
+        versionString += " FPS, ";
+        versionString += SceneManager::Identify();
 #endif
 
         bgX -= 25 * frameTime;

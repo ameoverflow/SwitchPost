@@ -7,7 +7,6 @@
 
 #include "raylib.h"
 #include "Scene.h"
-#include "tween.h"
 
 class SceneLoading : public Scene {
 public:
@@ -15,6 +14,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "loading"; }
 private:
     float spinnerRotation = 0;
     Texture2D loadingCircle;
