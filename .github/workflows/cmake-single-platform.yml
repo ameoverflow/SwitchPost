@@ -1,0 +1,40 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: CMake on a single platform
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          dkp-pacman -Syu --noconfirm switch-dev switch-curl switch-zlib switch-mesa switch-libdrm_nouveau
+
+      - name: Configure CMake
+        run: |
+          # Use the official devkitPro Switch toolchain file
+          cmake -B build
+
+      - name: Build project
+        run: |
+          cmake --build build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: switch-release
+          path: |
+            build/*.nro
+            build/*.elf
+
