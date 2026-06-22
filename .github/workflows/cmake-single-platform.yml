@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
-name: CMake on a single platform
+name: Development build
 
 on:
   push:
@@ -16,6 +16,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Upgrade CMake
+        run: |
+          curl -sSL https://github.com/Kitware/CMake/releases/download/v4.1.2/cmake-4.1.2-linux-x86_64.sh -o cmake-install.sh
+          sh cmake-install.sh --skip-license --prefix=/usr/local
+          rm cmake-install.sh
+          
+          # Verify the version update
+          cmake --version
 
       - name: Install dependencies
         run: |
