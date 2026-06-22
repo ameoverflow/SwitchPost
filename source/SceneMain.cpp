@@ -18,7 +18,6 @@
 #include "i18n.h"
 #include "MusicManager.h"
 #include "qrcodegen.h"
-#include "SceneError.h"
 #include "SceneLoading.h"
 #include "SoundManager.h"
 
@@ -80,6 +79,39 @@ std::string ToLowercase(std::string text) {
     return text;
 }
 
+void SceneMain::GenerateSenderNameRenderTexture() {
+    std::string selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+    if (std::size((*currentDisplay)) > 0) {
+        Vector2 textSize;
+
+        if (!selectedPackageName.empty()) {
+            textSize = MeasureTextEx(mainFont, selectedPackageName.c_str(), 28, 0);
+            // DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        } else {
+            textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), 28, 0);
+            //DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        }
+
+        if (senderName.id > 0) UnloadRenderTexture(senderName);
+        senderName = LoadRenderTexture(textSize.x + 4, textSize.y + 4);
+
+        BeginTextureMode(senderName);
+        ClearBackground(BLANK);
+        if (!selectedPackageName.empty()) {
+            DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {senderName.texture.width/2, senderName.texture.height/2}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        } else {
+            DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), {senderName.texture.width/2, senderName.texture.height/2}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        }
+        EndTextureMode();
+
+        textScrollAnim = 0;
+        textScrollDirection = false;
+        textScrollAnimDelay = 5.0f;
+
+        SPDLOG_DEBUG("generated render texture for string {}", selectedPackageName.empty() ? (*currentDisplay)[selectedPackage].senderName : selectedPackageName);
+    }
+}
+
 void SceneMain::SceneInit() {
     poststamp = LoadTexture(AssetLoader::ResolveResource("sprites/znaczek.png").c_str());
     package = LoadTexture(AssetLoader::ResolveResource("sprites/paczka.png").c_str());
@@ -132,9 +164,7 @@ void SceneMain::SceneInit() {
     selectorFadePulse.seek(0);
     modeChangeAnim.seek(0);
 
-    if (std::size((*currentDisplay)) > 0) {
-        selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
-    }
+    GenerateSenderNameRenderTexture();
 }
 
 void SceneMain::SceneUpdate(float dt) {
@@ -427,7 +457,7 @@ void SceneMain::SceneUpdate(float dt) {
                         } else {
                             SoundManager::PlaySound(ChangeSound);
                             selectedPackage = i;
-                            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+                            GenerateSenderNameRenderTexture();
                         }
                     }
                 }
@@ -448,7 +478,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage--;
             SoundManager::PlaySound(ChangeSound);
-            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -459,7 +489,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage++;
             SoundManager::PlaySound(ChangeSound);
-            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -474,7 +504,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage++;
             SoundManager::PlaySound(ChangeSound);
-            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -485,7 +515,7 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.seek(0);
             selectedPackage--;
             SoundManager::PlaySound(ChangeSound);
-            selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -501,7 +531,7 @@ void SceneMain::SceneUpdate(float dt) {
         if (askForParcelName) {
             swkbdCreate(&kbd, 0);
             swkbdConfigSetType(&kbd, SwkbdType_All);
-            swkbdConfigSetStringLenMax(&kbd, 20);
+            swkbdConfigSetStringLenMax(&kbd, 50);
             swkbdConfigSetStringLenMin(&kbd, 0);
             swkbdConfigSetHeaderText(&kbd, i18n::GetString("main.new_name.prompt").c_str());
             swkbdConfigSetGuideText(&kbd, "Cosplay");
@@ -512,7 +542,7 @@ void SceneMain::SceneUpdate(float dt) {
             if (R_SUCCEEDED(rc)) {
                 Config::openedFile.parcelNames.insert_or_assign((*currentDisplay)[selectedPackage].number, std::string(parcelName));
                 if (std::size((*currentDisplay)) > 0) {
-                    selectedPackageName = std::string(parcelName);
+                    GenerateSenderNameRenderTexture();
                 }
             }
             askForParcelName = false;
@@ -582,13 +612,35 @@ void SceneMain::SceneUpdate(float dt) {
                 SPDLOG_CRITICAL("current display pointing at unknown location");
             }
             if (std::size((*currentDisplay)) > 0) {
-                selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+                GenerateSenderNameRenderTexture();
             }
             modeChangeAnim.backward();
         } else if (modeChangeAnim.progress() <= 0.0f && modeChangeAnim.direction() == -1) {
             modeChangeAnim.forward();
             modeChangeAnim.seek(0);
             playModeChangeAnim = false;
+        }
+
+        if (!textScrollDirection) {
+            if (textScrollAnim + textAreaWidth > senderName.texture.width) {
+                textScrollAnimDelay -= dt;
+                if (textScrollAnimDelay < 0) {
+                    textScrollAnimDelay = 3.0f;
+                    textScrollDirection = true;
+                }
+            } else {
+                textScrollAnim += 50 * dt;
+            }
+        } else {
+            if (textScrollAnim < 0) {
+                textScrollAnimDelay -= dt;
+                if (textScrollAnimDelay < 0) {
+                    textScrollAnimDelay = 3.0f;
+                    textScrollDirection = false;
+                }
+            } else {
+                textScrollAnim -= 50 * dt;
+            }
         }
     }
 }
@@ -668,9 +720,9 @@ void SceneMain::SceneDraw() {
             paczkaCounter += std::to_string((*currentDisplay).size());
 #ifdef DEBUG
             paczkaCounter += "\n";
-            paczkaCounter += std::to_string(cameraOffset);
+            paczkaCounter += std::to_string(textScrollAnim);
             paczkaCounter += ", ";
-            paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * (*currentDisplay).size() - GetScreenWidth());
+            paczkaCounter += std::to_string(senderName.texture.width);
 #endif
             textSize = MeasureTextEx(mainFont, paczkaCounter.c_str(), 28, 1);
             DrawTextOutlineEx(mainFont, paczkaCounter.c_str(), {(float)GetScreenWidth()/2 - 190, poststampFade.peek() + modeChangeAnim.peek() + 100}, {textSize.x/2, textSize.y/2}, 28, 1, WHITE, BLACK, 2);
@@ -689,12 +741,15 @@ void SceneMain::SceneDraw() {
                 DrawTextOutlineEx(mainFont, std::string((*currentDisplay)[selectedPackage].street + ", " + (*currentDisplay)[selectedPackage].city).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 30}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
             }
 
-            if (!selectedPackageName.empty()) {
-                textSize = MeasureTextEx(mainFont, selectedPackageName.c_str(), 28, 0);
-                DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+            // DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+            if (senderName.texture.width > textAreaWidth) {
+                DrawTexturePro(senderName.texture, {textScrollAnim, 0, textAreaWidth, -senderName.texture.height},
+                                {GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95, textAreaWidth, senderName.texture.height},
+                                {textAreaWidth/2, senderName.texture.height/2}, 0, WHITE);
             } else {
-                textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), 28, 0);
-                DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+                DrawTexturePro(senderName.texture, {0, 0, senderName.texture.width, -senderName.texture.height},
+                {GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95, senderName.texture.width, senderName.texture.height},
+                {senderName.texture.width/2, senderName.texture.height/2}, 0, WHITE);
             }
 
             if (askForParcelName) {

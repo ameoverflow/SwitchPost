@@ -20,14 +20,23 @@ private:
     void ResetRemoteLockerData();
     void ReloadScene();
 
+    // resources
     Texture2D GenerateQrTexture(const char* qrData);
+    void GenerateSenderNameRenderTexture();
+    RenderTexture2D senderName;
     Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, selectorCorner,
     openButton, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
     Font mainFont;
     Sound confirmOpen, confirmClosed;
+    int textAreaWidth = 404;
 
+    // tweens
     tweeny::tween<float> poststampFade, packagesFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse, modeChangeAnim;
+    float textScrollAnimDelay = 5.0f;
+    float textScrollAnim = 0;
+    bool textScrollDirection;
 
+    // state
     bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, stickMoved, screenTouched, playModeChangeAnim;
     std::string sessionUuid;
     float scrollOffset = 0;
@@ -35,8 +44,8 @@ private:
     Texture2D qrCode;
     std::vector<Package>* currentDisplay;
 
+    // input
     int selectedPackage;
-    std::string selectedPackageName;
     float cameraOffset = 0;
     float targetOffset = 0;
     bool useTouch;
@@ -50,6 +59,7 @@ private:
 
     bool tokensLoaded, loadingDone;
 
+    // keyboard input
     Result rc;
     char parcelName[20];
     bool askForParcelName;
