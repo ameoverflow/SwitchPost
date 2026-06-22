@@ -26,10 +26,6 @@ jobs:
           # Verify the version update
           cmake --version
 
-      - name: Install dependencies
-        run: |
-          dkp-pacman -Syu --noconfirm switch-dev switch-curl switch-zlib switch-mesa switch-libdrm_nouveau
-
       - name: Configure CMake
         run: |
           # Use the official devkitPro Switch toolchain file
