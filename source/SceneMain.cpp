@@ -531,7 +531,7 @@ void SceneMain::SceneUpdate(float dt) {
         if (askForParcelName) {
             swkbdCreate(&kbd, 0);
             swkbdConfigSetType(&kbd, SwkbdType_All);
-            swkbdConfigSetStringLenMax(&kbd, 50);
+            swkbdConfigSetStringLenMax(&kbd, 100);
             swkbdConfigSetStringLenMin(&kbd, 0);
             swkbdConfigSetHeaderText(&kbd, i18n::GetString("main.new_name.prompt").c_str());
             swkbdConfigSetGuideText(&kbd, "Cosplay");

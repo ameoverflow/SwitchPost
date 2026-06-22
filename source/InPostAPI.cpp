@@ -203,7 +203,28 @@ bool InPostAPI::ParsePaczkas(std::string json) {
                 packages.push_back(packageObject);
             }
         } else {
-            packages.push_back(packageObject);
+            SPDLOG_TRACE(packageObject.events[0].internalDate);
+            std::istringstream iss{packageObject.events[0].internalDate};
+            std::chrono::sys_time<std::chrono::milliseconds> utc_tp;
+
+            iss >> std::chrono::parse("%Y-%m-%dT%H:%M:%S", utc_tp);
+            if (iss.fail()) {
+                packages.push_back(packageObject);
+                continue;
+            }
+
+            std::chrono::sys_time<std::chrono::milliseconds> now_ms =
+                std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+
+            std::chrono::milliseconds diff = now_ms - utc_tp;
+
+            if (diff > std::chrono::days(7)) {
+                SPDLOG_TRACE("adding to archive");
+                packageArchive.push_back(packageObject);
+            } else {
+                SPDLOG_TRACE("adding to regular parcels");
+                packages.push_back(packageObject);
+            }
         }
     }
     if (!packages.empty()) {
