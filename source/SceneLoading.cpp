@@ -13,6 +13,30 @@
 #include "SceneManager.h"
 #include "spdlog/spdlog.h"
 
+bool SceneLoading::IsConnected() {
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) {
+        SPDLOG_CRITICAL("failed to initialize nifm");
+        return false;
+    }
+
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+
+    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
+
+    nifmExit();
+
+    if (R_SUCCEEDED(rc)) {
+        if (status == NifmInternetConnectionStatus_Connected) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void SceneLoading::SceneInit() {
     InPostAPI::getPaczkasBuffer.data.clear();
     InPostAPI::getPaczkasBuffer.status = NotStarted;
@@ -25,43 +49,76 @@ void SceneLoading::SceneUpdate(float dt) {
     spinnerRotation += 180 * dt;
     if (showFakePackages) {
         std::ifstream fakePackages("romfs:/text/test_data.json");
-        if (fakePackages.is_open()) {
-            std::stringstream buffer;
-            buffer << fakePackages.rdbuf();
-            if (nlohmann::json::accept(buffer.str())) {
-                if (!InPostAPI::ParsePaczkas(buffer.str())) {
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
-                } else {
+        if (!fakePackages.is_open()) {
+            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+            return;
+        }
+        std::stringstream buffer;
+        buffer << fakePackages.rdbuf();
+
+        if (!nlohmann::json::accept(buffer.str())) {
+            SPDLOG_ERROR("failed to load fake packages");
+            SPDLOG_DEBUG("{}", buffer.str());
+            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+            return;
+        }
+
+        if (!InPostAPI::ParsePaczkas(buffer.str())) {
+            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+        } else {
+            SceneManager::ChangeScene(std::make_unique<SceneMain>());
+        }
+        fakePackages.close();
+    } else {
+        if (IsConnected()) {
+            if (InPostAPI::getPaczkasBuffer.status == NotStarted) {
+                InPostAPI::GetPaczkas();
+            } else if (InPostAPI::getPaczkasBuffer.status == Done) {
+                if (InPostAPI::getPaczkasBuffer.code == 200) {
+                    if (!InPostAPI::ParsePaczkas(std::string(InPostAPI::getPaczkasBuffer.data.begin(), InPostAPI::getPaczkasBuffer.data.end()))) {
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+                        return;
+                    }
+
+                    std::ofstream file("sdmc:/config/switchpost/offline.json");
+                    if (!file.is_open()) {
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(SDError));
+                        return;
+                    }
+
+                    file << std::string(InPostAPI::getPaczkasBuffer.data.begin(), InPostAPI::getPaczkasBuffer.data.end());
+                    file.close();
                     SceneManager::ChangeScene(std::make_unique<SceneMain>());
+                } else if (InPostAPI::getPaczkasBuffer.code == 304) {
+                    SceneManager::ChangeScene(std::make_unique<SceneMain>());
+                } else {
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
                 }
-            } else {
+            } else if (InPostAPI::getPaczkasBuffer.status == Error) {
+                SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+            }
+        } else {
+            std::ifstream offlinePackages("sdmc:/config/switchpost/offline.json");
+            if (!offlinePackages.is_open()) {
+                SceneManager::ChangeScene(std::make_unique<SceneError>(NotConnectedError));
+                return;
+            }
+
+            std::stringstream buffer;
+            buffer << offlinePackages.rdbuf();
+            if (!nlohmann::json::accept(buffer.str())) {
                 SPDLOG_ERROR("failed to load fake packages");
                 SPDLOG_DEBUG("{}", buffer.str());
                 SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                 return;
             }
-        } else {
-            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
-            return;
-        }
-        fakePackages.close();
-    } else {
-        if (InPostAPI::getPaczkasBuffer.status == NotStarted) {
-            InPostAPI::GetPaczkas();
-        } else if (InPostAPI::getPaczkasBuffer.status == Done) {
-            if (InPostAPI::getPaczkasBuffer.code == 200) {
-                if (InPostAPI::ParsePaczkas(std::string(InPostAPI::getPaczkasBuffer.data.begin(), InPostAPI::getPaczkasBuffer.data.end()))) {
-                    SceneManager::ChangeScene(std::make_unique<SceneMain>());
-                } else {
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
-                }
-            } else if (InPostAPI::getPaczkasBuffer.code == 304) {
-                SceneManager::ChangeScene(std::make_unique<SceneMain>());
+
+            if (!InPostAPI::ParsePaczkas(buffer.str())) {
+                SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
             } else {
-                SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                SceneManager::ChangeScene(std::make_unique<SceneMain>());
             }
-        } else if (InPostAPI::getPaczkasBuffer.status == Error) {
-            SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+            offlinePackages.close();
         }
     }
 }

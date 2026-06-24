@@ -21,6 +21,30 @@
 #include "SceneLoading.h"
 #include "SoundManager.h"
 
+bool SceneMain::IsConnected() {
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) {
+        SPDLOG_CRITICAL("failed to initialize nifm");
+        return false;
+    }
+
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+
+    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
+
+    nifmExit();
+
+    if (R_SUCCEEDED(rc)) {
+        if (status == NifmInternetConnectionStatus_Connected) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void SceneMain::ReloadScene() {
     ResetRemoteLockerData();
     inputLock = true;
@@ -80,8 +104,8 @@ std::string ToLowercase(std::string text) {
 }
 
 void SceneMain::GenerateSenderNameRenderTexture() {
-    std::string selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
     if (std::size((*currentDisplay)) > 0) {
+        std::string selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
         Vector2 textSize;
 
         if (!selectedPackageName.empty()) {
@@ -105,7 +129,7 @@ void SceneMain::GenerateSenderNameRenderTexture() {
         EndTextureMode();
 
         textScrollAnim = 0;
-        textScrollDirection = false;
+        textScrollDirection = true;
         textScrollAnimDelay = 5.0f;
 
         SPDLOG_DEBUG("generated render texture for string {}", selectedPackageName.empty() ? (*currentDisplay)[selectedPackage].senderName : selectedPackageName);
@@ -165,6 +189,8 @@ void SceneMain::SceneInit() {
     modeChangeAnim.seek(0);
 
     GenerateSenderNameRenderTexture();
+
+    offlineMode = !IsConnected();
 }
 
 void SceneMain::SceneUpdate(float dt) {
@@ -236,7 +262,7 @@ void SceneMain::SceneUpdate(float dt) {
                 inQR = false;
             }
 
-            if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer.status == NotStarted) {
+            if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer.status == NotStarted && !offlineMode) {
                 InPostAPI::GetPaczkomatStatus(
                         (*currentDisplay)[selectedPackage].number,
                         (*currentDisplay)[selectedPackage].pickupCode,
@@ -561,7 +587,7 @@ void SceneMain::SceneUpdate(float dt) {
             SoundManager::PlaySound(ChangeSound);
         }
 
-        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock) {
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock && !offlineMode) {
             inputLock = true;
             SceneManager::ChangeScene(std::make_unique<SceneLoading>());
             return;
@@ -629,7 +655,7 @@ void SceneMain::SceneUpdate(float dt) {
                     textScrollDirection = true;
                 }
             } else {
-                textScrollAnim += 50 * dt;
+                textScrollAnim += 35 * dt;
             }
         } else {
             if (textScrollAnim < 0) {
@@ -639,7 +665,7 @@ void SceneMain::SceneUpdate(float dt) {
                     textScrollDirection = false;
                 }
             } else {
-                textScrollAnim -= 50 * dt;
+                textScrollAnim -= 35 * dt;
             }
         }
     }
@@ -652,6 +678,10 @@ void SceneMain::SceneDraw() {
             DrawTextOutlineEx(mainFont, i18n::GetString("main.archive").c_str(), {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
         } else if (currentDisplay == &InPostAPI::packages) {
             DrawTextOutlineEx(mainFont, i18n::GetString("main.current").c_str(), {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
+        }
+
+        if (offlineMode) {
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.offline").c_str(), {30, 77}, {0, 0}, 42, 0, {255, 0, 0, 255}, BLACK, 4);
         }
 
         Rectangle source = {0.0f, 0.0f, (float) poststamp.width, (float) poststamp.height};
@@ -701,8 +731,11 @@ void SceneMain::SceneDraw() {
             DrawTextureEx(selectorCorner, { x - selectorFadePulse.peek(), y + 228.0f + selectorFadePulse.peek() }, 270.0f, 1.0f, WHITE);
         }
 
-        DrawTextureEx(promptPlus, {5.0f,  410.0f}, 0, 0.5f, WHITE);
-        DrawTextureEx(reloadButton, {60.0f, 410.0f}, 0, 1, WHITE);
+        if (!offlineMode) {
+            DrawTextureEx(promptPlus, {5.0f,  410.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(reloadButton, {60.0f, 410.0f}, 0, 1, WHITE);
+        }
+
         DrawTextureEx(promptY, {5.0f, 350.0f}, 0, 0.5f, WHITE);
         DrawTextureEx(renameButton, {60.0f, 350.0f}, 0, 1, WHITE);
         DrawTextureEx(promptX, {5.0f, 290.0f}, 0, 0.5f, WHITE);
@@ -765,8 +798,10 @@ void SceneMain::SceneDraw() {
             {(float)GetScreenWidth()/2, 20, (float)qrCode.width, (float)qrCode.height},
             {(float)qrCode.width/2, 0}, 0, WHITE);
 
-        DrawTextureEx(openButton, {GetScreenWidth()/2 - openButton.width/2, 40 + qrCode.height}, 0, 1, WHITE);
-        DrawTextureEx(promptX, {GetScreenWidth()/2 - openButton.width/2 - 10 - promptX.width, 35 + qrCode.height}, 0, 1, WHITE);
+        if (!offlineMode) {
+            DrawTextureEx(openButton, {GetScreenWidth()/2 - openButton.width/2, 40 + qrCode.height}, 0, 1, WHITE);
+            DrawTextureEx(promptX, {GetScreenWidth()/2 - openButton.width/2 - 10 - promptX.width, 35 + qrCode.height}, 0, 1, WHITE);
+        }
 
         if (inOpenPaczkomat || inConfirmClosed) {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});

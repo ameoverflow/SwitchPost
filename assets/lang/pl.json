@@ -20,6 +20,7 @@
   "intro.voice_select": "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak",
   "main.archive": "Archiwum paczek",
   "main.current": "Obecne paczki",
+  "main.offline": "Tryb offline",
   "main.no_parcels": "Brak paczek :c",
   "main.courier": "Paczka kurierska",
   "main.remote.open": "Czy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie",

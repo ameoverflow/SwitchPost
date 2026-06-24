@@ -20,6 +20,7 @@
   "intro.voice_select": "Select voice (in Polish)\n\n(A) Male\n(X) Female\n(B) None",
   "main.archive": "Parcel archive",
   "main.current": "Current parcels",
+  "main.offline": "Offline mode",
   "main.no_parcels": "No parcels? :c",
   "main.courier": "Courier parcel",
   "main.remote.open": "Do you want to open the parcel locker?\n\n(A) Yes      (B) No",

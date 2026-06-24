@@ -26,30 +26,6 @@
 
 ResponseBuffer bufferPointer;
 
-bool SceneIntro::IsConnected() {
-    Result rc = nifmInitialize(NifmServiceType_User);
-    if (R_FAILED(rc)) {
-        SPDLOG_CRITICAL("failed to initialize nifm");
-        return false;
-    }
-
-    NifmInternetConnectionType type;
-    u32 wifi_strength;
-    NifmInternetConnectionStatus status;
-
-    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
-
-    nifmExit();
-
-    if (R_SUCCEEDED(rc)) {
-        if (status == NifmInternetConnectionStatus_Connected) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void SceneIntro::SceneInit() {
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
     logo = LoadTexture(AssetLoader::ResolveResource("sprites/logo.png").c_str());
@@ -103,24 +79,15 @@ void SceneIntro::SceneUpdate(float dt) {
                 return;
             }
 
-            if (!checkedNetwork) {
-                if (!IsConnected()) {
-                    SPDLOG_CRITICAL("not connected");
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(NotConnectedError));
+            if (!loadedTokens) {
+                if (std::filesystem::exists("sdmc:/config/switchpost/token.json") && !InPostAPI::LoadTokens()) {
+                    SPDLOG_CRITICAL("unable to load tokens");
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     return;
                 }
-                checkedNetwork = true;
+                loadedTokens = true;
             } else {
-                if (!loadedTokens) {
-                    if (std::filesystem::exists("sdmc:/config/switchpost/token.json") && !InPostAPI::LoadTokens()) {
-                        SPDLOG_CRITICAL("unable to load tokens");
-                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
-                        return;
-                    }
-                    loadedTokens = true;
-                } else {
-                    introStage = 1;
-                }
+                introStage = 1;
             }
 
         } else if (introStage == 1) {

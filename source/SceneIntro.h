@@ -17,7 +17,6 @@ public:
     void SceneExit() override;
     std::string SceneIdentify() override { return "intro"; }
 private:
-    bool IsConnected();
     Texture2D pakuj, logo, introLogo;
     Font logoFont, mainFont;
     Sound introSound;

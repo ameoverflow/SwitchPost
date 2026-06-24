@@ -16,6 +16,7 @@ public:
     void SceneExit() override;
     std::string SceneIdentify() override { return "loading"; }
 private:
+    bool IsConnected();
     float spinnerRotation = 0;
     Texture2D loadingCircle;
 };

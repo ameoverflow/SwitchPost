@@ -11,6 +11,8 @@
 #include <switch.h>
 
 #include "i18n.h"
+#include "MusicManager.h"
+#include "SceneLoading.h"
 
 void SceneError::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 90, 0, 381);
@@ -57,7 +59,8 @@ void SceneError::SceneUpdate(float dt) {
             if (R_SUCCEEDED(rc)) {
                 if (status == NifmInternetConnectionStatus_Connected) {
                     networkTested = false;
-                    SceneManager::ChangeScene(std::make_unique<SceneIntro>());
+                    MusicManager::PlayMusic("music/menu_music.ogg");
+                    SceneManager::ChangeScene(std::make_unique<SceneLoading>());
                 }
             }
 

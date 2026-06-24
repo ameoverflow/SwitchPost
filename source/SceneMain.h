@@ -17,6 +17,7 @@ public:
     void SceneExit() override;
     std::string SceneIdentify() override { return "main"; }
 private:
+    bool IsConnected();
     void ResetRemoteLockerData();
     void ReloadScene();
 
@@ -34,7 +35,7 @@ private:
     tweeny::tween<float> poststampFade, packagesFade, sceneChangeFade, detailsFade, detailsScrollUp, selectorFadePulse, modeChangeAnim;
     float textScrollAnimDelay = 5.0f;
     float textScrollAnim = 0;
-    bool textScrollDirection;
+    bool textScrollDirection = true;
 
     // state
     bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, stickMoved, screenTouched, playModeChangeAnim;
@@ -43,6 +44,7 @@ private:
     RenderTexture2D packageDetails;
     Texture2D qrCode;
     std::vector<Package>* currentDisplay;
+    bool offlineMode;
 
     // input
     int selectedPackage;
