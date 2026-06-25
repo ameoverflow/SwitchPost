@@ -21,30 +21,6 @@
 #include "SceneLoading.h"
 #include "SoundManager.h"
 
-bool SceneMain::IsConnected() {
-    Result rc = nifmInitialize(NifmServiceType_User);
-    if (R_FAILED(rc)) {
-        SPDLOG_CRITICAL("failed to initialize nifm");
-        return false;
-    }
-
-    NifmInternetConnectionType type;
-    u32 wifi_strength;
-    NifmInternetConnectionStatus status;
-
-    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
-
-    nifmExit();
-
-    if (R_SUCCEEDED(rc)) {
-        if (status == NifmInternetConnectionStatus_Connected) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void SceneMain::ReloadScene() {
     ResetRemoteLockerData();
     inputLock = true;

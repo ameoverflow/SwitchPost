@@ -59,8 +59,7 @@ void SceneError::SceneUpdate(float dt) {
             if (R_SUCCEEDED(rc)) {
                 if (status == NifmInternetConnectionStatus_Connected) {
                     networkTested = false;
-                    MusicManager::PlayMusic("music/menu_music.ogg");
-                    SceneManager::ChangeScene(std::make_unique<SceneLoading>());
+                    SceneManager::ChangeScene(std::make_unique<SceneIntro>());
                 }
             }
 

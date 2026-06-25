@@ -125,6 +125,8 @@ void SceneIntro::SceneUpdate(float dt) {
             // log in
             if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
                 if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
+                    if (!IsConnected()) SceneManager::ChangeScene(std::make_unique<SceneError>(NotConnectedError));
+
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);

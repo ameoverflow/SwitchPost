@@ -13,30 +13,6 @@
 #include "SceneManager.h"
 #include "spdlog/spdlog.h"
 
-bool SceneLoading::IsConnected() {
-    Result rc = nifmInitialize(NifmServiceType_User);
-    if (R_FAILED(rc)) {
-        SPDLOG_CRITICAL("failed to initialize nifm");
-        return false;
-    }
-
-    NifmInternetConnectionType type;
-    u32 wifi_strength;
-    NifmInternetConnectionStatus status;
-
-    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
-
-    nifmExit();
-
-    if (R_SUCCEEDED(rc)) {
-        if (status == NifmInternetConnectionStatus_Connected) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void SceneLoading::SceneInit() {
     InPostAPI::getPaczkasBuffer.data.clear();
     InPostAPI::getPaczkasBuffer.status = NotStarted;

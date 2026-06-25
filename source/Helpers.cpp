@@ -6,6 +6,8 @@
 
 #include <string>
 #include <algorithm>
+#include <switch.h>
+#include <spdlog/spdlog.h>
 
 bool showFakePackages = false;
 bool shouldQuit = false;
@@ -39,4 +41,28 @@ float GetMappedAxis(float raw_val, float max_out, float deadzone) {
     float val = std::clamp(raw_val, deadzone, 1.0f);
 
     return (val - deadzone) / (1.0f - deadzone) * max_out;
+}
+
+bool IsConnected() {
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) {
+        SPDLOG_CRITICAL("failed to initialize nifm");
+        return false;
+    }
+
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+
+    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
+
+    nifmExit();
+
+    if (R_SUCCEEDED(rc)) {
+        if (status == NifmInternetConnectionStatus_Connected) {
+            return true;
+        }
+    }
+
+    return false;
 }

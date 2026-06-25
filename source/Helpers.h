@@ -21,6 +21,7 @@ enum LoadingError {
 
 void DrawTextOutlineEx(Font font, const char* text, Vector2 position, Vector2 origin, float fontSize, float spacing, Color textColor, Color outlineColor, int thickness);
 float GetMappedAxis(float raw_val, float max_out, float deadzone = 0.1f);
+bool IsConnected();
 extern bool showFakePackages;
 extern bool shouldQuit;
 extern std::vector<Texture2D> backgrounds;

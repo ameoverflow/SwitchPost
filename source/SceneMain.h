@@ -17,7 +17,6 @@ public:
     void SceneExit() override;
     std::string SceneIdentify() override { return "main"; }
 private:
-    bool IsConnected();
     void ResetRemoteLockerData();
     void ReloadScene();
 
