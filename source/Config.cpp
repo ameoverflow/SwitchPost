@@ -84,3 +84,29 @@ void Config::SaveFile() {
         SPDLOG_DEBUG("saving to sd disabled");
     }
 }
+
+
+std::string Config::LegacyGetConfigProperty(std::string name) {
+    SPDLOG_TRACE("[LEGACY] property: {}", name);
+    std::ifstream file("sdmc:/config/switchpost/config.json");
+    if (file.is_open()) {
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        file.close();
+        if (nlohmann::json::accept(buffer.str())) {
+            nlohmann::json config = nlohmann::json::parse(buffer.str());
+            if (!config.contains(name) || config[name].is_null()) {
+                SPDLOG_DEBUG("property doesnt exist");
+                return "";
+            } else {
+                return config[name];
+            }
+        } else {
+            SPDLOG_ERROR("file invalid");
+            return "";
+        }
+    } else {
+        SPDLOG_ERROR("file couldnt be opened");
+        return "";
+    }
+}

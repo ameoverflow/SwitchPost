@@ -60,7 +60,7 @@ target_compile_options(SwitchPost PRIVATE
         -Wno-narrowing
         -Wno-error=narrowing
         -ffunction-sections
-        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti;-fno-exceptions>
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
 )
 
 target_compile_definitions(SwitchPost PRIVATE

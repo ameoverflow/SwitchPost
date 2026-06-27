@@ -95,6 +95,18 @@ int main()
     SPDLOG_INFO("reading config file...");
     Config::OpenFile("sdmc:/config/switchpost/options.json");
 
+    if (std::filesystem::exists("sdmc:/config/switchpost/config.json") && !std::filesystem::exists("sdmc:/config/switchpost/options.json")) {
+        SPDLOG_INFO("converting from old config file...");
+        try {
+            Config::openedFile.background = std::stoi(Config::LegacyGetConfigProperty("background"));
+            Config::openedFile.tutorialDone = Config::LegacyGetConfigProperty("tutorialDone") == "true";
+            Config::openedFile.voice = Config::LegacyGetConfigProperty("voice");
+            Config::openedFile.resourcePack = Config::LegacyGetConfigProperty("resourcePack");
+        } catch (...) {
+            SPDLOG_ERROR("error converting config");
+        }
+    }
+
     SPDLOG_INFO("resolving resource packs...");
     AssetLoader::ResolvePacks();
 

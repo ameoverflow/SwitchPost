@@ -23,6 +23,7 @@ namespace Config {
     inline ConfigFile openedFile;
     void OpenFile(std::string filename);
     void SaveFile();
+    std::string LegacyGetConfigProperty(std::string name);
 };
 
 
