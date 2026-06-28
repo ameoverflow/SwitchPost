@@ -1,6 +1,6 @@
 # SwitchPost
 
-[/README_pl.md](PL)
+[PL](README_pl.md)
 
 ![logo.png](/.github/logo.png)
 
