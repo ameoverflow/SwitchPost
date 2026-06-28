@@ -1,30 +1,31 @@
 # SwitchPost
 
+[/README_pl.md](PL)
+
 ![logo.png](/.github/logo.png)
 
-Nieoficjalny klient InPost Mobile na Nintendo Switch.
+Unofficial InPost Mobile client for Nintendo Switch.
 
-Bazowany na [InPost3DS](https://github.com/TehFridge/InPost3DS) autorstwa TehFridge.
+Based on [InPost3DS](https://github.com/TehFridge/InPost3DS) by TehFridge.
 
 ![screenshot.png](/.github/screenshot.png)
 
-## Nowości w porównaniu do InPost3DS
-- Wsparcie paczek zasobów
-- 10 różnych teł do wyboru
-- Wskaźniki paczek (czy jest gotowa do odbioru lub została odebrana)
-- Archiwum paczek
-- Możliwość zmiany nazwy paczki
+## New features compared to InPost3DS
+- Resource pack support
+- 10 different backgrounds
+- Parel indicators (received or ready to pickup)
+- parcel archive
+- Ability to change parcel names
 
-## Instalacja
+## Installation
 
-Przekopiuj plik SwitchPost.nro do folderu switch na karcie SD zmodowanej konsoli.
+Copy SwitchPost.nro to the SD card of a modded Nintendo Switch.
 
-**Aplikacja musi zostać uruchomiona w trybie title takeover (przytrzymaj R przy uruchamianiu dowolnej aplikacji z home menu, 
-wystarczy jakaś darmowa z eShopa)**
+**App works only in title takeover mode (hold R when launching any Switch app from home menu, free app from eShop will work for this)**
 
-## Kompilacja
+## Compilation
 
-Wymagany jest zainstalowany toolchain devkitPro.
+devkitPro is required.
 
 1. `(dkp-)pacman -Syu switch-dev switch-curl switch-zlib switch-mesa switch-libdrm_nouveau`
 2. `mkdir build`
@@ -32,18 +33,18 @@ Wymagany jest zainstalowany toolchain devkitPro.
 4. `cd build`
 5. `make`
    
-Wyjdzie z tego plik SwitchPost.nro w wersji debugowej, który wypluwa do pliku więcej logów niż wersja release
+This will build a debug SwitchPost.nro which outputs more logs than release.
 
-## Notka
+## Legal note
 
-Aplikacja korzysta z API InPost Mobile autorstwa InPost sp. z o.o.
+App uses InPost Mobile API by InPost sp. z o.o.
 
-Nie jestem powiązana z InPost sp. z o.o., ani nie czerpię korzyści finansowych za ten projekt.
+I'm not associated with InPost sp. z o.o., and I'm not deriving any financial gain from this project.
 
-Aplikacja stworzona w celach edukacyjnych.
+Application created for educational purposes.
 
-Wszystkie znaki towarowe należą do ich właścicieli.
+All trademarks are the property of their respective owners.
 
-Użytkownicy korzystają z aplikacji na własne ryzyko.
+This application is provided 'as is', without warranty of any kind.
 
 :3
