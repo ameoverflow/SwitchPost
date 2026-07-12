@@ -7,13 +7,13 @@ np.
 {
     "name": "Moja paczka",
     "author": "ameOverflow",
-    "version": 1
+    "version": 2
 }
 ```
 
 - `name`: nazwa paczki
 - `author`: twój nick
-- `version`: musi być na 1
+- `version`: musi być na 2
 
 przykładowy resource pack znajduje się w folderze `example-pack`
 
