@@ -19,13 +19,13 @@ public:
 private:
     void ResetRemoteLockerData();
     void ReloadScene();
+    void RenderRemoteOpenButton();
 
     // resources
     Texture2D GenerateQrTexture(const char* qrData);
     void GenerateSenderNameRenderTexture();
-    RenderTexture2D senderName;
-    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, selectorCorner,
-    openButton, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
+    RenderTexture2D senderName, openButton;
+    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, selectorCorner, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
     Font mainFont;
     Sound confirmOpen, confirmClosed;
     int textAreaWidth = 404;

@@ -33,6 +33,7 @@
   "main.new_name.prompt": "Enter a new parcel name (empty restores default)",
   "main.history": "Event log",
   "main.history.code": "Pickup code",
+  "main.remote.open_button": "OPEN LOCKER",
   "options.resource_pack.select": "Select resource pack",
   "options.voice.select": "Select voice",
   "options": "Options",

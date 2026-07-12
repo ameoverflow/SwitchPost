@@ -33,6 +33,7 @@
   "main.new_name.prompt": "Wprowadź nową nazwę paczki (puste przywraca domyślną nazwę)",
   "main.history": "Historia zdarzeń",
   "main.history.code": "Kod odbioru",
+  "main.remote.open_button": "OTWÓRZ ZDALNIE",
   "options.resource_pack.select": "Wybierz paczkę zasobów",
   "options.voice.select": "Wybierz głos",
   "options": "Opcje",

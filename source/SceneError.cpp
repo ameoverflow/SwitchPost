@@ -17,8 +17,9 @@
 #include "SceneTitle.h"
 
 void SceneError::SceneInit() {
+    MusicManager::Stop();
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 90, 0, 381);
-    errorBgFade = tweeny::from(32).to(64).during(2000).via(tweeny::easing::sinusoidalInOut);
+    errorBgFade = tweeny::from(32).to(64).during(4000).via(tweeny::easing::sinusoidalInOut);
     errorDesc = i18n::GetString("error.title");
     switch (errorCode) {
         case NetworkError:
@@ -68,6 +69,7 @@ void SceneError::SceneUpdate(float dt) {
     }
 
     if (returnToMenu && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+        MusicManager::PlayMusic("music/menu_music.ogg");
         SceneManager::ChangeScene(std::make_unique<SceneTitle>());
     }
 
@@ -78,7 +80,8 @@ void SceneError::SceneUpdate(float dt) {
             if (R_SUCCEEDED(rc)) {
                 if (status == NifmInternetConnectionStatus_Connected) {
                     networkTested = false;
-                    SceneManager::ChangeScene(std::make_unique<SceneIntro>());
+                    MusicManager::PlayMusic("music/menu_music.ogg");
+                    SceneManager::ChangeScene(std::make_unique<SceneLoading>());
                 }
             }
 

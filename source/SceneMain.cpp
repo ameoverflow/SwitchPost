@@ -112,6 +112,21 @@ void SceneMain::GenerateSenderNameRenderTexture() {
     }
 }
 
+void SceneMain::RenderRemoteOpenButton() {
+    openButton = LoadRenderTexture(360, 80);
+    Texture2D buttonTemplate = LoadTexture(AssetLoader::ResolveResource("sprites/button.png").c_str());
+    Font buttonFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Heavy.otf", 42, 0, 381);
+
+    BeginTextureMode(openButton);
+    DrawTexture(buttonTemplate, 0, 0, WHITE);
+    Vector2 size = MeasureTextEx(buttonFont, i18n::GetString("main.remote.open_button").c_str(), 35, 4);
+    DrawTextOutlineEx(buttonFont, i18n::GetString("main.remote.open_button").c_str(), {180, 40}, {size.x/2, size.y/2}, 35, 2, BLACK, WHITE, 4);
+    EndTextureMode();
+
+    UnloadTexture(buttonTemplate);
+    UnloadFont(buttonFont);
+}
+
 void SceneMain::SceneInit() {
     poststamp = LoadTexture(AssetLoader::ResolveResource("sprites/znaczek.png").c_str());
     package = LoadTexture(AssetLoader::ResolveResource("sprites/paczka.png").c_str());
@@ -123,11 +138,11 @@ void SceneMain::SceneInit() {
     reloadButton = LoadTexture(AssetLoader::ResolveResource("sprites/refresh.png").c_str());
     renameButton = LoadTexture(AssetLoader::ResolveResource("sprites/rename.png").c_str());
     archiveButton = LoadTexture(AssetLoader::ResolveResource("sprites/archive.png").c_str());
-    openButton = LoadTexture(AssetLoader::ResolveResource("sprites/open_button.png").c_str());
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 42, 0, 381);
     packageDetails = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    RenderRemoteOpenButton();
 
     std::string voice = Config::openedFile.voice;
     if (voice != "none" && !voice.empty() && std::filesystem::exists(AssetLoader::ResolveResource("voice/" + voice + "/confirm_closed.ogg"))) {
@@ -265,8 +280,8 @@ void SceneMain::SceneUpdate(float dt) {
             if (inQR && !inOpenPaczkomat && !inConfirmClosed && GetTouchPointCount() > 0 && !screenTouched) {
                 Vector2 touchPoint = GetTouchPosition(0);
                 screenTouched = true;
-                if (touchPoint.x >= GetScreenWidth()/2 - openButton.width/2 && touchPoint.y >= 40 + qrCode.height &&
-                    touchPoint.x <= GetScreenWidth()/2 - openButton.width/2 + openButton.width && touchPoint.y <= 40 + qrCode.height + openButton.height) {
+                if (touchPoint.x >= GetScreenWidth()/2 - openButton.texture.width/2 && touchPoint.y >= 40 + qrCode.height &&
+                    touchPoint.x <= GetScreenWidth()/2 - openButton.texture.width/2 + openButton.texture.width && touchPoint.y <= 40 + qrCode.height + openButton.texture.height) {
                     InPostAPI::GetPaczkomatStatus(
                             (*currentDisplay)[selectedPackage].number,
                             (*currentDisplay)[selectedPackage].pickupCode,
@@ -774,8 +789,12 @@ void SceneMain::SceneDraw() {
             {(float)qrCode.width/2, 0}, 0, WHITE);
 
         if (!offlineMode) {
-            DrawTextureEx(openButton, {GetScreenWidth()/2 - openButton.width/2, 40 + qrCode.height}, 0, 1, WHITE);
-            DrawTextureEx(promptX, {GetScreenWidth()/2 - openButton.width/2 - 10 - promptX.width, 35 + qrCode.height}, 0, 1, WHITE);
+            /* DrawTexturePro(senderName.texture, {0, 0, senderName.texture.width, -senderName.texture.height},
+            {GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95, senderName.texture.width, senderName.texture.height},
+            {senderName.texture.width/2, senderName.texture.height/2}, 0, WHITE); */
+            DrawTexturePro(openButton.texture, {0, 0, 360,-80},
+                {GetScreenWidth()/2 - openButton.texture.width/2, 40 + qrCode.height, 360, 80}, {0, 0}, 0, WHITE);
+            DrawTextureEx(promptX, {GetScreenWidth()/2 - openButton.texture.width/2 - 10 - promptX.width, 35 + qrCode.height}, 0, 1, WHITE);
         }
 
         if (inOpenPaczkomat || inConfirmClosed) {
@@ -822,7 +841,7 @@ void SceneMain::SceneExit() {
     UnloadTexture(promptY);
     UnloadTexture(promptX);
     UnloadTexture(promptPlus);
-    UnloadTexture(openButton);
+    UnloadRenderTexture(openButton);
     UnloadTexture(reloadButton);
     UnloadTexture(renameButton);
     UnloadTexture(readyForPickup);
