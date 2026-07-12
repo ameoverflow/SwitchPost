@@ -176,8 +176,7 @@ void SceneMain::SceneUpdate(float dt) {
     }
 
     spinnerRotation += 180 * dt;
-    if (inDetails)
-    {
+    if (inDetails) {
         float drawOffset = 10;
 
         // --- render detail mode ---

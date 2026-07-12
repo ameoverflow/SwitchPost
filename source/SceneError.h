@@ -13,8 +13,9 @@
 
 class SceneError : public Scene {
 public:
-    SceneError(LoadingError error = UnknownError) {
+    SceneError(LoadingError error = UnknownError, bool allowReturnToMainMenu = false) {
         errorCode = error;
+        returnToMenu = allowReturnToMainMenu;
     }
     void SceneInit() override;
     void SceneDraw() override;
@@ -23,6 +24,7 @@ public:
     std::string SceneIdentify() override { return "error"; }
 private:
     LoadingError errorCode;
+    bool returnToMenu;
     tweeny::tween<int> errorBgFade;
     Font mainFont;
     std::string errorDesc;

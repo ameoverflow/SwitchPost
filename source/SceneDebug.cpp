@@ -10,6 +10,7 @@
 
 #include "i18n.h"
 #include "InPostAPI.h"
+#include "SceneError.h"
 #include "SceneIntro.h"
 #include "SoundManager.h"
 #include "spdlog/spdlog.h"
@@ -21,7 +22,8 @@ void SceneDebug::SceneInit() {
             i18n::GetString("debug.show_test"),
             i18n::GetString("debug.pack"),
             i18n::GetString("debug.set_address"),
-            i18n::GetString("debug.sd_lock")
+            i18n::GetString("debug.sd_lock"),
+            i18n::GetString("debug.show_error")
     };
 }
 
@@ -77,6 +79,8 @@ void SceneDebug::SceneUpdate(float dt) {
             case 3:
                 disableSavingToSD = !disableSavingToSD;
                 break;
+            case 4:
+                SceneManager::ChangeScene(std::make_unique<SceneError>(UnknownError));
         }
         SoundManager::PlaySound(GoSound);
     }

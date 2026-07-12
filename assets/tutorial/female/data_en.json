@@ -1,0 +1,145 @@
+[
+  {
+    "speakingSprite": "excited.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_1.ogg",
+    "text": "Hi! Welcome to SwitchPost!"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_2.ogg",
+    "text": "In this short tutorial I'll show you\nhow to use the app..."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut0.png",
+    "voiceClip": "tut_3.ogg",
+    "text": "starting with the main menu."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut0.png",
+    "voiceClip": "tut_4.ogg",
+    "text": "On the top of the screen you'll see\na poststamp with your parcel's data."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut0.png",
+    "voiceClip": "tut_5.ogg",
+    "text": "It consists of information such as..."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut1.png",
+    "voiceClip": "tut_6.ogg",
+    "text": "When was the parcel's status last updated,"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut2.png",
+    "voiceClip": "tut_7.ogg",
+    "text": "The name of the destination parcel locker,"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut3.png",
+    "voiceClip": "tut_8.ogg",
+    "text": "The name of the sender,"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut4.png",
+    "voiceClip": "tut_9.ogg",
+    "text": "And the estimated delivery address of the parcel."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut5.png",
+    "voiceClip": "tut_10.ogg",
+    "text": "Using the D-pad you can move between\nthe parcels shown on the bottom of the screen."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut5.png",
+    "voiceClip": "tut_11.ogg",
+    "text": "Press (A) on the selected parcel\nto see the menu with all information about it."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut7.png",
+    "voiceClip": "tut_12.ogg",
+    "text": "If the parcel is ready to be picked up,\nyou'll see a six character pickup code\nand the QR button."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut7.png",
+    "voiceClip": "tut_13.ogg",
+    "text": "After pressing it, or the (Y) button\nyou'll be shown the parcel pickup menu."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut8.png",
+    "voiceClip": "tut_14.ogg",
+    "text": "On the screen you'll see the QR code\nwhich you can use with the scanners\navailable in the parcel lockers."
+  },
+  {
+    "speakingSprite": "diss_open.png",
+    "idleSprite": "diss.png",
+    "background": "tut8.png",
+    "voiceClip": "tut_15.ogg",
+    "text": "Which.. don't like to work\nwith the console screen."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut9.png",
+    "voiceClip": "tut_16.ogg",
+    "text": "You'll see the button for remote locker\nopening as well!"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut10.png",
+    "voiceClip": "tut_17.ogg",
+    "text": "When you press it, you'll see a pop-up\nasking if you want to open the locker"
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut10.png",
+    "voiceClip": "tut_18.ogg",
+    "text": "It's there just to be sure\nyou won't accidentally open the locker."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "background": "tut10.png",
+    "voiceClip": "tut_19.ogg",
+    "text": "SwitchPost doesn't detect your location,\nso be sure to keep caution."
+  },
+  {
+    "speakingSprite": "normal.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_20.ogg",
+    "text": "And that's all for the tutorial."
+  },
+  {
+    "speakingSprite": "excited.png",
+    "idleSprite": "idle.png",
+    "voiceClip": "tut_21.ogg",
+    "text": "Thank you for using SwitchPost. Have fun! :)"
+  }
+]

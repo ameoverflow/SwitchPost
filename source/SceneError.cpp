@@ -13,6 +13,8 @@
 #include "i18n.h"
 #include "MusicManager.h"
 #include "SceneLoading.h"
+#include "SceneMain.h"
+#include "SceneTitle.h"
 
 void SceneError::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 90, 0, 381);
@@ -32,8 +34,21 @@ void SceneError::SceneInit() {
             errorDesc += i18n::GetString("error.applet");
             break;
         case JSONError:
-            errorDesc = i18n::GetString("error.json");
+            errorDesc += i18n::GetString("error.json");
             break;
+        default:
+            errorDesc += i18n::GetString("error.unknown");
+            break;
+    }
+
+    errorDesc += "\n\n";
+
+    if (errorCode == NotConnectedError) {
+        errorDesc += i18n::GetString("error.checking_network");
+    } else if (returnToMenu) {
+        errorDesc += i18n::GetString("error.return");
+    } else {
+        errorDesc += i18n::GetString("error.restart");
     }
 
     if (errorCode == NotConnectedError) {
@@ -50,6 +65,10 @@ void SceneError::SceneUpdate(float dt) {
         errorBgFade.backward();
     } else if (errorBgFade.progress() <= 0.0f && errorBgFade.direction() == -1) {
         errorBgFade.forward();
+    }
+
+    if (returnToMenu && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+        SceneManager::ChangeScene(std::make_unique<SceneTitle>());
     }
 
     if (errorCode == NotConnectedError) {

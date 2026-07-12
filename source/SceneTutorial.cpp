@@ -53,8 +53,8 @@ void SceneTutorial::SceneInit() {
 
     MusicManager::SetVolume(0.6f);
 
-    SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data_pl.json"));
-    std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data_pl.json"));
+    SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data_" + Config::openedFile.language + ".json"));
+    std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data_" + Config::openedFile.language + ".json"));
     if (file.is_open()) {
         std::stringstream buffer;
         buffer << file.rdbuf();

@@ -26,7 +26,7 @@ void SceneLoading::SceneUpdate(float dt) {
     if (showFakePackages) {
         std::ifstream fakePackages("romfs:/text/test_data.json");
         if (!fakePackages.is_open()) {
-            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
             return;
         }
         std::stringstream buffer;
@@ -35,12 +35,12 @@ void SceneLoading::SceneUpdate(float dt) {
         if (!nlohmann::json::accept(buffer.str())) {
             SPDLOG_ERROR("failed to load fake packages");
             SPDLOG_DEBUG("{}", buffer.str());
-            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
             return;
         }
 
         if (!InPostAPI::ParsePaczkas(buffer.str())) {
-            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+            SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
         } else {
             SceneManager::ChangeScene(std::make_unique<SceneMain>());
         }
@@ -52,7 +52,7 @@ void SceneLoading::SceneUpdate(float dt) {
             } else if (InPostAPI::getPaczkasBuffer.status == Done) {
                 if (InPostAPI::getPaczkasBuffer.code == 200) {
                     if (!InPostAPI::ParsePaczkas(std::string(InPostAPI::getPaczkasBuffer.data.begin(), InPostAPI::getPaczkasBuffer.data.end()))) {
-                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
                         return;
                     }
 
@@ -68,10 +68,10 @@ void SceneLoading::SceneUpdate(float dt) {
                 } else if (InPostAPI::getPaczkasBuffer.code == 304) {
                     SceneManager::ChangeScene(std::make_unique<SceneMain>());
                 } else {
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError, true));
                 }
             } else if (InPostAPI::getPaczkasBuffer.status == Error) {
-                SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+                SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError, true));
             }
         } else {
             std::ifstream offlinePackages("sdmc:/config/switchpost/offline.json");
@@ -85,12 +85,12 @@ void SceneLoading::SceneUpdate(float dt) {
             if (!nlohmann::json::accept(buffer.str())) {
                 SPDLOG_ERROR("failed to load fake packages");
                 SPDLOG_DEBUG("{}", buffer.str());
-                SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+                SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
                 return;
             }
 
             if (!InPostAPI::ParsePaczkas(buffer.str())) {
-                SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
+                SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
             } else {
                 SceneManager::ChangeScene(std::make_unique<SceneMain>());
             }
