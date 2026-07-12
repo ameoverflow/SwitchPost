@@ -46,7 +46,7 @@ Additional thanks:
 TomekTTX
 for help, without it i wouldn't get started in c++ at all
 
-Warszawski Hackerspace
+Warsaw Hackerspace
 for being able to rot there, and for mate vending
 
 And for few Discord servers on which
