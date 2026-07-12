@@ -34,7 +34,7 @@ private:
     int lineHeight;
     Font mainFont;
     int currentFrame = 0;
-    bool playCharacterAnim, comingFromOptions;
+    bool playCharacterAnim, comingFromOptions, dontPlayVoice;
 
     std::string tut;
 };

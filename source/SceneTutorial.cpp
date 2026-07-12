@@ -16,6 +16,7 @@
 #include "Config.h"
 #include "i18n.h"
 #include "MusicManager.h"
+#include "SceneLoading.h"
 #include "SceneMain.h"
 #include "SceneOptions.h"
 
@@ -44,6 +45,10 @@ void SceneTutorial::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Light.otf", 42, 0, 381);
     textbox = LoadTexture(AssetLoader::ResolveResource("sprites/textbox.png").c_str());
     tut = Config::openedFile.voice;
+    if (tut == "none") {
+        tut = "female";
+        dontPlayVoice = true;
+    }
 
     characterAnim.seek(0);
     backgroundPopUpAnim.seek(0);
@@ -97,7 +102,7 @@ void SceneTutorial::SceneInit() {
             background = LoadTexture(Frames[currentFrame].background.c_str());
             voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
 
-            PlaySound(voiceClip);
+            if (!dontPlayVoice) PlaySound(voiceClip);
         } else {
             SPDLOG_WARN("tutorial file not valid");
         }
@@ -129,7 +134,7 @@ void SceneTutorial::SceneUpdate(float dt) {
             if (comingFromOptions) {
                 SceneManager::ChangeScene(std::make_unique<SceneOptions>());
             } else {
-                SceneManager::ChangeScene(std::make_unique<SceneMain>());
+                SceneManager::ChangeScene(std::make_unique<SceneLoading>());
             }
         } else {
             StopSound(voiceClip);
@@ -154,7 +159,7 @@ void SceneTutorial::SceneUpdate(float dt) {
 
             voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
 
-            PlaySound(voiceClip);
+            if (!dontPlayVoice) PlaySound(voiceClip);
             playCharacterAnim = true;
         }
     }

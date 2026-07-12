@@ -181,6 +181,9 @@ void SceneOptions::SceneUpdate(float dt) {
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
             std::filesystem::remove("sdmc:/config/switchpost/options.json");
             std::filesystem::remove("sdmc:/config/switchpost/token.json");
+            std::filesystem::remove("sdmc:/config/switchpost/offline.json");
+            std::filesystem::remove("sdmc:/config/switchpost/config.json");
+            Config::OpenFile("sdmc:/config/switchpost/options.json");
             MusicManager::Stop();
             SceneManager::ChangeScene(std::make_unique<SceneIntro>());
             return;
@@ -303,10 +306,16 @@ void SceneOptions::SceneUpdate(float dt) {
                     inResourcePackOptions = true;
                     break;
                 case 4:
-                    if (Config::openedFile.voice.empty() || Config::openedFile.voice == "none" || !std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data_pl.json"))) {
-                        inNoVoicePopup = true;
-                    } else {
-                        SceneManager::ChangeScene(std::make_unique<SceneTutorial>(true));
+                    if (!Config::openedFile.voice.empty()) {
+                        if (Config::openedFile.voice != "none") {
+                            if (!std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data_pl.json"))) {
+                                inNoVoicePopup = true;
+                            } else {
+                                SceneManager::ChangeScene(std::make_unique<SceneTutorial>(true));
+                            }
+                        } else {
+                            SceneManager::ChangeScene(std::make_unique<SceneTutorial>(true));
+                        }
                     }
                     break;
                 case 5:

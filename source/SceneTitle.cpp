@@ -42,9 +42,15 @@ void SceneTitle::SceneInit() {
     bool tutorialViewed = Config::openedFile.tutorialDone;
     std::string voice = Config::openedFile.voice;
     std::string currentPack = Config::openedFile.resourcePack;
-    if (!tutorialViewed && voice != "" && voice != "none"
-        && std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + voice + "/data.json"))) {
-        askForTutorial = true;
+
+    if (!tutorialViewed && !Config::openedFile.voice.empty()) {
+        if (Config::openedFile.voice != "none") {
+            if (std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data_pl.json"))) {
+                askForTutorial = true;
+            }
+        } else {
+            askForTutorial = true;
+        }
     }
 
     if (std::filesystem::exists(AssetLoader::ResolveResource("voice/" + voice + "/confirm_tutorial.ogg"))) {
