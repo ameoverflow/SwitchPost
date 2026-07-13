@@ -14,7 +14,9 @@
 #include "SceneManager.h"
 #include "Helpers.h"
 #include "Config.h"
+#include "i18n.h"
 #include "MusicManager.h"
+#include "SceneLoading.h"
 #include "SceneMain.h"
 #include "SceneOptions.h"
 
@@ -42,7 +44,11 @@ void SceneTutorial::SceneInit() {
     backgroundPopUpAnim = tweeny::from(0.0f).to(1.0f).during(500).via(tweeny::easing::backOut);
     mainFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Light.otf", 42, 0, 381);
     textbox = LoadTexture(AssetLoader::ResolveResource("sprites/textbox.png").c_str());
-    tut = Config::GetProperty("voice");
+    tut = Config::openedFile.voice;
+    if (tut == "none") {
+        tut = "female";
+        dontPlayVoice = true;
+    }
 
     characterAnim.seek(0);
     backgroundPopUpAnim.seek(0);
@@ -52,8 +58,8 @@ void SceneTutorial::SceneInit() {
 
     MusicManager::SetVolume(0.6f);
 
-    SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data.json"));
-    std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data.json"));
+    SPDLOG_TRACE("tutorial file: {}", AssetLoader::ResolveResource("tutorial/" + tut + "/data_" + Config::openedFile.language + ".json"));
+    std::ifstream file(AssetLoader::ResolveResource("tutorial/" + tut + "/data_" + Config::openedFile.language + ".json"));
     if (file.is_open()) {
         std::stringstream buffer;
         buffer << file.rdbuf();
@@ -90,19 +96,19 @@ void SceneTutorial::SceneInit() {
                 Frames.push_back(frame);
                 SPDLOG_INFO("registered frame");
             }
+
+            speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
+            idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
+            background = LoadTexture(Frames[currentFrame].background.c_str());
+            voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
+
+            if (!dontPlayVoice) PlaySound(voiceClip);
         } else {
             SPDLOG_WARN("tutorial file not valid");
         }
     } else {
         SPDLOG_WARN("tutorial file not valid");
     }
-
-    speakingSprite = LoadTexture(Frames[currentFrame].speakingSprite.c_str());
-    idleSprite = LoadTexture(Frames[currentFrame].idleSprite.c_str());
-    background = LoadTexture(Frames[currentFrame].background.c_str());
-    voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
-
-    PlaySound(voiceClip);
 }
 
 void SceneTutorial::SceneUpdate(float dt) {
@@ -124,11 +130,11 @@ void SceneTutorial::SceneUpdate(float dt) {
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
         currentFrame++;
         if (currentFrame == Frames.size()) {
-            Config::SetProperty("tutorialDone", "true");
+            Config::openedFile.tutorialDone = true;
             if (comingFromOptions) {
                 SceneManager::ChangeScene(std::make_unique<SceneOptions>());
             } else {
-                SceneManager::ChangeScene(std::make_unique<SceneMain>());
+                SceneManager::ChangeScene(std::make_unique<SceneLoading>());
             }
         } else {
             StopSound(voiceClip);
@@ -153,7 +159,7 @@ void SceneTutorial::SceneUpdate(float dt) {
 
             voiceClip = LoadSound(Frames[currentFrame].voiceClip.c_str());
 
-            PlaySound(voiceClip);
+            if (!dontPlayVoice) PlaySound(voiceClip);
             playCharacterAnim = true;
         }
     }
@@ -176,8 +182,8 @@ void SceneTutorial::SceneDraw() {
 
     Vector2 textSize = MeasureTextEx(mainFont, Frames[currentFrame].text.c_str(), 32, 0);
     DrawTextOutlineEx(mainFont, Frames[currentFrame].text.c_str(), {speakingSprite.width + 10, GetScreenHeight() - textbox.height + 25}, {0, 0}, 32, 0, WHITE, BLACK, 2);
-    textSize = MeasureTextEx(mainFont, "Naciśnij (A), aby kontynuować", 22, 0);
-    DrawTextOutlineEx(mainFont, "Naciśnij (A), aby kontynuować", {483, GetScreenHeight() - textSize.y}, {0, 0}, 22, 0, {255, 204, 0, 255}, BLACK, 1);
+    textSize = MeasureTextEx(mainFont, i18n::GetString("tutorial.continue").c_str(), 22, 0);
+    DrawTextOutlineEx(mainFont, i18n::GetString("tutorial.continue").c_str(), {483, GetScreenHeight() - textSize.y}, {0, 0}, 22, 0, {255, 204, 0, 255}, BLACK, 1);
 }
 
 void SceneTutorial::SceneExit() {

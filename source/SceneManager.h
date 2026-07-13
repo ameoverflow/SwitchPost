@@ -10,6 +10,7 @@ namespace SceneManager {
     void ChangeScene(std::unique_ptr<Scene>&& scene);
     void Init(std::unique_ptr<Scene>&& init_scene);
     void Exit();
+    std::string Identify();
 };
 
 

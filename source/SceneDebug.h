@@ -13,10 +13,10 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "debug"; }
 private:
     Font mainFont;
     int selectedOption;
-    Sound change, done;
     Texture2D pakuj;
     bool inputLock, pakujOn;
     std::vector<std::string> options;

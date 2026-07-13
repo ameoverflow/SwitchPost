@@ -11,9 +11,11 @@
 #include "easing.h"
 #include "AssetLoader.h"
 #include "Config.h"
+#include "i18n.h"
 #include "SceneLoading.h"
 #include "SceneOptions.h"
 #include "SceneTutorial.h"
+#include "SoundManager.h"
 
 
 void SceneTitle::SceneInit() {
@@ -21,8 +23,6 @@ void SceneTitle::SceneInit() {
     smallFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 24, 0, 381);
     logo = LoadTexture(AssetLoader::ResolveResource("sprites/logo.png").c_str());
     logoRender = LoadRenderTexture(logo.width, logo.height);
-    collectedAll = LoadSound(AssetLoader::ResolveResource("sounds/collectedall.wav").c_str());
-    change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
 
     fadeOut = tweeny::from(0.0f).to(1.0f).during(250);
     fadeOut.seek(0);
@@ -32,19 +32,25 @@ void SceneTitle::SceneInit() {
     rotationAnim.seek(0);
 
     options = {
-            "Start",
-            "Opcje"
+        i18n::GetString("title.start"),
+        i18n::GetString("options")
     };
 
     version = "SwitchPost ";
     version += std::string(APP_VERSION);
 
-    std::string tutorialViewed = Config::GetProperty("tutorialDone");
-    std::string voice = Config::GetProperty("voice");
-    std::string currentPack = Config::GetProperty("resourcePack");
-    if ((tutorialViewed == "" || tutorialViewed != "true") && voice != "" && voice != "none"
-        && std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + voice + "/data.json"))) {
-        askForTutorial = true;
+    bool tutorialViewed = Config::openedFile.tutorialDone;
+    std::string voice = Config::openedFile.voice;
+    std::string currentPack = Config::openedFile.resourcePack;
+
+    if (!tutorialViewed && !Config::openedFile.voice.empty()) {
+        if (Config::openedFile.voice != "none") {
+            if (std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data_pl.json"))) {
+                askForTutorial = true;
+            }
+        } else {
+            askForTutorial = true;
+        }
     }
 
     if (std::filesystem::exists(AssetLoader::ResolveResource("voice/" + voice + "/confirm_tutorial.ogg"))) {
@@ -53,11 +59,6 @@ void SceneTitle::SceneInit() {
 }
 
 void SceneTitle::SceneUpdate(float dt) {
-    if (!sceneLoaded) {
-        sceneLoaded = true;
-        return;
-    }
-
     // render logo texture
     BeginTextureMode(logoRender);
 
@@ -81,9 +82,16 @@ void SceneTitle::SceneUpdate(float dt) {
         rotationAnim.forward();
     }
 
-    if (sceneLoaded && flashbang.progress() <= 1.0f) {
+    if (!sceneLoaded) {
+        sceneLoaded = true;
+        return;
+    }
+
+    if (sceneLoaded && flashbang.progress() <= 1.0f && !skipFlashbang) {
         flashbang.step((int)(dt * 1000.0f));
     }
+
+    if (sceneLoaded && flashbang.progress() == 1.0f && !skipFlashbang) skipFlashbang = true;
 
     if (isFadingOut) {
         if (fadeOut.progress() <= 0.99f) {
@@ -102,13 +110,13 @@ void SceneTitle::SceneUpdate(float dt) {
     if (currentStickValue > 0.5f && !stickMoved && selectedOption > 0 && !inputLock && !firstTimeUsingPrompt) {
         stickMoved = true;
         selectedOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (currentStickValue < -0.5f && !stickMoved && selectedOption < std::size(options) - 1 && !inputLock && !firstTimeUsingPrompt) {
         stickMoved = true;
         selectedOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (currentStickValue > -0.3f && currentStickValue < 0.3f) {
@@ -117,12 +125,12 @@ void SceneTitle::SceneUpdate(float dt) {
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP) && selectedOption > 0 && !inputLock && !firstTimeUsingPrompt) {
         selectedOption--;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN) && selectedOption < std::size(options) - 1 && !inputLock && !firstTimeUsingPrompt) {
         selectedOption++;
-        PlaySound(change);
+        SoundManager::PlaySound(ChangeSound);
     }
 
     if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !isFadingOut && !inputLock && !firstTimeUsingPrompt) {
@@ -133,19 +141,21 @@ void SceneTitle::SceneUpdate(float dt) {
                 }
                 firstTimeUsingPrompt = true;
             } else {
-                Config::SetProperty("tutorialDone", "true");
+                SoundManager::PlaySound(CollectedAllSound);
+                Config::openedFile.tutorialDone = true;
                 inputLock = true;
                 isFadingOut = true;
             }
         } else {
             inputLock = true;
+            SoundManager::PlaySound(GoSound);
             SceneManager::ChangeScene(std::make_unique<SceneOptions>());
         }
         return;
     }
 
     if (firstTimeUsingPrompt && !inputLock && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
-        Config::SetProperty("tutorialDone", "true");
+        Config::openedFile.tutorialDone = true;
         firstTimeUsingPrompt = false;
         isFadingOut = true;
     }
@@ -182,18 +192,15 @@ void SceneTitle::SceneDraw() {
     if (isFadingOut)
         DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(BLACK, fadeOut.peek()), ColorAlpha({10, 10, 10}, fadeOut.peek()));
 
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(WHITE, flashbang.peek()));
+    if (!skipFlashbang)
+        DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), ColorAlpha(WHITE, flashbang.peek()));
 }
 
 void SceneTitle::SceneExit() {
     StopSound(confirmTutorial);
     UnloadSound(confirmTutorial);
-    StopSound(collectedAll);
-    StopSound(change);
     UnloadFont(mainFont);
     UnloadFont(smallFont);
     UnloadTexture(logo);
     UnloadRenderTexture(logoRender);
-    UnloadSound(collectedAll);
-    UnloadSound(change);
 }

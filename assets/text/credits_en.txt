@@ -1,0 +1,64 @@
+SwitchPost
+Based on InPost3DS by TehFridge
+
+
+PROGRAMMING
+
+ameOverflow
+
+
+
+GRAPHICS
+
+User interface
+ameOverflow
+TehFridge
+
+InPost-kun and InPost-chan characters
+Sansy (@fedora_maniac)
+
+Logo in intro
+Lena (@LoonaDev)
+
+
+
+VOICES
+
+InPost-kun - Droździak1 (@drozdziak1@hackerspace.pl)
+InPost-chan - MadX (@Mad_X@mastodon.social)
+
+
+
+MUSIC
+
+Main theme
+John "Joy" Tay
+
+Credits music
+Takenobu Mitsuyoshi
+Naofumi Hataya
+Tomoko Sasaki
+
+
+
+Additional thanks:
+
+TomekTTX
+for help, without it i wouldn't get started in c++ at all
+
+Warsaw Hackerspace
+for being able to rot there, and for mate vending
+
+And for few Discord servers on which
+I was able to spam with progress of making this,
+and on friend DMs XD
+
+Powered by raylib 6.0
+
+App uses InPost Mobile API
+I'm not associated with InPost, nor work for them
+
+All trademarks are the property of their respective owners
+
+
+:3

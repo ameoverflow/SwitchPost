@@ -1,0 +1,45 @@
+# This starter workflow is for a CMake project running on a single platform. There is a different starter workflow if you need cross-platform coverage.
+# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-multi-platform.yml
+name: Development build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkita64:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upgrade CMake
+        run: |
+          curl -sSL https://github.com/Kitware/CMake/releases/download/v4.1.2/cmake-4.1.2-linux-x86_64.sh -o cmake-install.sh
+          sh cmake-install.sh --skip-license --prefix=/usr/local
+          rm cmake-install.sh
+          
+          # Verify the version update
+          cmake --version
+
+      - name: Configure CMake
+        run: |
+          # Use the official devkitPro Switch toolchain file
+          cmake -B build
+
+      - name: Build project
+        run: |
+          cmake --build build
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SwitchPost-DEV
+          path: |
+            build/*.nro
+            build/*.elf
+

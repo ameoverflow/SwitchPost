@@ -47,13 +47,13 @@ void AssetLoader::ResolvePacks() {
                     if (!data.contains("name") || data["name"].is_null() ||
                         !data.contains("author") || data["author"].is_null() ||
                         !data.contains("version") || data["version"].is_null() ||
-                        data["version"].get<unsigned int>() != 1) {
+                        data.value("version", 0) != 2) {
                         SPDLOG_WARN("pack {} is not valid", entry.path().filename().string());
                         continue;
                     }
 
-                    pack.name = data["name"].get<std::string>();
-                    pack.author = data["author"].get<std::string>();
+                    pack.name = data.value("name", "");
+                    pack.author = data.value("author", "");
 
                     std::string voicesPath = "sdmc:/config/switchpost/resourcepacks/" + pack.directory + "/voice";
                     if (std::filesystem::exists(voicesPath) && std::filesystem::is_directory(voicesPath)) {

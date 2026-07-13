@@ -24,6 +24,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "tutorial"; }
 private:
     std::vector<TutorialFrame> Frames;
     tweeny::tween<float> characterAnim, backgroundPopUpAnim;
@@ -33,7 +34,7 @@ private:
     int lineHeight;
     Font mainFont;
     int currentFrame = 0;
-    bool playCharacterAnim, comingFromOptions;
+    bool playCharacterAnim, comingFromOptions, dontPlayVoice;
 
     std::string tut;
 };

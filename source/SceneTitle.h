@@ -13,6 +13,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "title"; }
 private:
     Font mainFont;
     Font smallFont;
@@ -24,7 +25,7 @@ private:
 #endif
     Texture2D logo;
     RenderTexture2D logoRender;
-    Sound collectedAll, change, confirmTutorial;
+    Sound confirmTutorial;
     Camera3D camera;
     tweeny::tween<float> fadeOut, rotationAnim, flashbang;
     bool isFadingOut, sceneLoaded; // :troll:

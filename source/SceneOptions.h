@@ -1,6 +1,7 @@
 #ifndef SWITCHPOST_SCENEOPTIONS_H
 #define SWITCHPOST_SCENEOPTIONS_H
 
+#include <functional>
 #include "Scene.h"
 #include "raylib.h"
 #include <string>
@@ -13,18 +14,20 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "options"; }
 private:
+    void HandleSelectMenu(size_t listSize, bool &activeMenu, std::function<void()> onConfirm);
+
     Font mainFont, promptFont;
     int selectedOption, selectedSubOption;
-    Sound change, done;
     bool inputLock;
 
-    std::vector<std::string> options, voices;
+    std::vector<std::string> options, voices, languages;
     std::vector<ResourcePack> packList;
 
-    std::string voice, currentResourcePack, oldPack, buildInfo;
+    std::string oldPack, buildInfo;
 
-    bool inResourcePackOptions, inVoiceOptions, inDeleteData, stickMovedY, stickMovedX, inNoVoicePopup, inBuildPopup;
+    bool inResourcePackOptions, inVoiceOptions, inDeleteData, stickMovedY, stickMovedX, inNoVoicePopup, inBuildPopup, inLanguageOptions;
 
     float scrollOffset, drawOffset, targetOffset;
 };

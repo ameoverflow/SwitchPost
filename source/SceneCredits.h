@@ -16,6 +16,7 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "credits"; }
 private:
     Texture2D logoBg;
     Font mainFont;

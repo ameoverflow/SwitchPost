@@ -1,19 +1,19 @@
 # Tworzenie własnych resource packów
 
-stwórz folder w `/config/switchpost` na karcie sd i nazwij go np. `moja-paczka`
+stwórz folder w `/config/switchpost/resourcepacks` na karcie sd i nazwij go np. `moja-paczka`
 a w nim plik `pack.spmeta` o treści (zastępując wartości własnymi)
 np.
 ```
 {
     "name": "Moja paczka",
     "author": "ameOverflow",
-    "version": 1
+    "version": 2
 }
 ```
 
 - `name`: nazwa paczki
 - `author`: twój nick
-- `version`: musi być na 1
+- `version`: musi być na 2
 
 przykładowy resource pack znajduje się w folderze `example-pack`
 
@@ -22,6 +22,7 @@ paczka zasobów powinna pojawić się w aplikacji w ustawieniach
 ## Pliki których nie da się zastąpić
 - `fonts/*`
 - `text/test_data.json`
+- `sprites/intro_logo.png`
 
 ## Głos
 
@@ -59,3 +60,11 @@ ten plik to tablica json, w której każdy element to obiekt z właściwościami
 - `voiceClip`: głos odtwarzany w aplikacji
 - `background`: (opcjonalne) obrazek w tle
 - `text`: zawartość textboxa
+
+### dane techniczne
+
+
+| Wersja paczki zasobów | Wersje Switchpost | Zmiany                                                                                                                             |
+|-----------------------|-------------------|------------------------------------------------------------------------------------------------------------------------------------|
+| 1                     | 1.0 - 1.1         | -                                                                                                                                  |
+| 2                     | 1.2-dev+          | Zmiana nazw teł, dodanie plików językowych, zamiana pliku<br/>`tutorial/<głos>/data.json` na wiele plików dla różnych wersji językowych |

@@ -15,8 +15,8 @@ public:
     void SceneDraw() override;
     void SceneUpdate(float dt) override;
     void SceneExit() override;
+    std::string SceneIdentify() override { return "intro"; }
 private:
-    bool IsConnected();
     Texture2D pakuj, logo, introLogo;
     Font logoFont, mainFont;
     Sound introSound;
@@ -30,7 +30,7 @@ private:
     bool checkedNetwork, loadedTokens;
 
     std::string line = "missingno.";
-    std::string voice, errorCode;
+    std::string voice, errorCode, language;
     std::vector<std::string> splashes;
 
     AppletType at;

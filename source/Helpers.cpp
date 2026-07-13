@@ -6,14 +6,16 @@
 
 #include <string>
 #include <algorithm>
+#include <switch.h>
+#include <spdlog/spdlog.h>
 
 bool showFakePackages = false;
 bool shouldQuit = false;
-int currentBackground = 0;
 std::vector<Texture2D> backgrounds = {};
 bool alreadyLoggedIn = false;
 bool disableSavingToSD = false;
 bool networkTested = false;
+bool skipFlashbang = false;
 
 void DrawTextOutlineEx(Font font, const char* text, Vector2 position, Vector2 origin, float fontSize, float spacing, Color textColor, Color outlineColor, int thickness) {
     // calculate the actual top-left starting point based on the origin
@@ -39,4 +41,28 @@ float GetMappedAxis(float raw_val, float max_out, float deadzone) {
     float val = std::clamp(raw_val, deadzone, 1.0f);
 
     return (val - deadzone) / (1.0f - deadzone) * max_out;
+}
+
+bool IsConnected() {
+    Result rc = nifmInitialize(NifmServiceType_User);
+    if (R_FAILED(rc)) {
+        SPDLOG_CRITICAL("failed to initialize nifm");
+        return false;
+    }
+
+    NifmInternetConnectionType type;
+    u32 wifi_strength;
+    NifmInternetConnectionStatus status;
+
+    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
+
+    nifmExit();
+
+    if (R_SUCCEEDED(rc)) {
+        if (status == NifmInternetConnectionStatus_Connected) {
+            return true;
+        }
+    }
+
+    return false;
 }

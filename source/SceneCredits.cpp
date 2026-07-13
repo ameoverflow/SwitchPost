@@ -10,12 +10,13 @@
 #include "SceneOptions.h"
 #include "Helpers.h"
 #include "AssetLoader.h"
+#include "i18n.h"
 
 void SceneCredits::SceneInit() {
     logoBg = LoadTexture(AssetLoader::ResolveResource("sprites/logo.png").c_str());
     mainFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Light.otf", 42, 0, 381);
 
-    std::ifstream creditsFile(AssetLoader::ResolveResource("text/credits.txt").c_str());
+    std::ifstream creditsFile(AssetLoader::ResolveResource("text/credits_" + i18n::GetLanguage() + ".txt").c_str());
 
     std::string line;
     while (std::getline(creditsFile, line)) {
@@ -53,9 +54,9 @@ void SceneCredits::SceneDraw() {
         lineOffset += lineHeight + 10;
     }
 
-    Vector2 textSize = MeasureTextEx(mainFont, "Wciśnij (B) żeby wrócić do menu głównego", 28, 0);
+    Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("credits.return").c_str(), 28, 0);
     DrawRectangle(0, GetScreenHeight() - textSize.y, GetScreenWidth(), textSize.y, {10, 10, 10, 255});
-    DrawTextOutlineEx(mainFont, "Wciśnij (B) żeby wrócić do menu głównego", {GetScreenWidth()/2, GetScreenHeight() - textSize.y/2}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 3);
+    DrawTextOutlineEx(mainFont, i18n::GetString("credits.return").c_str(), {GetScreenWidth()/2, GetScreenHeight() - textSize.y/2}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 3);
 }
 
 void SceneCredits::SceneExit() {

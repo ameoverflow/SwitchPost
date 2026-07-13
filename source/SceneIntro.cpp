@@ -20,34 +20,11 @@
 #include "InPostAPI.h"
 #include "json.hpp"
 #include "Config.h"
+#include "i18n.h"
 #include "SceneDebug.h"
 #include "SceneError.h"
 
 ResponseBuffer bufferPointer;
-
-bool SceneIntro::IsConnected() {
-    Result rc = nifmInitialize(NifmServiceType_User);
-    if (R_FAILED(rc)) {
-        SPDLOG_CRITICAL("failed to initialize nifm");
-        return false;
-    }
-
-    NifmInternetConnectionType type;
-    u32 wifi_strength;
-    NifmInternetConnectionStatus status;
-
-    rc = nifmGetInternetConnectionStatus(&type, &wifi_strength, &status);
-
-    nifmExit();
-
-    if (R_SUCCEEDED(rc)) {
-        if (status == NifmInternetConnectionStatus_Connected) {
-            return true;
-        }
-    }
-
-    return false;
-}
 
 void SceneIntro::SceneInit() {
     pakuj = LoadTexture(AssetLoader::ResolveResource("sprites/pakuj.png").c_str());
@@ -59,7 +36,8 @@ void SceneIntro::SceneInit() {
     logoFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Heavy.otf", 90, 0, 381);
     introStage = 0;
     at = appletGetAppletType();
-    voice = Config::GetProperty("voice");
+    voice = Config::openedFile.voice;
+    language = Config::openedFile.language;
 
     logoFadeIn = tweeny::from(0.0f).to(0.8f).during(644);
     ameLogoFadeIn = tweeny::from(0.0f).to(1.0f).during(250).via(tweeny::easing::backOut);
@@ -101,24 +79,15 @@ void SceneIntro::SceneUpdate(float dt) {
                 return;
             }
 
-            if (!checkedNetwork) {
-                if (!IsConnected()) {
-                    SPDLOG_CRITICAL("not connected");
-                    SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError));
+            if (!loadedTokens) {
+                if (std::filesystem::exists("sdmc:/config/switchpost/token.json") && !InPostAPI::LoadTokens()) {
+                    SPDLOG_CRITICAL("unable to load tokens");
+                    SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
                     return;
                 }
-                checkedNetwork = true;
+                loadedTokens = true;
             } else {
-                if (!loadedTokens) {
-                    if (std::filesystem::exists("sdmc:/config/switchpost/token.json") && !InPostAPI::LoadTokens()) {
-                        SPDLOG_CRITICAL("unable to load tokens");
-                        SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError));
-                        return;
-                    }
-                    loadedTokens = true;
-                } else {
-                    introStage = 1;
-                }
+                introStage = 1;
             }
 
         } else if (introStage == 1) {
@@ -135,15 +104,35 @@ void SceneIntro::SceneUpdate(float dt) {
                 introStage = 3;
             }
         } else if (introStage == 3) {
+            SPDLOG_DEBUG("language is {}", language);
+            if (language != "") {
+                introStage = 4;
+                return;
+            }
+
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) ||
+            IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
+                if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
+                    Config::openedFile.language = "en";
+                } else {
+                    Config::openedFile.language = "pl";
+                }
+                i18n::SetLanguage(Config::openedFile.language);
+                SPDLOG_TRACE("language set to {}", Config::openedFile.language);
+                introStage = 4;
+            }
+        } else if (introStage == 4) {
             // log in
             if (!std::filesystem::exists("sdmc:/config/switchpost/token.json")) {
                 if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
+                    if (!IsConnected()) SceneManager::ChangeScene(std::make_unique<SceneError>(NotConnectedError));
+
                     while (true) {
                         swkbdCreate(&kbd, 0);
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
                         swkbdConfigSetStringLenMax(&kbd, 9);
                         swkbdConfigSetStringLenMin(&kbd, 9);
-                        swkbdConfigSetHeaderText(&kbd, "Wprowadź numer telefonu");
+                        swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.phone").c_str());
                         swkbdConfigSetGuideText(&kbd, "600100100");
 
                         rc = swkbdShow(&kbd, phoneNumber, sizeof(phoneNumber));
@@ -162,7 +151,7 @@ void SceneIntro::SceneUpdate(float dt) {
                         swkbdConfigSetType(&kbd, SwkbdType_NumPad);
                         swkbdConfigSetStringLenMax(&kbd, 6);
                         swkbdConfigSetStringLenMin(&kbd, 6);
-                        swkbdConfigSetHeaderText(&kbd, "Wprowadź kod SMS");
+                        swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.sms").c_str());
                         swkbdConfigSetGuideText(&kbd, "123456");
 
                         rc = swkbdShow(&kbd, code, sizeof(code));
@@ -215,9 +204,9 @@ void SceneIntro::SceneUpdate(float dt) {
                     SPDLOG_CRITICAL("network error, curl code is {}, http code is {}", std::to_string(bufferPointer.result), std::to_string(InPostAPI::sendSMSCodeBuffer.code));
                 }
             } else {
-                introStage = 4;
+                introStage = 5;
             }
-        } else if (introStage == 4) {
+        } else if (introStage == 5) {
             if (voice != "") {
                 introStage = 999;
                 MusicManager::PlayMusic("music/menu_music.ogg");
@@ -228,13 +217,13 @@ void SceneIntro::SceneUpdate(float dt) {
             IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) ||
             IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) {
                 if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)) {
-                    Config::SetProperty("voice", "male");
+                    Config::openedFile.voice = "male";
                 } else if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP)) {
-                    Config::SetProperty("voice", "female");
+                    Config::openedFile.voice = "female";
                 } else {
-                    Config::SetProperty("voice", "none");
+                    Config::openedFile.voice = "none";
                 }
-                SPDLOG_TRACE("voice set to {}", Config::GetProperty("voice"));
+                SPDLOG_TRACE("voice set to {}", Config::openedFile.voice);
                 MusicManager::PlayMusic("music/menu_music.ogg");
                 introStage = 999;
             }
@@ -258,10 +247,15 @@ void SceneIntro::SceneDraw() {
             Vector2 textSize = MeasureTextEx(mainFont, line.c_str(), 34, 0);
             DrawTextPro(mainFont, line.c_str(), {1280/2, 720/2 + 250},
                         {textSize.x / 2.0f, textSize.y / 2.0f}, 0, 34, 0, WHITE);
-        } else if (introStage == 4) {
+        } else if (introStage == 3) {
+            if (language != "") return;
+            Vector2 textSize = MeasureTextEx(mainFont, "Select language\nWybierz język\n\n(A) English\n(B) Polski", 34, 0);
+            DrawTextPro(mainFont, "Select language\nWybierz język\n\n(A) English\n(B) Polski",
+                        {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 34, 0, WHITE);
+        } else if (introStage == 5) {
             if (voice != "") return;
-            Vector2 textSize = MeasureTextEx(mainFont, "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak", 34, 0);
-            DrawTextPro(mainFont, "Wybierz głos nawigatora głosowego\n\n(A) Mężczyzna\n(X) Kobieta\n(B) Brak",
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("intro.voice_select").c_str(), 34, 0);
+            DrawTextPro(mainFont, i18n::GetString("intro.voice_select").c_str(),
                         {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 34, 0, WHITE);
         } else if (introStage == 999) {
             Rectangle source = { 0.0f, 0.0f, (float)logo.width, (float)logo.height };
@@ -276,7 +270,6 @@ void SceneIntro::SceneDraw() {
 }
 
 void SceneIntro::SceneExit() {
-    UnloadSound(introSound);
     UnloadFont(logoFont);
     UnloadFont(mainFont);
     UnloadTexture(pakuj);

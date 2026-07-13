@@ -15,10 +15,11 @@
 #include "SceneManager.h"
 #include "AssetLoader.h"
 #include "Config.h"
+#include "i18n.h"
 #include "MusicManager.h"
 #include "qrcodegen.h"
-#include "SceneError.h"
 #include "SceneLoading.h"
+#include "SoundManager.h"
 
 void SceneMain::ReloadScene() {
     ResetRemoteLockerData();
@@ -42,10 +43,9 @@ Texture2D SceneMain::GenerateQrTexture(const char* qrData) {
 
     if (!qrData || strlen(qrData) == 0) return { 0 };
 
-    bool ok = qrcodegen_encodeText(qrData, tempBuffer, qrcode, qrcodegen_Ecc_MEDIUM,
+    if (!qrcodegen_encodeText(qrData, tempBuffer, qrcode, qrcodegen_Ecc_MEDIUM,
                                    qrcodegen_VERSION_MIN, qrcodegen_VERSION_MAX,
-                                   qrcodegen_Mask_AUTO, true);
-    if (!ok) return { 0 };
+                                   qrcodegen_Mask_AUTO, true)) return { 0 };
 
     int qrSize = qrcodegen_getSize(qrcode);
     int scale = 15; // how big each module is in the texture
@@ -71,6 +71,62 @@ Texture2D SceneMain::GenerateQrTexture(const char* qrData) {
     return tex;
 }
 
+
+// yyyyhhhhh
+std::string ToLowercase(std::string text) {
+    std::transform(text.begin(), text.end(), text.begin(),
+                   [](unsigned char c){ return std::tolower(c); });
+    return text;
+}
+
+void SceneMain::GenerateSenderNameRenderTexture() {
+    if (std::size((*currentDisplay)) > 0) {
+        std::string selectedPackageName = Config::openedFile.parcelNames[(*currentDisplay)[selectedPackage].number];
+        Vector2 textSize;
+
+        if (!selectedPackageName.empty()) {
+            textSize = MeasureTextEx(mainFont, selectedPackageName.c_str(), 28, 0);
+            // DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        } else {
+            textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), 28, 0);
+            //DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        }
+
+        if (senderName.id > 0) UnloadRenderTexture(senderName);
+        senderName = LoadRenderTexture(textSize.x + 4, textSize.y + 4);
+
+        BeginTextureMode(senderName);
+        ClearBackground(BLANK);
+        if (!selectedPackageName.empty()) {
+            DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {senderName.texture.width/2, senderName.texture.height/2}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        } else {
+            DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), {senderName.texture.width/2, senderName.texture.height/2}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+        }
+        EndTextureMode();
+
+        textScrollAnim = 0;
+        textScrollDirection = true;
+        textScrollAnimDelay = 5.0f;
+
+        SPDLOG_DEBUG("generated render texture for string {}", selectedPackageName.empty() ? (*currentDisplay)[selectedPackage].senderName : selectedPackageName);
+    }
+}
+
+void SceneMain::RenderRemoteOpenButton() {
+    openButton = LoadRenderTexture(360, 80);
+    Texture2D buttonTemplate = LoadTexture(AssetLoader::ResolveResource("sprites/button.png").c_str());
+    Font buttonFont = LoadFontEx("romfs:/fonts/ComicHelvetic_Heavy.otf", 42, 0, 381);
+
+    BeginTextureMode(openButton);
+    DrawTexture(buttonTemplate, 0, 0, WHITE);
+    Vector2 size = MeasureTextEx(buttonFont, i18n::GetString("main.remote.open_button").c_str(), 35, 4);
+    DrawTextOutlineEx(buttonFont, i18n::GetString("main.remote.open_button").c_str(), {180, 40}, {size.x/2, size.y/2}, 35, 2, BLACK, WHITE, 4);
+    EndTextureMode();
+
+    UnloadTexture(buttonTemplate);
+    UnloadFont(buttonFont);
+}
+
 void SceneMain::SceneInit() {
     poststamp = LoadTexture(AssetLoader::ResolveResource("sprites/znaczek.png").c_str());
     package = LoadTexture(AssetLoader::ResolveResource("sprites/paczka.png").c_str());
@@ -82,15 +138,13 @@ void SceneMain::SceneInit() {
     reloadButton = LoadTexture(AssetLoader::ResolveResource("sprites/refresh.png").c_str());
     renameButton = LoadTexture(AssetLoader::ResolveResource("sprites/rename.png").c_str());
     archiveButton = LoadTexture(AssetLoader::ResolveResource("sprites/archive.png").c_str());
-    openButton = LoadTexture(AssetLoader::ResolveResource("sprites/open_button.png").c_str());
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
-    change = LoadSound(AssetLoader::ResolveResource("sounds/change.wav").c_str());
-    go = LoadSound(AssetLoader::ResolveResource("sounds/go.wav").c_str());
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 42, 0, 381);
     packageDetails = LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
+    RenderRemoteOpenButton();
 
-    std::string voice = Config::GetProperty("voice");
+    std::string voice = Config::openedFile.voice;
     if (voice != "none" && !voice.empty() && std::filesystem::exists(AssetLoader::ResolveResource("voice/" + voice + "/confirm_closed.ogg"))) {
         confirmClosed = LoadSound(AssetLoader::ResolveResource("voice/" + voice + "/confirm_closed.ogg").c_str());
     }
@@ -125,9 +179,9 @@ void SceneMain::SceneInit() {
     selectorFadePulse.seek(0);
     modeChangeAnim.seek(0);
 
-    if (std::size((*currentDisplay)) > 0) {
-        selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
-    }
+    GenerateSenderNameRenderTexture();
+
+    offlineMode = !IsConnected();
 }
 
 void SceneMain::SceneUpdate(float dt) {
@@ -137,8 +191,7 @@ void SceneMain::SceneUpdate(float dt) {
     }
 
     spinnerRotation += 180 * dt;
-    if (inDetails)
-    {
+    if (inDetails) {
         float drawOffset = 10;
 
         // --- render detail mode ---
@@ -148,7 +201,7 @@ void SceneMain::SceneUpdate(float dt) {
             DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(),
                 {255, 255, 255, 255}, {255, 255, 140, 255});
             if ((*currentDisplay)[selectedPackage].openable) {
-                DrawTextPro(mainFont, "Kod odbioru", {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
+                DrawTextPro(mainFont, i18n::GetString("main.history.code").c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                 drawOffset += 37;
                 DrawTextPro(mainFont, (*currentDisplay)[selectedPackage].pickupCode.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 50, 0, BLACK);
                 drawOffset += 55;
@@ -163,14 +216,14 @@ void SceneMain::SceneUpdate(float dt) {
                 }
             }
             drawOffset += 25;
-            Vector2 textSize = MeasureTextEx(mainFont, "Historia zdarzeń", 50, 2);
-            DrawTextPro(mainFont, "Historia zdarzeń", {(float)GetScreenWidth()/2, scrollOffset + drawOffset},
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.history").c_str(), 50, 2);
+            DrawTextPro(mainFont, i18n::GetString("main.history").c_str(), {(float)GetScreenWidth()/2, scrollOffset + drawOffset},
         {textSize.x/2, textSize.y/2}, 0, 50, 2, BLACK);
             drawOffset += 32;
             for (PackageEvent event : (*currentDisplay)[selectedPackage].events) {
                 DrawTextPro(mainFont, event.date.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, GRAY);
                 drawOffset += 37;
-                DrawTextPro(mainFont, event.name.c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, BLACK);
+                DrawTextPro(mainFont, i18n::GetString(ToLowercase(event.name)).c_str(), {20, scrollOffset + drawOffset}, {0, 0}, 0, 32, 0, BLACK);
                 drawOffset += 47;
                 DrawLine(20, scrollOffset + drawOffset, GetScreenWidth() - 20, scrollOffset + drawOffset, GRAY);
                 drawOffset += 10;
@@ -199,7 +252,7 @@ void SceneMain::SceneUpdate(float dt) {
                 inQR = false;
             }
 
-            if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer.status == NotStarted) {
+            if (inQR && !inOpenPaczkomat && !inConfirmClosed && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && InPostAPI::getPaczkomatStatusBuffer.status == NotStarted && !offlineMode) {
                 InPostAPI::GetPaczkomatStatus(
                         (*currentDisplay)[selectedPackage].number,
                         (*currentDisplay)[selectedPackage].pickupCode,
@@ -227,8 +280,8 @@ void SceneMain::SceneUpdate(float dt) {
             if (inQR && !inOpenPaczkomat && !inConfirmClosed && GetTouchPointCount() > 0 && !screenTouched) {
                 Vector2 touchPoint = GetTouchPosition(0);
                 screenTouched = true;
-                if (touchPoint.x >= GetScreenWidth()/2 - openButton.width/2 && touchPoint.y >= 40 + qrCode.height &&
-                    touchPoint.x <= GetScreenWidth()/2 - openButton.width/2 + openButton.width && touchPoint.y <= 40 + qrCode.height + openButton.height) {
+                if (touchPoint.x >= GetScreenWidth()/2 - openButton.texture.width/2 && touchPoint.y >= 40 + qrCode.height &&
+                    touchPoint.x <= GetScreenWidth()/2 - openButton.texture.width/2 + openButton.texture.width && touchPoint.y <= 40 + qrCode.height + openButton.texture.height) {
                     InPostAPI::GetPaczkomatStatus(
                             (*currentDisplay)[selectedPackage].number,
                             (*currentDisplay)[selectedPackage].pickupCode,
@@ -412,15 +465,15 @@ void SceneMain::SceneUpdate(float dt) {
                     if (touchStartPos.x >= leftUpper.x && touchStartPos.y >= leftUpper.y &&
                         touchStartPos.x <= rightLower.x && touchStartPos.y <= rightLower.y) {
                         if (selectedPackage == i) {
-                            PlaySound(go);
+                            SoundManager::PlaySound(GoSound);
                             scrollOffset = 0;
                             detailsFade.forward();
                             detailsScrollUp.forward();
                             inDetails = true;
                         } else {
-                            PlaySound(change);
+                            SoundManager::PlaySound(ChangeSound);
                             selectedPackage = i;
-                            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+                            GenerateSenderNameRenderTexture();
                         }
                     }
                 }
@@ -440,8 +493,8 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage--;
-            PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            SoundManager::PlaySound(ChangeSound);
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -451,8 +504,8 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage++;
-            PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            SoundManager::PlaySound(ChangeSound);
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -466,8 +519,8 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage++;
-            PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            SoundManager::PlaySound(ChangeSound);
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
@@ -477,14 +530,14 @@ void SceneMain::SceneUpdate(float dt) {
             selectorFadePulse.forward();
             selectorFadePulse.seek(0);
             selectedPackage--;
-            PlaySound(change);
-            selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+            SoundManager::PlaySound(ChangeSound);
+            GenerateSenderNameRenderTexture();
             useTouch = false;
         }
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT)
         && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
-            PlaySound(go);
+            SoundManager::PlaySound(GoSound);
             scrollOffset = 0;
             detailsFade.forward();
             detailsScrollUp.forward();
@@ -494,18 +547,18 @@ void SceneMain::SceneUpdate(float dt) {
         if (askForParcelName) {
             swkbdCreate(&kbd, 0);
             swkbdConfigSetType(&kbd, SwkbdType_All);
-            swkbdConfigSetStringLenMax(&kbd, 20);
+            swkbdConfigSetStringLenMax(&kbd, 100);
             swkbdConfigSetStringLenMin(&kbd, 0);
-            swkbdConfigSetHeaderText(&kbd, "Wprowadź nową nazwę paczki (puste przywraca domyślną nazwę)");
+            swkbdConfigSetHeaderText(&kbd, i18n::GetString("main.new_name.prompt").c_str());
             swkbdConfigSetGuideText(&kbd, "Cosplay");
 
             rc = swkbdShow(&kbd, parcelName, sizeof(parcelName));
             swkbdClose(&kbd);
 
             if (R_SUCCEEDED(rc)) {
-                Config::SetProperty((*currentDisplay)[selectedPackage].number + "_name", std::string(parcelName));
+                Config::openedFile.parcelNames.insert_or_assign((*currentDisplay)[selectedPackage].number, std::string(parcelName));
                 if (std::size((*currentDisplay)) > 0) {
-                    selectedPackageName = std::string(parcelName);
+                    GenerateSenderNameRenderTexture();
                 }
             }
             askForParcelName = false;
@@ -513,7 +566,7 @@ void SceneMain::SceneUpdate(float dt) {
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
         && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
-            PlaySound(go);
+            SoundManager::PlaySound(GoSound);
             askForParcelName = true;
         }
 
@@ -521,10 +574,10 @@ void SceneMain::SceneUpdate(float dt) {
             modeChangeAnim.forward();
             modeChangeAnim.seek(0);
             playModeChangeAnim = true;
-            PlaySound(change);
+            SoundManager::PlaySound(ChangeSound);
         }
 
-        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock) {
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock && !offlineMode) {
             inputLock = true;
             SceneManager::ChangeScene(std::make_unique<SceneLoading>());
             return;
@@ -575,13 +628,35 @@ void SceneMain::SceneUpdate(float dt) {
                 SPDLOG_CRITICAL("current display pointing at unknown location");
             }
             if (std::size((*currentDisplay)) > 0) {
-                selectedPackageName = Config::GetProperty((*currentDisplay)[selectedPackage].number + "_name");
+                GenerateSenderNameRenderTexture();
             }
             modeChangeAnim.backward();
         } else if (modeChangeAnim.progress() <= 0.0f && modeChangeAnim.direction() == -1) {
             modeChangeAnim.forward();
             modeChangeAnim.seek(0);
             playModeChangeAnim = false;
+        }
+
+        if (!textScrollDirection) {
+            if (textScrollAnim + textAreaWidth > senderName.texture.width) {
+                textScrollAnimDelay -= dt;
+                if (textScrollAnimDelay < 0) {
+                    textScrollAnimDelay = 3.0f;
+                    textScrollDirection = true;
+                }
+            } else {
+                textScrollAnim += 35 * dt;
+            }
+        } else {
+            if (textScrollAnim < 0) {
+                textScrollAnimDelay -= dt;
+                if (textScrollAnimDelay < 0) {
+                    textScrollAnimDelay = 3.0f;
+                    textScrollDirection = false;
+                }
+            } else {
+                textScrollAnim -= 35 * dt;
+            }
         }
     }
 }
@@ -590,9 +665,13 @@ void SceneMain::SceneDraw() {
     if (!inQR) {
         if (currentDisplay == &InPostAPI::packageArchive) {
             DrawRectangle(0, 0, 1280, 720, {0, 0, 0, 192});
-            DrawTextOutlineEx(mainFont, "Archiwum paczek", {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.archive").c_str(), {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
         } else if (currentDisplay == &InPostAPI::packages) {
-            DrawTextOutlineEx(mainFont, "Obecne paczki", {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.current").c_str(), {30, 30}, {0, 0}, 42, 0, {255, 204, 0, 255}, BLACK, 4);
+        }
+
+        if (offlineMode) {
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.offline").c_str(), {30, 77}, {0, 0}, 42, 0, {255, 0, 0, 255}, BLACK, 4);
         }
 
         Rectangle source = {0.0f, 0.0f, (float) poststamp.width, (float) poststamp.height};
@@ -642,28 +721,31 @@ void SceneMain::SceneDraw() {
             DrawTextureEx(selectorCorner, { x - selectorFadePulse.peek(), y + 228.0f + selectorFadePulse.peek() }, 270.0f, 1.0f, WHITE);
         }
 
-        DrawTextureEx(promptPlus, {5.0f,  410.0f}, 0, 0.5f, WHITE);
-        DrawTextureEx(reloadButton, {60.0f, 410.0f}, 0, 1, WHITE);
+        if (!offlineMode) {
+            DrawTextureEx(promptPlus, {5.0f,  410.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(reloadButton, {60.0f, 410.0f}, 0, 1, WHITE);
+        }
+
         DrawTextureEx(promptY, {5.0f, 350.0f}, 0, 0.5f, WHITE);
         DrawTextureEx(renameButton, {60.0f, 350.0f}, 0, 1, WHITE);
         DrawTextureEx(promptX, {5.0f, 290.0f}, 0, 0.5f, WHITE);
         DrawTextureEx(archiveButton, {60.0f, 290.0f}, 0, 1, WHITE);
 
         if ((*currentDisplay).size() == 0) {
-            Vector2 textSize = MeasureTextEx(mainFont, "Brak paczek :c", 42, 1);
-            DrawTextOutlineEx(mainFont, "Brak paczek :c", { (float)GetScreenWidth() / 2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height }, {textSize.x / 2, textSize.y / 2}, 42, 0, WHITE, BLACK, 4);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.no_parcels").c_str(), 42, 1);
+            DrawTextOutlineEx(mainFont, i18n::GetString("main.no_parcels").c_str(), { (float)GetScreenWidth() / 2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height }, {textSize.x / 2, textSize.y / 2}, 42, 0, WHITE, BLACK, 4);
         } else {
-            Vector2 textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].events[0].name.c_str(), 32, 1);
-            DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].events[0].name.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString(ToLowercase((*currentDisplay)[selectedPackage].events[0].name)).c_str(), 32, 1);
+            DrawTextOutlineEx(mainFont, i18n::GetString(ToLowercase((*currentDisplay)[selectedPackage].events[0].name)).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 170}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
             std::string paczkaCounter;
             paczkaCounter += std::to_string(selectedPackage + 1);
             paczkaCounter += " / ";
             paczkaCounter += std::to_string((*currentDisplay).size());
 #ifdef DEBUG
             paczkaCounter += "\n";
-            paczkaCounter += std::to_string(cameraOffset);
+            paczkaCounter += std::to_string(textScrollAnim);
             paczkaCounter += ", ";
-            paczkaCounter += std::to_string(40.0f + ((float) package.width + 40) * (*currentDisplay).size() - GetScreenWidth());
+            paczkaCounter += std::to_string(senderName.texture.width);
 #endif
             textSize = MeasureTextEx(mainFont, paczkaCounter.c_str(), 28, 1);
             DrawTextOutlineEx(mainFont, paczkaCounter.c_str(), {(float)GetScreenWidth()/2 - 190, poststampFade.peek() + modeChangeAnim.peek() + 100}, {textSize.x/2, textSize.y/2}, 28, 1, WHITE, BLACK, 2);
@@ -672,8 +754,8 @@ void SceneMain::SceneDraw() {
             DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].events[0].date.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + 120}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
 
             if ((*currentDisplay)[selectedPackage].courier) {
-                textSize = MeasureTextEx(mainFont, "Paczka kurierska", 40, 0);
-                DrawTextOutlineEx(mainFont, "Paczka kurierska", {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
+                textSize = MeasureTextEx(mainFont, i18n::GetString("main.courier").c_str(), 40, 0);
+                DrawTextOutlineEx(mainFont, i18n::GetString("main.courier").c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
             } else {
                 textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].pickupPointName.c_str(), 40, 0);
                 DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].pickupPointName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height}, {textSize.x/2, textSize.y/2}, 40, 0, WHITE, BLACK, 2);
@@ -682,12 +764,15 @@ void SceneMain::SceneDraw() {
                 DrawTextOutlineEx(mainFont, std::string((*currentDisplay)[selectedPackage].street + ", " + (*currentDisplay)[selectedPackage].city).c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 30}, {textSize.x/2, textSize.y/2}, 32, 0, WHITE, BLACK, 2);
             }
 
-            if (!selectedPackageName.empty()) {
-                textSize = MeasureTextEx(mainFont, selectedPackageName.c_str(), 28, 0);
-                DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+            // DrawTextOutlineEx(mainFont, selectedPackageName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+            if (senderName.texture.width > textAreaWidth) {
+                DrawTexturePro(senderName.texture, {textScrollAnim, 0, textAreaWidth, -senderName.texture.height},
+                                {GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95, textAreaWidth, senderName.texture.height},
+                                {textAreaWidth/2, senderName.texture.height/2}, 0, WHITE);
             } else {
-                textSize = MeasureTextEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), 28, 0);
-                DrawTextOutlineEx(mainFont, (*currentDisplay)[selectedPackage].senderName.c_str(), {(float)GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95}, {textSize.x/2, textSize.y/2}, 28, 0, WHITE, BLACK, 2);
+                DrawTexturePro(senderName.texture, {0, 0, senderName.texture.width, -senderName.texture.height},
+                {GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95, senderName.texture.width, senderName.texture.height},
+                {senderName.texture.width/2, senderName.texture.height/2}, 0, WHITE);
             }
 
             if (askForParcelName) {
@@ -703,24 +788,30 @@ void SceneMain::SceneDraw() {
             {(float)GetScreenWidth()/2, 20, (float)qrCode.width, (float)qrCode.height},
             {(float)qrCode.width/2, 0}, 0, WHITE);
 
-        DrawTextureEx(openButton, {GetScreenWidth()/2 - openButton.width/2, 40 + qrCode.height}, 0, 1, WHITE);
-        DrawTextureEx(promptX, {GetScreenWidth()/2 - openButton.width/2 - 10 - promptX.width, 35 + qrCode.height}, 0, 1, WHITE);
+        if (!offlineMode) {
+            /* DrawTexturePro(senderName.texture, {0, 0, senderName.texture.width, -senderName.texture.height},
+            {GetScreenWidth()/2, poststampFade.peek() + modeChangeAnim.peek() + poststamp.height + 95, senderName.texture.width, senderName.texture.height},
+            {senderName.texture.width/2, senderName.texture.height/2}, 0, WHITE); */
+            DrawTexturePro(openButton.texture, {0, 0, 360,-80},
+                {GetScreenWidth()/2 - openButton.texture.width/2, 40 + qrCode.height, 360, 80}, {0, 0}, 0, WHITE);
+            DrawTextureEx(promptX, {GetScreenWidth()/2 - openButton.texture.width/2 - 10 - promptX.width, 35 + qrCode.height}, 0, 1, WHITE);
+        }
 
         if (inOpenPaczkomat || inConfirmClosed) {
             DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
         }
 
         if (inOpenPaczkomat) {
-            Vector2 textSize = MeasureTextEx(mainFont, "Czy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie", 32, 0);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.remote.open").c_str(), 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-            DrawTextPro(mainFont, "Czy chcesz otworzyć Paczkomat?\n\n(A) Tak      (B) Nie",
+            DrawTextPro(mainFont, i18n::GetString("main.remote.open").c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
 
         if (inConfirmClosed) {
-            Vector2 textSize = MeasureTextEx(mainFont, "Czy paczka została odebrana?\n\n(A) Tak      (B) Nie", 32, 0);
+            Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.remote.picked_up").c_str(), 32, 0);
             DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-            DrawTextPro(mainFont, "Czy paczka została odebrana?\n\n(A) Tak      (B) Nie",
+            DrawTextPro(mainFont, i18n::GetString("main.remote.picked_up").c_str(),
                 {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
         }
 
@@ -742,10 +833,6 @@ void SceneMain::SceneExit() {
     StopSound(confirmOpen);
     UnloadSound(confirmOpen);
     UnloadRenderTexture(packageDetails);
-    StopSound(change);
-    UnloadSound(change);
-    StopSound(go);
-    UnloadSound(go);
     UnloadFont(mainFont);
     UnloadTexture(package);
     UnloadTexture(poststamp);
@@ -754,7 +841,7 @@ void SceneMain::SceneExit() {
     UnloadTexture(promptY);
     UnloadTexture(promptX);
     UnloadTexture(promptPlus);
-    UnloadTexture(openButton);
+    UnloadRenderTexture(openButton);
     UnloadTexture(reloadButton);
     UnloadTexture(renameButton);
     UnloadTexture(readyForPickup);

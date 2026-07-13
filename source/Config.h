@@ -9,10 +9,21 @@
 #include "json.hpp"
 #include <fstream>
 
+struct ConfigFile {
+    std::unordered_map<std::string, std::string> parcelNames;
+    int background;
+    std::string resourcePack;
+    bool tutorialDone;
+    std::string voice;
+    std::string filename;
+    std::string language;
+};
+
 namespace Config {
-    void LoadConfigFile(std::string filename);
-    std::string GetProperty(std::string name);
-    void SetProperty(std::string name, std::string value);
+    inline ConfigFile openedFile;
+    void OpenFile(std::string filename);
+    void SaveFile();
+    std::string LegacyGetConfigProperty(std::string name);
 };
 
 
