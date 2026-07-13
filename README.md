@@ -1,6 +1,6 @@
 # SwitchPost
 
-[PL](README_pl.md) (English language available in 1.2 development builds, downloads in Actions tab. 1.1 is Polish only!)
+[PL](README_pl.md)
 
 ![logo.png](/.github/logo.png)
 
