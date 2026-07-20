@@ -11,6 +11,7 @@ list(APPEND CMAKE_PROGRAM_PATH  "${DEVKITPRO}/tools/bin")
 list(APPEND CMAKE_PROGRAM_PATH  "${DEVKITPRO}/devkitA64/bin")
 set(CMAKE_C_COMPILER "aarch64-none-elf-gcc")
 set(CMAKE_CXX_COMPILER "aarch64-none-elf-g++")
+set(CMAKE_TOOLCHAIN_FILE "${DEVKITPRO}/cmake/Switch.cmake")
 
 project(SwitchPost)
 
@@ -19,7 +20,7 @@ set(APP_AUTHOR "ameOverflow")
 set(APP_VERSION "1.2")
 
 set(SOURCES
-        lib/qrcodegen.c
+        source/qrcodegen.c
         source/main.cpp
         source/Helpers.cpp
         source/SceneManager.cpp
@@ -40,6 +41,34 @@ set(SOURCES
         source/i18n.cpp
         source/SoundManager.cpp
 )
+set(PLATFORM "NX" CACHE STRING "Target platform for raylib" FORCE)
+
+# set stuffs required by switchpost and raylib
+add_compile_definitions(__SWITCH__)
+set(ARCH -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE)
+
+add_compile_options(
+        ${ARCH}
+        -fpermissive
+        -Wno-narrowing
+        -Wno-error=narrowing
+        -ffunction-sections
+        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
+)
+
+add_link_options(
+        ${ARCH}
+        -specs=${LIBNX}/switch.specs
+)
+
+include(FetchContent)
+FetchContent_Declare(
+        raylib
+        GIT_REPOSITORY https://github.com/luizpestana/raylib-nx.git
+        GIT_TAG        6.0
+)
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(raylib)
 
 add_executable(SwitchPost ${SOURCES})
 set_target_properties(SwitchPost PROPERTIES
@@ -48,20 +77,9 @@ set_target_properties(SwitchPost PROPERTIES
         CXX_EXTENSIONS OFF
 )
 
-set(ARCH -march=armv8-a -mtune=cortex-a57 -mtp=soft -fPIE)
-
-target_include_directories(SwitchPost PRIVATE ${LIBNX}/include ${PORTLIBS}/include ./source ./include ./include/raylib ${PROJECT_BINARY_DIR})
-target_link_directories(SwitchPost PRIVATE ${LIBNX}/lib ${PORTLIBS}/lib ./lib)
+target_include_directories(SwitchPost PRIVATE ${LIBNX}/include ${PORTLIBS}/include ./source ./include ${raylib_SOURCE_DIR}/src ${PROJECT_BINARY_DIR})
+target_link_directories(SwitchPost PRIVATE ${LIBNX}/lib ${PORTLIBS}/lib)
 target_link_libraries(SwitchPost PRIVATE curl z raylib EGL GLESv2 glapi drm_nouveau nx m)
-
-target_compile_options(SwitchPost PRIVATE
-        ${ARCH}
-        -fpermissive
-        -Wno-narrowing
-        -Wno-error=narrowing
-        -ffunction-sections
-        $<$<COMPILE_LANGUAGE:CXX>:-fno-rtti>
-)
 
 target_compile_definitions(SwitchPost PRIVATE
         __SWITCH__
@@ -75,11 +93,6 @@ target_compile_definitions(SwitchPost PRIVATE
         APP_TITLE="${APP_TITLE}"
         APP_VERSION="${APP_VERSION}"
         BASE_URL="https://api-inmobile-pl.easypack24.net"
-)
-
-target_link_options(SwitchPost PRIVATE
-        ${ARCH}
-        -specs=${LIBNX}/switch.specs
 )
 
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
