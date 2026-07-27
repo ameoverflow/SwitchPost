@@ -62,7 +62,7 @@ private:
 
     // keyboard input
     Result rc;
-    char parcelName[20];
+    char parcelName[100];
     bool askForParcelName;
     SwkbdConfig kbd;
 };

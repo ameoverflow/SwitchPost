@@ -24,6 +24,7 @@ float bgX = 0;
 float bgY = 0;
 Music menuMusic;
 std::string versionString;
+int nxlink_fd = -1;
 
 void SpdlogRaylibCallback(int logLevel, const char *text, va_list args) {
     char buffer[4096];
@@ -75,7 +76,7 @@ int main()
     romfsInit();
     socketInitializeDefault();
 
-    int nxlink_fd = nxlinkStdio();
+    nxlink_fd = nxlinkStdio();
 
     if (nxlink_fd >= 0) {
         std::cout << "Connected to nxlink!" << std::endl;
@@ -249,14 +250,14 @@ int main()
     Config::SaveFile();
 
     CloseAudioDevice();
+    CloseWindow();
 
     spdlog::shutdown();
     fflush(stdout);
     fflush(stderr);
+    if (nxlink_fd >= 0) close(nxlink_fd);
     socketExit();
     romfsExit();
-
-    CloseWindow();
     appletUnlockExit();
 
     return 0;
