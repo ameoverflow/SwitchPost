@@ -42,6 +42,10 @@ void SceneLoading::SceneUpdate(float dt) {
         if (!InPostAPI::ParsePaczkas(buffer.str())) {
             SceneManager::ChangeScene(std::make_unique<SceneError>(JSONError, true));
         } else {
+            if (!alreadyLoggedIn) {
+                SPDLOG_INFO("Good evening professor. I see you have driven here in your Ferrari.");
+                alreadyLoggedIn = true;
+            }
             SceneManager::ChangeScene(std::make_unique<SceneMain>());
         }
         fakePackages.close();
@@ -64,8 +68,16 @@ void SceneLoading::SceneUpdate(float dt) {
 
                     file << std::string(InPostAPI::getPaczkasBuffer.data.begin(), InPostAPI::getPaczkasBuffer.data.end());
                     file.close();
+                    if (!alreadyLoggedIn) {
+                        SPDLOG_INFO("Good evening professor. I see you have driven here in your Ferrari.");
+                        alreadyLoggedIn = true;
+                    }
                     SceneManager::ChangeScene(std::make_unique<SceneMain>());
                 } else if (InPostAPI::getPaczkasBuffer.code == 304) {
+                    if (!alreadyLoggedIn) {
+                        SPDLOG_INFO("Good evening professor. I see you have driven here in your Ferrari.");
+                        alreadyLoggedIn = true;
+                    }
                     SceneManager::ChangeScene(std::make_unique<SceneMain>());
                 } else {
                     SceneManager::ChangeScene(std::make_unique<SceneError>(NetworkError, true));
@@ -109,8 +121,4 @@ void SceneLoading::SceneDraw() {
 
 void SceneLoading::SceneExit() {
     UnloadTexture(loadingCircle);
-    if (!alreadyLoggedIn) {
-        SPDLOG_INFO("Good evening professor. I see you have driven here in your Ferrari.");
-        alreadyLoggedIn = true;
-    }
 }

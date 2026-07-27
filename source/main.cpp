@@ -18,11 +18,13 @@
 #include "i18n.h"
 #include "SoundManager.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include <iostream>
 
 float bgX = 0;
 float bgY = 0;
 Music menuMusic;
 std::string versionString;
+int nxlink_fd = -1;
 
 void SpdlogRaylibCallback(int logLevel, const char *text, va_list args) {
     char buffer[4096];
@@ -72,11 +74,18 @@ int main()
     // switch init shit
     appletLockExit();
     romfsInit();
+    socketInitializeDefault();
+
+    nxlink_fd = nxlinkStdio();
+
+    if (nxlink_fd >= 0) {
+        std::cout << "Connected to nxlink!" << std::endl;
+    }
+
     std::filesystem::create_directory("sdmc:/config");
     std::filesystem::create_directory("sdmc:/config/switchpost");
     std::filesystem::create_directory("sdmc:/config/switchpost/logs");
     std::filesystem::create_directory("sdmc:/config/switchpost/resourcepacks");
-    socketInitializeDefault();
 
     // log init shit
     std::shared_ptr<spdlog::sinks::sink> consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
@@ -241,11 +250,15 @@ int main()
     Config::SaveFile();
 
     CloseAudioDevice();
+    CloseWindow();
 
+    spdlog::shutdown();
+    fflush(stdout);
+    fflush(stderr);
+    if (nxlink_fd >= 0) close(nxlink_fd);
     socketExit();
     romfsExit();
-
-    CloseWindow();
     appletUnlockExit();
+
     return 0;
 }
