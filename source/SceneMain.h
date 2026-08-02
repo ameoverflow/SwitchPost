@@ -25,7 +25,7 @@ private:
     Texture2D GenerateQrTexture(const char* qrData);
     void GenerateSenderNameRenderTexture();
     RenderTexture2D senderName, openButton;
-    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, promptB, selectorCorner, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
+    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, promptMinus, selectorCorner, reloadButton, archiveButton, delivered, readyForPickup, renameButton, settingsButton;
     Font mainFont;
     Sound confirmOpen, confirmClosed;
     int textAreaWidth = 404;
