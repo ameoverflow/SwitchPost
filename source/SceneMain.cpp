@@ -19,6 +19,7 @@
 #include "MusicManager.h"
 #include "qrcodegen.h"
 #include "SceneLoading.h"
+#include "SceneOptions.h"
 #include "SoundManager.h"
 
 void SceneMain::ReloadScene() {
@@ -135,9 +136,11 @@ void SceneMain::SceneInit() {
     promptY = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_Y.png").c_str());
     promptX = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_X.png").c_str());
     promptPlus = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_Plus.png").c_str());
+    promptMinus = LoadTexture(AssetLoader::ResolveResource("sprites/prompts/Switch_Minus.png").c_str());
     reloadButton = LoadTexture(AssetLoader::ResolveResource("sprites/refresh.png").c_str());
     renameButton = LoadTexture(AssetLoader::ResolveResource("sprites/rename.png").c_str());
     archiveButton = LoadTexture(AssetLoader::ResolveResource("sprites/archive.png").c_str());
+    settingsButton = LoadTexture(AssetLoader::ResolveResource("sprites/settings.png").c_str());
     delivered = LoadTexture(AssetLoader::ResolveResource("sprites/delivered.png").c_str());
     readyForPickup = LoadTexture(AssetLoader::ResolveResource("sprites/ready_for_pickup.png").c_str());
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Regular.ttf", 42, 0, 381);
@@ -564,22 +567,29 @@ void SceneMain::SceneUpdate(float dt) {
             askForParcelName = false;
         }
 
-        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT)
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP)
         && !inDetails && !inputLock && std::size((*currentDisplay)) > 0) {
             SoundManager::PlaySound(GoSound);
             askForParcelName = true;
         }
 
-        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP) && !inDetails && !inputLock) {
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_LEFT) && !inDetails && !inputLock) {
             modeChangeAnim.forward();
             modeChangeAnim.seek(0);
             playModeChangeAnim = true;
             SoundManager::PlaySound(ChangeSound);
         }
 
-        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock && !offlineMode) {
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT) && !inDetails && !inputLock && !offlineMode) {
             inputLock = true;
             SceneManager::ChangeScene(std::make_unique<SceneLoading>());
+            return;
+        }
+
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock && !offlineMode) {
+            inputLock = true;
+            SoundManager::PlaySound(GoSound);
+            SceneManager::ChangeScene(std::make_unique<SceneOptions>(true));
             return;
         }
     }
@@ -620,10 +630,8 @@ void SceneMain::SceneUpdate(float dt) {
             useTouch = false;
             if (currentDisplay == &InPostAPI::packages) {
                 currentDisplay = &InPostAPI::packageArchive;
-                MusicManager::SetVolume(0.5f);
             } else if (currentDisplay == &InPostAPI::packageArchive) {
                 currentDisplay = &InPostAPI::packages;
-                MusicManager::SetVolume(1.0f);
             } else {
                 SPDLOG_CRITICAL("current display pointing at unknown location");
             }
@@ -722,14 +730,16 @@ void SceneMain::SceneDraw() {
         }
 
         if (!offlineMode) {
-            DrawTextureEx(promptPlus, {5.0f,  410.0f}, 0, 0.5f, WHITE);
+            DrawTextureEx(promptY, {5.0f,  410.0f}, 0, 0.5f, WHITE);
             DrawTextureEx(reloadButton, {60.0f, 410.0f}, 0, 1, WHITE);
         }
 
-        DrawTextureEx(promptY, {5.0f, 350.0f}, 0, 0.5f, WHITE);
+        DrawTextureEx(promptX, {5.0f, 350.0f}, 0, 0.5f, WHITE);
         DrawTextureEx(renameButton, {60.0f, 350.0f}, 0, 1, WHITE);
-        DrawTextureEx(promptX, {5.0f, 290.0f}, 0, 0.5f, WHITE);
+        DrawTextureEx(promptMinus, {5.0f, 290.0f}, 0, 0.5f, WHITE);
         DrawTextureEx(archiveButton, {60.0f, 290.0f}, 0, 1, WHITE);
+        DrawTextureEx(promptPlus, {5.0f, 230.0f}, 0, 0.5f, WHITE);
+        DrawTextureEx(settingsButton, {60.0f, 230.0f}, 0, 1, WHITE);
 
         if ((*currentDisplay).size() == 0) {
             Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("main.no_parcels").c_str(), 42, 1);
@@ -841,9 +851,11 @@ void SceneMain::SceneExit() {
     UnloadTexture(promptY);
     UnloadTexture(promptX);
     UnloadTexture(promptPlus);
+    UnloadTexture(promptMinus);
     UnloadRenderTexture(openButton);
     UnloadTexture(reloadButton);
     UnloadTexture(renameButton);
+    UnloadTexture(settingsButton);
     UnloadTexture(readyForPickup);
     UnloadTexture(delivered);
 }

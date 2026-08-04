@@ -25,7 +25,7 @@ private:
     Texture2D GenerateQrTexture(const char* qrData);
     void GenerateSenderNameRenderTexture();
     RenderTexture2D senderName, openButton;
-    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, selectorCorner, reloadButton, archiveButton, delivered, readyForPickup, renameButton;
+    Texture2D poststamp, package, loadingCircle, promptY, promptX, promptPlus, promptMinus, selectorCorner, reloadButton, archiveButton, delivered, readyForPickup, renameButton, settingsButton;
     Font mainFont;
     Sound confirmOpen, confirmClosed;
     int textAreaWidth = 404;
@@ -37,7 +37,7 @@ private:
     bool textScrollDirection = true;
 
     // state
-    bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, stickMoved, screenTouched, playModeChangeAnim;
+    bool inDetails, inQR, inOpenPaczkomat, inConfirmClosed, inOptions, stickMoved, screenTouched, playModeChangeAnim;
     std::string sessionUuid;
     float scrollOffset = 0;
     RenderTexture2D packageDetails;

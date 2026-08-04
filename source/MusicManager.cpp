@@ -5,6 +5,7 @@
 #include "MusicManager.h"
 #include "raylib.h"
 #include "AssetLoader.h"
+#include "Config.h"
 
 Music music;
 
@@ -17,6 +18,7 @@ void MusicManager::PlayMusic(const char *file) {
     music = LoadMusicStream(AssetLoader::ResolveResource(file).c_str());
     music.looping = true;
     PlayMusicStream(music);
+    if (!Config::openedFile.playMusic) SetMusicVolume(music, 0.0f);
 }
 
 void MusicManager::Update() {
@@ -39,5 +41,5 @@ void MusicManager::Destroy() {
 }
 
 void MusicManager::SetVolume(float volume) {
-    SetMusicVolume(music, volume);
+    SetMusicVolume(music, Config::openedFile.playMusic ? volume : 0.0f);
 }

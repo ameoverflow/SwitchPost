@@ -69,8 +69,7 @@ std::string getLogFileName() {
     return name;
 }
 
-int main()
-{
+int main() {
     // switch init shit
     appletLockExit();
     romfsInit();
@@ -209,8 +208,11 @@ int main()
         versionString += std::string(BUILD_TYPE);
         versionString += "), ";
         versionString += std::to_string(GetFPS());
-        versionString += " FPS, ";
+        versionString += " FPS, scene: ";
         versionString += SceneManager::Identify();
+        if (nxlink_fd >= 0) {
+            versionString += ", connected";
+        }
 #endif
 
         bgX -= 25 * frameTime;

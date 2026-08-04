@@ -13,8 +13,10 @@
 #include "i18n.h"
 #include "MusicManager.h"
 #include "SceneIntro.h"
+#include "SceneLoading.h"
 #include "SceneTutorial.h"
 #include "SoundManager.h"
+#include "spdlog/spdlog.h"
 
 void SceneOptions::SceneInit() {
     mainFont = LoadFontEx("romfs:/fonts/Ubuntu-Bold.ttf", 50, 0, 381);
@@ -24,6 +26,7 @@ void SceneOptions::SceneInit() {
             i18n::GetString("options.voice"),
             i18n::GetString("options.resource_pack"),
             i18n::GetString("options.background"),
+            i18n::GetString("options.music"),
             i18n::GetString("options.show_tutorial"),
             i18n::GetString("options.clear_data"),
             i18n::GetString("options.credits")
@@ -44,7 +47,8 @@ void SceneOptions::SceneInit() {
             {"", i18n::GetString("options.resource_pack.default"), "ameOverflow"},
     };
 
-    for (std::pair<std::string, ResourcePack> kvp : AssetLoader::RegisteredPacks) {
+    for (const std::pair<const std::string, ResourcePack>& kvp : AssetLoader::RegisteredPacks) {
+        SPDLOG_DEBUG("adding pack {} to list", kvp.second.directory);
         packList.push_back(kvp.second);
     }
 
@@ -140,7 +144,7 @@ void SceneOptions::SceneUpdate(float dt) {
                 if (Config::openedFile.voice != "none" && Config::openedFile.voice != "male" && Config::openedFile.voice != "female") Config::openedFile.voice = "none";
             } else {
                 if (Config::openedFile.voice != "none" && Config::openedFile.voice != "male" && Config::openedFile.voice != "female") {
-                    std::vector<std::string> voicesList = AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].voices;
+                    std::vector<std::string> voicesList = AssetLoader::RegisteredPacks.at(Config::openedFile.resourcePack).voices;
                     if (std::find(voicesList.begin(), voicesList.end(), Config::openedFile.voice) == voicesList.end()) Config::openedFile.voice = "none";
                 }
             }
@@ -171,10 +175,12 @@ void SceneOptions::SceneUpdate(float dt) {
                 i18n::GetString("options.voice"),
                 i18n::GetString("options.resource_pack"),
                 i18n::GetString("options.background"),
+                i18n::GetString("options.music"),
                 i18n::GetString("options.show_tutorial"),
                 i18n::GetString("options.clear_data"),
                 i18n::GetString("options.credits")
             };
+
             packList[0] = {"", i18n::GetString("options.resource_pack.default"), "ameOverflow"};
         });
     } else if (inDeleteData) {
@@ -202,7 +208,11 @@ void SceneOptions::SceneUpdate(float dt) {
     } else  {
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) && !inputLock) {
             inputLock = true;
-            SceneManager::ChangeScene(std::make_unique<SceneTitle>());
+            if (returnToMainScene) {
+                SceneManager::ChangeScene(std::make_unique<SceneLoading>());
+            } else {
+                SceneManager::ChangeScene(std::make_unique<SceneTitle>());
+            }
             return;
         }
 
@@ -263,19 +273,45 @@ void SceneOptions::SceneUpdate(float dt) {
 
         // read dpad left right
         {
-            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT) && Config::openedFile.background > 0 && !inputLock && selectedOption == 3) {
-                Config::openedFile.background--;
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT) && !inputLock) {
+                if (selectedOption != 3 && selectedOption != 4) return;
                 SoundManager::PlaySound(ChangeSound);
+                switch (selectedOption) {
+                    case 3:
+                        if (Config::openedFile.background > 0) Config::openedFile.background--;
+                        break;
+                    case 4:
+                        Config::openedFile.playMusic = !Config::openedFile.playMusic;
+                        if (Config::openedFile.playMusic) {
+                            MusicManager::SetVolume(1.0f);
+                        } else {
+                            MusicManager::SetVolume(0.0f);
+                        }
+                        break;
+                }
             }
 
-            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) && Config::openedFile.background < std::size(backgrounds) - 1 && !inputLock && selectedOption == 3) {
-                Config::openedFile.background++;
+            if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT) && !inputLock) {
+                if (selectedOption != 3 && selectedOption != 4) return;
                 SoundManager::PlaySound(ChangeSound);
+                switch (selectedOption) {
+                    case 3:
+                        if (Config::openedFile.background < std::size(backgrounds) - 1) Config::openedFile.background++;
+                        break;
+                    case 4:
+                        Config::openedFile.playMusic = !Config::openedFile.playMusic;
+                        if (Config::openedFile.playMusic) {
+                            MusicManager::SetVolume(1.0f);
+                        } else {
+                            MusicManager::SetVolume(0.0f);
+                        }
+                        break;
+                }
             }
         }
 
         if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) && !inputLock) {
-            if (selectedOption == 3) return;
+            if (selectedOption == 3 || selectedOption == 4) return;
             SoundManager::PlaySound(GoSound);
             switch (selectedOption) {
                 case 0:
@@ -292,8 +328,10 @@ void SceneOptions::SceneUpdate(float dt) {
                         i18n::GetString("options.voice.female")
                     };
 
-                    for (std::string packVoice : AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].voices) {
-                        voices.push_back(packVoice);
+                    if (!Config::openedFile.resourcePack.empty() && AssetLoader::RegisteredPacks.contains(Config::openedFile.resourcePack)) {
+                        for (const std::string& packVoice : AssetLoader::RegisteredPacks.at(Config::openedFile.resourcePack).voices) {
+                            voices.push_back(packVoice);
+                        }
                     }
 
                     selectedSubOption = 0;
@@ -305,7 +343,7 @@ void SceneOptions::SceneUpdate(float dt) {
                     selectedSubOption = 0;
                     inResourcePackOptions = true;
                     break;
-                case 4:
+                case 5:
                     if (!Config::openedFile.voice.empty()) {
                         if (Config::openedFile.voice != "none") {
                             if (!std::filesystem::exists(AssetLoader::ResolveResource("tutorial/" + Config::openedFile.voice + "/data_pl.json"))) {
@@ -318,10 +356,10 @@ void SceneOptions::SceneUpdate(float dt) {
                         }
                     }
                     break;
-                case 5:
+                case 6:
                     inDeleteData = true;
                     break;
-                case 6:
+                case 7:
                     targetOffset = 0;
                     scrollOffset = 0;
                     inputLock = true;
@@ -369,12 +407,12 @@ void SceneOptions::SceneDraw() {
         }
     } else {
         Vector2 textSize = MeasureTextEx(mainFont, i18n::GetString("options").c_str(), 100, 0);
-        DrawTextOutlineEx(mainFont, i18n::GetString("options").c_str(), {GetScreenWidth()/2, 100}, {textSize.x/2, textSize.y/2}, 100, 2, WHITE, BLACK, 6);
+        DrawTextOutlineEx(mainFont, i18n::GetString("options").c_str(), {GetScreenWidth()/2, 75}, {textSize.x/2, textSize.y/2}, 100, 2, WHITE, BLACK, 6);
         if (oldPack != Config::openedFile.resourcePack) {
             textSize = MeasureTextEx(mainFont, i18n::GetString("options.resource_pack.restart").c_str(), 42, 0);
             DrawTextOutlineEx(mainFont, i18n::GetString("options.resource_pack.restart").c_str(), {GetScreenWidth()/2, GetScreenHeight()/2 + 300}, {textSize.x/2, textSize.y/2}, 42, 0, RED, BLACK, 4);
         }
-        int offset = 225;
+        int offset = 175;
         for (int i = 0; i < options.size(); i++) {
             Vector2 textSize = MeasureTextEx(mainFont, options[i].c_str(), 50, 0);
             if (i == 0) {
@@ -399,12 +437,16 @@ void SceneOptions::SceneDraw() {
                 if (Config::openedFile.resourcePack == "" || !AssetLoader::RegisteredPacks.contains(Config::openedFile.resourcePack)) {
                     text +=  i18n::GetString("options.resource_pack.default");
                 } else {
-                    text += AssetLoader::RegisteredPacks[Config::openedFile.resourcePack].name;
+                    text += AssetLoader::RegisteredPacks.at(Config::openedFile.resourcePack).name;
                 }
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else if (i == 3) {
                 std::string text = i18n::GetString("options.background") + ": < " + std::to_string(Config::openedFile.background + 1) + " >";
+                textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
+                DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
+            } else if (i == 4) {
+                std::string text = i18n::GetString("options.music") + ": < " + (Config::openedFile.playMusic ? i18n::GetString("generic.yes") : i18n::GetString("generic.no")) + " >";
                 textSize = MeasureTextEx(mainFont, text.c_str(), 50, 0);
                 DrawTextOutlineEx(mainFont, text.c_str(), {GetScreenWidth()/2, offset}, {textSize.x/2, textSize.y/2}, 50, 0, selectedOption == i ? YELLOW : WHITE, BLACK, 4);
             } else {

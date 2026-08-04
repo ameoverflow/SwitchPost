@@ -17,6 +17,7 @@ struct ConfigFile {
     std::string voice;
     std::string filename;
     std::string language;
+    bool playMusic;
 };
 
 namespace Config {
