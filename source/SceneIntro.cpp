@@ -127,40 +127,43 @@ void SceneIntro::SceneUpdate(float dt) {
                 if (InPostAPI::sendSMSCodeBuffer.status == NotStarted) {
                     if (!IsConnected()) SceneManager::ChangeScene(std::make_unique<SceneError>(NotConnectedError));
 
-                    while (true) {
-                        swkbdCreate(&kbd, 0);
-                        swkbdConfigSetType(&kbd, SwkbdType_NumPad);
-                        swkbdConfigSetStringLenMax(&kbd, 9);
-                        swkbdConfigSetStringLenMin(&kbd, 9);
-                        swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.phone").c_str());
-                        swkbdConfigSetGuideText(&kbd, "600100100");
+                    swkbdCreate(&kbd, 0);
+                    swkbdConfigSetType(&kbd, SwkbdType_NumPad);
+                    swkbdConfigSetStringLenMax(&kbd, 9);
+                    swkbdConfigSetStringLenMin(&kbd, 9);
+                    swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.phone").c_str());
+                    swkbdConfigSetGuideText(&kbd, "600100100");
 
-                        rc = swkbdShow(&kbd, phoneNumber, sizeof(phoneNumber));
-                        swkbdClose(&kbd);
+                    rc = swkbdShow(&kbd, phoneNumber, sizeof(phoneNumber));
+                    swkbdClose(&kbd);
 
-                        if (R_SUCCEEDED(rc)) break;
+                    if (R_SUCCEEDED(rc)) {
+                        InPostAPI::SendSMSCode(std::string(phoneNumber));
+                    } else {
+                        shouldQuit = true;
+                        return;
                     }
-
-                    InPostAPI::SendSMSCode(std::string(phoneNumber));
                 }
 
                 if (InPostAPI::sendSMSCodeBuffer.status == Done &&
                     InPostAPI::verifySMSCodeBuffer.status == NotStarted) {
-                    while (true) {
-                        swkbdCreate(&kbd, 0);
-                        swkbdConfigSetType(&kbd, SwkbdType_NumPad);
-                        swkbdConfigSetStringLenMax(&kbd, 6);
-                        swkbdConfigSetStringLenMin(&kbd, 6);
-                        swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.sms").c_str());
-                        swkbdConfigSetGuideText(&kbd, "123456");
+                    swkbdCreate(&kbd, 0);
+                    swkbdConfigSetType(&kbd, SwkbdType_NumPad);
+                    swkbdConfigSetStringLenMax(&kbd, 6);
+                    swkbdConfigSetStringLenMin(&kbd, 6);
+                    swkbdConfigSetHeaderText(&kbd, i18n::GetString("intro.sms").c_str());
+                    swkbdConfigSetGuideText(&kbd, "123456");
 
-                        rc = swkbdShow(&kbd, code, sizeof(code));
-                        swkbdClose(&kbd);
+                    rc = swkbdShow(&kbd, code, sizeof(code));
+                    swkbdClose(&kbd);
 
-                        if (R_SUCCEEDED(rc)) break;
+                    if (R_SUCCEEDED(rc)) {
+                        InPostAPI::VerifySMSCode(std::string(phoneNumber), std::string(code));
+                    } else {
+                        shouldQuit = true;
+                        return;
                     }
 
-                    InPostAPI::VerifySMSCode(std::string(phoneNumber), std::string(code));
                 } else if (InPostAPI::sendSMSCodeBuffer.status == Error ||
                            (InPostAPI::sendSMSCodeBuffer.status == Done &&
                             InPostAPI::sendSMSCodeBuffer.code != 200)) {
@@ -174,10 +177,10 @@ void SceneIntro::SceneUpdate(float dt) {
                                           InPostAPI::verifySMSCodeBuffer.data.end());
                     if (nlohmann::json::accept(loginData)) {
                         nlohmann::json data = nlohmann::json::parse(loginData);
-                        std::string authToken = data.value("authToken", "");
-                        std::string refreshToken = data.value("refreshToken", "");
+                        InPostAPI::authToken = data.value("authToken", "");
+                        InPostAPI::refreshToken = data.value("refreshToken", "");
 
-                        if (!authToken.empty() && !refreshToken.empty()) {
+                        if (!InPostAPI::authToken.empty() && !InPostAPI::refreshToken.empty()) {
                             if (!disableSavingToSD) {
                                 std::ofstream file("sdmc:/config/switchpost/token.json");
                                 if (file.is_open()) {

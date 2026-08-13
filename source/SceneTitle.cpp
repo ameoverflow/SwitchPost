@@ -183,9 +183,9 @@ void SceneTitle::SceneDraw() {
 
     if (firstTimeUsingPrompt) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), {0, 0, 0, 192});
-        Vector2 textSize = MeasureTextEx(smallFont, "Czy korzystasz z SwitchPost pierwszy raz?\n\n(A) Tak      (B) Nie", 32, 0);
+        Vector2 textSize = MeasureTextEx(smallFont, i18n::GetString("title.tutorial").c_str(), 32, 0);
         DrawRectangle(GetScreenWidth()/2 - textSize.x/2 - 50, GetScreenHeight()/2 - textSize.y/2 - 50, textSize.x + 100, textSize.y + 100, WHITE);
-        DrawTextPro(smallFont, "Czy korzystasz z SwitchPost pierwszy raz?\n\n(A) Tak      (B) Nie",
+        DrawTextPro(smallFont, i18n::GetString("title.tutorial").c_str(),
             {GetScreenWidth()/2, GetScreenHeight()/2}, {textSize.x/2, textSize.y/2}, 0, 32, 0, BLACK);
     }
 

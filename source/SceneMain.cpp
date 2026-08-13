@@ -586,7 +586,7 @@ void SceneMain::SceneUpdate(float dt) {
             return;
         }
 
-        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock && !offlineMode) {
+        if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT) && !inDetails && !inputLock) {
             inputLock = true;
             SoundManager::PlaySound(GoSound);
             SceneManager::ChangeScene(std::make_unique<SceneOptions>(true));
